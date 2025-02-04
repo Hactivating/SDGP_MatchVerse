@@ -17,3 +17,10 @@ model Temp {
   id Int @id @default(autoincrement())
 }
 
+model Venue{
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  location String
+}
+
