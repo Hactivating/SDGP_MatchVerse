@@ -1,9 +1,9 @@
-import { IsInt, isInt, IsString, isString, Min } from 'class-validator'
+import { IsInt, IsString, Min } from 'class-validator'
 
 export class CreateCourtDto {
 
     @IsString()
-    name: String
+    name: string
 
     @IsInt()
     @Min(1)

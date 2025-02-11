@@ -25,7 +25,7 @@ export class CourtsController {
         return this.courtsService.createCourt(payload)
     }
 
-    @Delete()
+    @Delete(':id')
     deleteCourt(@Param('id') id: string) {
         return this.courtsService.deleteCourt(parseInt(id, 10));
     }
