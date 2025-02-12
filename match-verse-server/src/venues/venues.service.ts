@@ -24,7 +24,7 @@ export class VenuesService {
   }
 
   async createNewVenue(payload: CreateVenueDto) {
-    const SALT = await bcrypt.genSalt();// generate random salt
+    const SALT = await bcrypt.genSalt(); // generate random salt
     const password = await bcrypt.hash(payload.password, SALT); //hashpassword 0
     payload.password = password;
     //save venue details with hash password
@@ -32,14 +32,13 @@ export class VenuesService {
       data: payload,
     });
   }
-  
-  async updateVenue(id: number, payload: UpdateVenueDto) {
-    if(payload.password){
-    const SALT = await bcrypt.genSalt();// generate random salt
-    const password = await bcrypt.hash(payload.password, SALT);
-    payload.password=password;
-    }
 
+  async updateVenue(id: number, payload: UpdateVenueDto) {
+    if (payload.password) {
+      const SALT = await bcrypt.genSalt(); // generate random salt
+      const password = await bcrypt.hash(payload.password, SALT);
+      payload.password = password;
+    }
 
     return this.prisma.venue.update({
       where: { id: id },

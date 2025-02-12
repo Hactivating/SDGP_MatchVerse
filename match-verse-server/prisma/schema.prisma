@@ -17,10 +17,18 @@ model Temp {
   id Int @id @default(autoincrement())
 }
 
-model Venue{
-  id Int @id @default(autoincrement())
-  email String @unique
+model Venue {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
   location String
+
+  Court Court[]
 }
 
+model Court {
+  id      Int    @id @default(autoincrement())
+  name    String
+  venueId Int
+  venue   Venue  @relation(fields: [venueId], references: [id])
+}

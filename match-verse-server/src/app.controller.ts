@@ -13,7 +13,7 @@ export class AppController {
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  login(@Request() req){
+  login(@Request() req) {
     return req.user;
   }
 }
