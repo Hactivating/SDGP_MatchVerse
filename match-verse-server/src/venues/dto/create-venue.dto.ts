@@ -1,4 +1,4 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsInt, IsString, Max, Min } from 'class-validator';
 
 export class CreateVenueDto {
   @IsEmail()
@@ -7,4 +7,11 @@ export class CreateVenueDto {
   password: string;
   @IsString()
   location: string;
+  @IsInt()
+  @Min(0)
+  @Max(2359)
+  openingTime: number;
+  @Min(0)
+  @Max(2359)
+  closingTime: number;
 }

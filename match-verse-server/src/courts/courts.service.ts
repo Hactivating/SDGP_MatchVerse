@@ -16,7 +16,7 @@ export class CourtsService {
 
   async getCourtById(id: number) {
     const court = await this.prisma.court.findUnique({
-      where: { id: id },
+      where: { courtId: id },
     });
 
     if (!court) {
@@ -35,7 +35,7 @@ export class CourtsService {
 
   async deleteCourt(id: number) {
     return this.prisma.court.delete({
-      where: { id: id },
+      where: { courtId: id },
     });
   }
 
