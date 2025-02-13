@@ -14,7 +14,7 @@ export class AuthService {
     const authorized = await bcrypt.compare(password, venue.password);
 
     if (authorized) {
-      return venue.id; //return details if passwords match
+      return venue.venueId; //return details if passwords match
     } else {
       //throw exception if password dont match
       throw new UnauthorizedException('Wrong password');

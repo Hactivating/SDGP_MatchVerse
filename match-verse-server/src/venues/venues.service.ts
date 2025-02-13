@@ -41,14 +41,14 @@ export class VenuesService {
     }
 
     return this.prisma.venue.update({
-      where: { id: id },
+      where: { venueId: id },
       data: payload,
     });
   }
 
   async deleteVenue(id: number) {
     return this.prisma.venue.delete({
-      where: { id: id },
+      where: { venueId: id },
     });
   }
 }
