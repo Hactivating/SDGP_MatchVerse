@@ -17,6 +17,15 @@ model Temp {
   id Int @id @default(autoincrement())
 }
 
+model User{
+  userId Int @id @default(autoincrement())
+  username String @unique
+  email String @unique
+  password String
+  booking Booking []
+
+}
+
 model Venue {
   venueId       Int    @id @default(autoincrement())
   email    String @unique
@@ -41,6 +50,8 @@ model Booking{
   courtId Int
   date String
   startingTime String
+  userId Int?
+  user User? @relation(fields: [userId],references: [userId])
 
   court Court @relation(fields: [courtId], references: [courtId])
   @@unique([courtId,date,startingTime])
