@@ -38,7 +38,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 };
 
 export const register = async (userData: RegisterUserDto): Promise<LoginResponse> => {
-  const response = await fetch(`${API_URL}/auth/register`, {
+  const response = await fetch(`http://localhost:3000/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export const register = async (userData: RegisterUserDto): Promise<LoginResponse
 export const getUserProfile = async (): Promise<User> => {
   const token = await getToken();
   
-  const response = await fetch(`${API_URL}/users/profile`, {
+  const response = await fetch(`http://localhost:3000/users/profile`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -67,7 +67,7 @@ export const getUserProfile = async (): Promise<User> => {
 export const updateUserProfile = async (userData: UpdateUserDto): Promise<User> => {
   const token = await getToken();
   
-  const response = await fetch(`${API_URL}/users/profile`, {
+  const response = await fetch(`http://localhost:3000/users/profile`, {
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -82,7 +82,7 @@ export const updateUserProfile = async (userData: UpdateUserDto): Promise<User> 
 export const deleteUserAccount = async (password: string): Promise<void> => {
   const token = await getToken();
   
-  const response = await fetch(`${API_URL}/users/account`, {
+  const response = await fetch(`http://localhost:3000/users/account`, {
     method: 'DELETE',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -95,7 +95,7 @@ export const deleteUserAccount = async (password: string): Promise<void> => {
 };
 
 export const checkAuthStatus = async (token: string): Promise<User> => {
-  const response = await fetch(`${API_URL}/auth/status`, {
+  const response = await fetch(`http://localhost:3000/auth/status`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -113,7 +113,7 @@ export const checkAuthStatus = async (token: string): Promise<User> => {
 export const api = {
   getCurrentUser: async () => {
     const token = await SecureStore.getItemAsync('userToken');
-    const response = await axios.get(`${API_URL}/users/me`, {
+    const response = await axios.get(`http://localhost:3000/users/me`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
