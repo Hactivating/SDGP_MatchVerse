@@ -1,50 +1,99 @@
-# Welcome to your Expo app 👋
+# User Management App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application for user management built with Expo and TypeScript.
 
-## Get started
+## Features
 
-1. Install dependencies
+- User authentication (login/register)
+- View user profile
+- Edit user profile
+- Delete user account
+- Settings management
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- React Native / Expo
+- TypeScript
+- Expo Router for navigation
+- Secure Storage for token management
+- REST API integration
 
-   ```bash
-    npx expo start
-   ```
+## Project Structure
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+├── app/                  # Expo Router app directory
+│   ├── (tabs)/           # Tab-based screens
+│   │   ├── _layout.tsx   # Tab navigation layout
+│   │   ├── index.tsx     # Home screen
+│   │   ├── profile.tsx   # Profile screen
+│   │   └── settings.tsx  # Settings screen
+│   ├── _layout.tsx       # Root layout
+│   ├── login.tsx         # Login screen
+│   ├── register.tsx      # Registration screen
+│   ├── edit-profile.tsx  # Edit profile screen
+│   └── delete-account.tsx # Delete account screen
+├── components/           # Reusable components
+├── context/              # Context providers
+│   └── AuthContext.tsx   # Authentication context
+├── services/             # API services
+│   └── api.ts            # API integration
+├── types/                # TypeScript type definitions
+└── utils/                # Utility functions
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-## Learn more
+### Prerequisites
 
-To learn more about developing your project with Expo, look at the following resources:
+- Node.js (v14 or newer)
+- npm or yarn
+- Expo CLI
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Installation
 
-## Join the community
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Start the development server:
+   ```
+   npm run dev
+   ```
 
-Join our community of developers creating universal apps.
+## API Configuration
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app is configured to connect to a NestJS backend. Update the API URL in `services/api.ts` to point to your backend server:
+
+```typescript
+const API_URL = 'https://your-api-url.com';
+```
+
+## Authentication Flow
+
+The app uses JWT tokens for authentication:
+
+1. User logs in or registers
+2. JWT token is stored securely using Expo SecureStore
+3. Token is included in API requests
+4. On logout, token is removed from storage
+
+## Form Validation
+
+Input validation is implemented for all forms:
+- Email validation
+- Password requirements
+- Required fields
+
+## Error Handling
+
+The app includes comprehensive error handling:
+- API error responses
+- Form validation errors
+- Loading states for async operations
+
+## Security Considerations
+
+- Secure storage for authentication tokens
+- Password confirmation for sensitive operations
+- Proper validation of user inputs
