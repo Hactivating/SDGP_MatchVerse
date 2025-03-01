@@ -20,6 +20,12 @@ export class UsersService {
       throw new NotFoundException('User with this email does not exist');
     } else return user;
   }
+  async getUserByEmailGoogle(email: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { email: email },
+    });
+    return user;
+  }
 
   async createNewUser(payload) {
     const SALT = await bcrypt.genSalt(); // generate random salt
