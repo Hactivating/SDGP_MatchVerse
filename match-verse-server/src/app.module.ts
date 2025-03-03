@@ -7,10 +7,12 @@ import { AuthModule } from './auth/auth.module';
 import { CourtsModule } from './courts/courts.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { UsersModule } from './users/users.module';
+import { MatchModule } from './match/match.module';
+
 
 @Module({
-  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule],
+  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
