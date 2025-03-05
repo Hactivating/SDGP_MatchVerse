@@ -45,6 +45,7 @@ model Court {
   name    String
   venueId Int
   booking Booking []
+  courtImage CourtImage []
   venue   Venue  @relation(fields: [venueId], references: [venueId])
 }
 
@@ -60,3 +61,14 @@ model Booking{
   @@unique([courtId,date,startingTime])
 
 }
+
+
+model CourtImage{
+  courtImageId Int @id @default(autoincrement())
+  imageUrl String
+  courtId Int
+  court Court @relation(fields: [courtId],references: [courtId])
+
+
+}
+
