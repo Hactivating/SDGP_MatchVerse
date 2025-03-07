@@ -3,10 +3,14 @@ import { CreateVenueDto } from './dto/create-venue.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateVenueDto } from './dto/update-venue.dto';
 import * as bcrypt from 'bcrypt';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class VenuesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private s3Service: S3Service,
+  ) {}
 
   //return all avaialble venues
   async getAllVenues() {
@@ -49,6 +53,16 @@ export class VenuesService {
   async deleteVenue(id: number) {
     return this.prisma.venue.delete({
       where: { venueId: id },
+    });
+  }
+
+  async addImageToVenue(file: Express.Multer.File, id: number) {
+    const key = `${file.fieldname}${Date.now()}`;
+    const imageUrl = await this.s3Service.uploadFile(file, key);
+
+    return await this.prisma.venue.update({
+      where: { venueId: id },
+      data: { venueImageUrl: imageUrl },
     });
   }
 }

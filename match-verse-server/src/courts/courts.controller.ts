@@ -48,7 +48,7 @@ export class CourtsController {
     @Request() req,
   ) {
     console.log(file);
-    console.log("sdsd")
+    console.log('sdsd');
     await this.courtsService.addImagesToCourt(file, parseInt(id));
   }
 }

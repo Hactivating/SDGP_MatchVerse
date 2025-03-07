@@ -40,8 +40,7 @@ export class CourtsService {
   async addImagesToCourt(file: Express.Multer.File, id: number) {
     console.log('here in service');
     const key = `${file.fieldname}${Date.now()}`;
-    const imageUrl= await this.s3Service.uploadFile(file, key);
+    const imageUrl = await this.s3Service.uploadFile(file, key);
     return imageUrl;
-    
   }
 }

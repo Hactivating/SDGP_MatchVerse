@@ -17,58 +17,57 @@ model Temp {
   id Int @id @default(autoincrement())
 }
 
-model User{
-  userId Int @id @default(autoincrement())
-  username String @unique
-  email String @unique
-  password String
-  experience Int  @default(0)
-  rating Int @default(0)
+model User {
+  userId     Int    @id @default(autoincrement())
+  username   String @unique
+  email      String @unique
+  password   String
+  experience Int    @default(0)
+  rating     Int    @default(0)
+  userImageUrl String?
 
-  booking Booking []
-
+  booking Booking[]
 }
 
 model Venue {
-  venueId       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  location String
+  venueId     Int    @id @default(autoincrement())
+  email       String @unique
+  password    String
+  location    String
   openingTime Int
   closingTime Int
+  venueImageUrl String?
 
   court Court[]
 }
 
 model Court {
-  courtId      Int    @id @default(autoincrement())
-  name    String
-  venueId Int
-  booking Booking []
-  courtImage CourtImage []
-  venue   Venue  @relation(fields: [venueId], references: [venueId])
+  courtId    Int          @id @default(autoincrement())
+  name       String
+  venueId    Int
+  booking    Booking[]
+  courtImage CourtImage[]
+  venue      Venue        @relation(fields: [venueId], references: [venueId])
 }
 
-model Booking{
-  bookingId Int @id @default(autoincrement())
-  courtId Int
-  date String
+model Booking {
+  bookingId    Int    @id @default(autoincrement())
+  courtId      Int
+  date         String
   startingTime String
-  userId Int?
-  user User? @relation(fields: [userId],references: [userId])
+  userId       Int?
+  user         User?  @relation(fields: [userId], references: [userId])
 
   court Court @relation(fields: [courtId], references: [courtId])
-  @@unique([courtId,date,startingTime])
 
+  @@unique([courtId, date, startingTime])
 }
 
-
-model CourtImage{
-  courtImageId Int @id @default(autoincrement())
-  imageUrl String
-  courtId Int
-  court Court @relation(fields: [courtId],references: [courtId])
-
-
+model CourtImage {
+  courtImageId Int    @id @default(autoincrement())
+  imageUrl     String
+  courtId      Int
+  court        Court  @relation(fields: [courtId], references: [courtId])
 }
+
 
