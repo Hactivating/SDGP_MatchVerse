@@ -6,10 +6,15 @@ import {
   Param,
   Post,
   Put,
+  UploadedFile,
+  Request,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateVenueDto } from './dto/create-venue.dto';
 import { VenuesService } from './venues.service';
 import { UpdateVenueDto } from './dto/update-venue.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { RateVenueDto } from './dto/rate-venue.dto';
 
 @Controller('venues')
 export class VenuesController {
@@ -34,5 +39,23 @@ export class VenuesController {
   @Delete(':id')
   deleteVenue(@Param('id') id: string) {
     return this.venuesService.deleteVenue(parseInt(id, 10));
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @Post(':id/upload-file')
+  async addImageToVenue(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    console.log(file);
+    return this.venuesService.addImageToVenue(file, parseInt(id));
+  }
+
+  @Post('rate/:id')
+  rateVenue(@Param('id') id:string, @Body() payload:RateVenueDto){
+
+    return this.venuesService.rateVenue(parseInt(id,10),payload)
+    
   }
 }

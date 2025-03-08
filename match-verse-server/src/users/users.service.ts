@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService,
+    private s3Service: S3Service
+  ) {}
 
   //return all avaialble venues
   async getAllUsers() {
@@ -53,6 +56,16 @@ export class UsersService {
   async deleteUser(id: number) {
     return this.prisma.user.delete({
       where: { userId: id },
+    });
+  }
+
+  async addImageToVenue(file: Express.Multer.File, id: number) {
+    const key = `${file.fieldname}${Date.now()}`;
+    const imageUrl = await this.s3Service.uploadFile(file, key);
+
+    return await this.prisma.user.update({
+      where: { userId: id },
+      data: { userImageUrl: imageUrl },
     });
   }
 }
