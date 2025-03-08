@@ -65,4 +65,65 @@ export class VenuesService {
       data: { venueImageUrl: imageUrl },
     });
   }
+
+  async rateVenue(id: number, payload) {
+    const existingRating = await this.prisma.venue.findFirst({
+      where: { venueId: id },
+    });
+
+    const existingUserRating = await this.prisma.userVenueRating.findFirst({
+      where: { venueId: id, userId: payload.userId },
+    });
+
+    if (existingRating && !existingUserRating) {
+      const totalRating = 1 + existingRating.totalRating;
+      const venueRating =
+        payload.rating + existingRating.rating * existingRating.totalRating;
+      const updatedRating = venueRating / totalRating;
+
+      const data = {
+        userId: payload.userId,
+        venueId: id,
+        rating: payload.rating,
+      };
+
+      const userRating = await this.prisma.userVenueRating.create({
+        data: data,
+      });
+
+      const updated = await this.prisma.venue.update({
+        where: { venueId: id },
+        data: { rating: updatedRating, totalRating: totalRating },
+      });
+
+      return updated;
+    }
+
+    if (existingRating && existingUserRating) {
+      const totalRating = existingRating.totalRating;
+      const venueRating =
+        payload.rating +
+        existingRating.rating * existingRating.totalRating -
+        existingUserRating.rating;
+      const updatedRating = venueRating / totalRating;
+
+      const data = {
+        userId: payload.userId,
+        venueId: id,
+        rating: payload.rating,
+      };
+
+      const userRating = await this.prisma.userVenueRating.update({
+        where: { userRatingId: existingUserRating.userRatingId },
+        data: data,
+      });
+
+      const updated = await this.prisma.venue.update({
+        where: { venueId: id },
+        data: { rating: updatedRating, totalRating: totalRating },
+      });
+
+      return updated;
+    }
+  }
 }

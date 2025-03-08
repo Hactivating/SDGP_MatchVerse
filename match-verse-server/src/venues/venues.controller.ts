@@ -14,6 +14,7 @@ import { CreateVenueDto } from './dto/create-venue.dto';
 import { VenuesService } from './venues.service';
 import { UpdateVenueDto } from './dto/update-venue.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { RateVenueDto } from './dto/rate-venue.dto';
 
 @Controller('venues')
 export class VenuesController {
@@ -49,5 +50,12 @@ export class VenuesController {
   ) {
     console.log(file);
     return this.venuesService.addImageToVenue(file, parseInt(id));
+  }
+
+  @Post('rate/:id')
+  rateVenue(@Param('id') id:string, @Body() payload:RateVenueDto){
+
+    return this.venuesService.rateVenue(parseInt(id,10),payload)
+    
   }
 }
