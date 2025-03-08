@@ -37,10 +37,31 @@ export class CourtsService {
     });
   }
 
-  async addImagesToCourt(file: Express.Multer.File, id: number) {
+  async addImagesToCourt(files: Express.Multer.File[], id: number) {
     console.log('here in service');
-    const key = `${file.fieldname}${Date.now()}`;
-    const imageUrl = await this.s3Service.uploadFile(file, key);
-    return imageUrl;
+
+    const uploadedUrls: {
+      courtId: number;
+      courtImageId: number;
+      imageUrl: string;
+    }[] = [];
+
+    //loop through the files and upload them to database one by one
+    for (const file of files) {
+      const key = `${file.fieldname ?? `${id}image`}${Date.now()}`;
+      const imageUrl = await this.s3Service.uploadFile(file, key);
+
+      if (imageUrl) {
+        const uploadedUrl = await this.prisma.courtImage.create({
+          data: {
+            courtId: id,
+            imageUrl: imageUrl,
+          },
+        });
+
+        uploadedUrls.push(uploadedUrl);
+      }
+    }
+    return uploadedUrls;
   }
 }

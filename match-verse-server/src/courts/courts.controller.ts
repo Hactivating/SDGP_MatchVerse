@@ -9,12 +9,12 @@ import {
   ParseIntPipe,
   Request,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
 import { CourtsService } from './courts.service';
 import { CreateCourtDto } from './dto/create-court.dto';
 import { UpdateCourtDto } from './dto/update-court.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('courts')
 export class CourtsController {
@@ -40,15 +40,15 @@ export class CourtsController {
     return this.courtsService.deleteCourt(parseInt(id, 10));
   }
 
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('files'))
   @Post(':id/upload-file')
   async addImagesToCourt(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
     @Param('id') id: string,
     @Request() req,
   ) {
-    console.log(file);
+    console.log(files);
     console.log('sdsd');
-    await this.courtsService.addImagesToCourt(file, parseInt(id));
+    await this.courtsService.addImagesToCourt(files, parseInt(id));
   }
 }

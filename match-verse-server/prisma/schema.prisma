@@ -18,27 +18,31 @@ model Temp {
 }
 
 model User {
-  userId     Int    @id @default(autoincrement())
-  username   String @unique
-  email      String @unique
-  password   String
-  experience Int    @default(0)
-  rating     Int    @default(0)
+  userId       Int     @id @default(autoincrement())
+  username     String  @unique
+  email        String  @unique
+  password     String
+  experience   Int     @default(0)
+  rating       Int     @default(0)
   userImageUrl String?
 
-  booking Booking[]
+  booking         Booking[]
+  UserVenueRating UserVenueRating[]
 }
 
 model Venue {
-  venueId     Int    @id @default(autoincrement())
-  email       String @unique
-  password    String
-  location    String
-  openingTime Int
-  closingTime Int
+  venueId       Int     @id @default(autoincrement())
+  email         String  @unique
+  password      String
+  location      String
+  openingTime   Int
+  closingTime   Int
   venueImageUrl String?
+  rating        Int     @default(0)
+  totalRating   Int     @default(0)
 
-  court Court[]
+  court           Court[]
+  UserVenueRating UserVenueRating[]
 }
 
 model Court {
@@ -70,4 +74,12 @@ model CourtImage {
   court        Court  @relation(fields: [courtId], references: [courtId])
 }
 
+model UserVenueRating {
+  userRatingId Int @id @default(autoincrement())
+  venueId Int
+  userId  Int
+  rating  Int
 
+  user  User   @relation(fields: [userId], references: [userId])
+  Venue Venue @relation(fields: [venueId], references: [venueId])
+}
