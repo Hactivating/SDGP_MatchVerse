@@ -1,14 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { createMatchDto } from './DTO/create-match.dto';
-import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
-
+import { CreateMatchRequestDto } from './DTO/create-match-request.dto';
 
 @Injectable()
 export class MatchService {
     constructor(private prisma: PrismaService) { }
 
-    async createMatchRequest(data: createMatchDto) {
+    async createMatchRequest(data: CreateMatchRequestDto) {
         const booking = await this.prisma.booking.findUnique({
             where: { bookingId: data.bookingId },
         });

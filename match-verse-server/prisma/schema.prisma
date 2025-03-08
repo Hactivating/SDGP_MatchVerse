@@ -17,23 +17,24 @@ model Temp {
   id Int @id @default(autoincrement())
 }
 
-model User{
-  userId Int @id @default(autoincrement())
-  username String @unique
-  email String @unique
-  password String
-  experience Int  @default(0)
-  rating Int @default(0)
+model User {
+  userId     Int    @id @default(autoincrement())
+  username   String @unique
+  email      String @unique
+  password   String
+  experience Int    @default(0)
+  rating     Int    @default(0)
 
-  booking Booking []
-
+  booking          Booking[]
+  createdMatches   MatchRequest[] @relation(name: "matchCreator")
+  partneredMatches MatchRequest[] @relation(name: "matchPartner")
 }
 
 model Venue {
-  venueId       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  location String
+  venueId     Int    @id @default(autoincrement())
+  email       String @unique
+  password    String
+  location    String
   openingTime Int
   closingTime Int
 
@@ -41,22 +42,39 @@ model Venue {
 }
 
 model Court {
-  courtId      Int    @id @default(autoincrement())
+  courtId Int       @id @default(autoincrement())
   name    String
   venueId Int
-  booking Booking []
-  venue   Venue  @relation(fields: [venueId], references: [venueId])
+  booking Booking[]
+  venue   Venue     @relation(fields: [venueId], references: [venueId])
 }
 
-model Booking{
-  bookingId Int @id @default(autoincrement())
-  courtId Int
-  date String
+model Booking {
+  bookingId    Int    @id @default(autoincrement())
+  courtId      Int
+  date         String
   startingTime String
-  userId Int?
-  user User? @relation(fields: [userId],references: [userId])
+  userId       Int?
+  user         User?  @relation(fields: [userId], references: [userId])
 
-  court Court @relation(fields: [courtId], references: [courtId])
-  @@unique([courtId,date,startingTime])
+  matchRequest MatchRequest[]
+  court        Court          @relation(fields: [courtId], references: [courtId])
 
+  @@unique([courtId, date, startingTime])
+}
+
+model MatchRequest {
+  requestId   Int    @id @default(autoincrement())
+  bookingId   Int    @unique
+  matchType   String
+  createdById Int
+  partnerId   Int?
+  status      String @default("pending")
+
+  createdBy User  @relation(fields: [createdById], references: [userId], name: "matchCreator")
+  partner   User? @relation(fields: [partnerId], references: [userId], name: "matchPartner")
+
+  booking Booking @relation(fields: [bookingId], references: [bookingId])
+
+  @@index([bookingId])
 }

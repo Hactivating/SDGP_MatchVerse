@@ -1,15 +1,13 @@
 import { Controller, Body, Get, Post } from '@nestjs/common';
 import { MatchService } from './match.service';
-import { createMatchDto } from './DTO/create-match.dto';
-
-
+import { CreateMatchRequestDto } from './DTO/create-match-request.dto';
 
 @Controller('match')
 export class MatchController {
     constructor(private matchService: MatchService) { }
 
     @Post('request')
-    createMatchRequest(@Body() payload: createMatchDto) {
+    createMatchRequest(@Body() payload: CreateMatchRequestDto) {
         return this.matchService.createMatchRequest(payload);
     }
 
