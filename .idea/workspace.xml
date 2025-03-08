@@ -46,7 +46,7 @@
     "HTTP Request.All in generated-requests.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "ui-users",
+    "git-widget-placeholder": "<unknown>",
     "last_opened_file_path": "/Users/dhuwarakesh/Documents/GitHub/SDGP_MatchVerse",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -107,6 +107,7 @@
       <workItem from="1741280474085" duration="937000" />
       <workItem from="1741281623463" duration="676000" />
       <workItem from="1741282306862" duration="10612000" />
+      <workItem from="1741333041153" duration="19000" />
     </task>
     <task id="LOCAL-00001" summary="Log in and Register">
       <option name="closed" value="true" />
@@ -143,7 +144,6 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/match-verse-client/app/(auth)/login.tsx</url>
           <line>9</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
