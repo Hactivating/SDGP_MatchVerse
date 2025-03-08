@@ -1,9 +1,8 @@
 // services/api.ts
 import axios from 'axios';
-import Constants from 'expo-constants';
 
 // Use your NestJS server IP and port - adjust this to your actual server address
-const API_URL = 'http://localhost:3000';
+export const API_URL = 'http://localhost:3000';
 
 // Create axios instance
 export const api = axios.create({
@@ -14,7 +13,8 @@ export const api = axios.create({
 });
 
 // Add request interceptor to add auth token
-export const setAuthToken = (token: string | undefined) => {
+export const setAuthToken = (token: string | null) => {
+    console.log("Setting auth token:", token ? "valid token" : "null");
     if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
