@@ -4,6 +4,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import axios from 'axios';
+// We'll use axios directly for all requests to ensure consistency
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -21,8 +22,6 @@ const VenueProfile = () => {
   const [formData, setFormData] = useState({
     email: '',
     location: '',
-    openingTime: 900,
-    closingTime: 1800,
     photoUrl: ''
   });
   
@@ -44,7 +43,6 @@ const VenueProfile = () => {
     }
   }, []);
 
-  // Cleanup preview URL when component unmounts
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -75,9 +73,7 @@ const VenueProfile = () => {
       setFormData({
         email: matchedVenue.email || '',
         location: matchedVenue.location || '',
-        openingTime: matchedVenue.openingTime || 900,
-        closingTime: matchedVenue.closingTime || 1800,
-        photoUrl: matchedVenue.photoUrl || ''
+        photoUrl: matchedVenue.venueImageUrl || ''
       });
     } catch (err) {
       if (err.response) {
@@ -161,16 +157,6 @@ const VenueProfile = () => {
     fileInputRef.current.click();
   };
   
-  // Base64 encode the image for direct embedding in JSON
-  const encodeFileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  };
-  
   const updateProfile = async (e) => {
     e.preventDefault();
     
@@ -184,55 +170,65 @@ const VenueProfile = () => {
     setError('');
     
     try {
-      // Create a copy of form data to send to the server
-      const updatedData = { ...formData };
+      const profileData = {
+        email: formData.email,
+        location: formData.location
+      };
       
-      // If we have a selected file, encode it as base64 and include it in the request
+      await axios.put(`${API_URL}/venues/${venueId}`, profileData);
+      
+      // If there's a file to upload, do that separately using FormData
       if (selectedFile) {
         try {
           setUploading(true);
-          // Convert file to base64
-          const base64Image = await encodeFileToBase64(selectedFile);
+          const formData = new FormData();
+          formData.append('file', selectedFile);
           
-          // Add it to the update data
-          updatedData.photoBase64 = base64Image;
-          updatedData.photoFilename = selectedFile.name;
-          updatedData.photoMimeType = selectedFile.type;
-        } catch (fileError) {
-          console.error('Error encoding file:', fileError);
-          setError('Failed to process image. Please try again.');
+          const uploadResponse = await axios.post(`${API_URL}/venues/${venueId}/upload-file`, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            },
+            withCredentials: true
+          });
+          
+          if (uploadResponse.data && uploadResponse.data.venueImageUrl) {
+            setFormData(prevData => ({
+              ...prevData,
+              photoUrl: uploadResponse.data.venueImageUrl
+            }));
+          } else {
+            const updatedVenueResponse = await axios.get(`${API_URL}/venues`, {
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              withCredentials: true
+            });
+            
+            const venues = updatedVenueResponse.data || [];
+            const updatedVenue = venues.find(venue => 
+              Number(venue.venueId) === Number(venueId)
+            );
+            
+            if (updatedVenue) {
+              setFormData(prevData => ({
+                ...prevData,
+                photoUrl: updatedVenue.venueImageUrl || updatedVenue.photoUrl || prevData.photoUrl
+              }));
+            }
+          }
+          
+          setSelectedFile(null);
+          
+          if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl('');
+          }
+        } catch (uploadError) {
+          console.error('Photo upload error:', uploadError);
+          setError('Failed to upload photo. Please try again.');
           setUpdating(false);
           setUploading(false);
           return;
-        }
-      }
-      
-      // Update profile with all data including the encoded image if present
-      const response = await axios.put(`${API_URL}/venues/${venueId}`, updatedData);
-      
-      if (response.data) {
-        // If the server returns a photoUrl in the response, update it
-        if (response.data.photoUrl) {
-          updatedData.photoUrl = response.data.photoUrl;
-        }
-        
-        // Update localStorage with all the updated venue data
-        const updatedVenue = { 
-          ...JSON.parse(localStorage.getItem('venue') || '{}'), 
-          ...response.data 
-        };
-        localStorage.setItem('venue', JSON.stringify(updatedVenue));
-        
-        // Update form data with the data returned from the server
-        setFormData(updatedData);
-        
-        // Reset file selection state
-        setSelectedFile(null);
-        
-        // Clear preview URL if it was a temporary one
-        if (previewUrl && previewUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(previewUrl);
-          setPreviewUrl('');
         }
       }
       
@@ -360,38 +356,6 @@ const VenueProfile = () => {
                     value={formData.location}
                     onChange={handleProfileChange}
                   />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="openingTime" className="block text-sm font-medium text-gray-700 mb-1">
-                      Opening Time
-                    </label>
-                    <input
-                      type="time"
-                      id="openingTime"
-                      name="openingTime"
-                      required
-                      className="input w-full"
-                      value={formatTimeForInput(formData.openingTime)}
-                      onChange={handleTimeChange}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="closingTime" className="block text-sm font-medium text-gray-700 mb-1">
-                      Closing Time
-                    </label>
-                    <input
-                      type="time"
-                      id="closingTime"
-                      name="closingTime"
-                      required
-                      className="input w-full"
-                      value={formatTimeForInput(formData.closingTime)}
-                      onChange={handleTimeChange}
-                    />
-                  </div>
                 </div>
                 
                 <div className="pt-4">
