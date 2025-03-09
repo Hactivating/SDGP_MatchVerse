@@ -25,6 +25,7 @@ model User {
   experience   Int     @default(0)
   rating       Int     @default(0)
   userImageUrl String?
+ 
 
   booking         Booking[]
   UserVenueRating UserVenueRating[]
@@ -40,6 +41,7 @@ model Venue {
   venueImageUrl String?
   rating        Int     @default(0)
   totalRating   Int     @default(0)
+  venueName String
 
   court           Court[]
   UserVenueRating UserVenueRating[]
