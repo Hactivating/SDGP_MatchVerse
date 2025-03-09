@@ -1,5 +1,5 @@
 // components/Navbar.tsx
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
@@ -14,132 +14,145 @@ export default function Navbar() {
     };
 
     const navigate = (route: string): void => {
-        // Prevent navigation if we're already on that route
-        if (!pathname.includes(route)) {
+        // Check if we're already exactly on that route
+        // This prevents re-navigation to the same route
+        const currentMainRoute = pathname.split('/').pop();
+        const targetRoute = route.split('/').pop();
+
+        if (currentMainRoute !== targetRoute) {
             router.push(route);
         }
     };
 
+    // Define colors for active and inactive states
+    const activeColor = "#22c55e";
+    const inactiveColor = "#737373";
+
     return (
-        <View className="bg-white border-t border-gray-200 absolute bottom-0 left-0 right-0 z-10 shadow-lg py-2 pt-4" style={{ shadowOffset: { width: 0, height: -3 }, shadowRadius: 5, shadowOpacity: 0.1, elevation: 5 }}>
+        <View className="bg-white border-t border-gray-200 absolute bottom-0 left-0 right-0 z-10 shadow-lg py-4 pb-6" style={{ shadowOffset: { width: 0, height: -3 }, shadowRadius: 5, shadowOpacity: 0.1, elevation: 5 }}>
             <View className="flex-row mx-auto" style={{ width: '100%', maxWidth: 500 }}>
                 {/* HOME */}
                 <View className="flex-1 items-center justify-center">
                     <TouchableOpacity
-                        className="items-center justify-center w-16 h-18"
+                        className="items-center justify-center w-14 h-16"
                         onPress={() => navigate('/(app)/home')}
                         activeOpacity={0.7}
                     >
-                        <View className="relative items-center justify-center">
+                        <View className="items-center">
                             {isActive('/home') && (
-                                <View className="w-12 h-12 bg-[rgba(34,197,94,0.2)] rounded-full absolute" />
+                                <View className="h-2 w-2 bg-[#22c55e] rounded-full mb-1" />
                             )}
-                            <View className="w-10 h-10 rounded-full items-center justify-center">
-                                <Ionicons name="home" size={24} color="#22c55e" />
+                            {!isActive('/home') && (
+                                <View className="h-2 w-2 bg-transparent mb-1" />
+                            )}
+                            <View className="w-12 h-12 rounded-full items-center justify-center">
+                                <Ionicons
+                                    name="home"
+                                    size={26}
+                                    color={isActive('/home') ? activeColor : inactiveColor}
+                                />
                             </View>
                         </View>
-                        <Text className={`text-[#22c55e] text-xs mt-2 ${isActive('/home') ? 'font-bold' : ''}`}>
-                            Home
-                        </Text>
-                        {isActive('/home') && (
-                            <View className="h-1 w-5 bg-[#22c55e] rounded-full mt-1" />
-                        )}
                     </TouchableOpacity>
                 </View>
 
                 {/* VENUES */}
                 <View className="flex-1 items-center justify-center">
                     <TouchableOpacity
-                        className="items-center justify-center w-16 h-18"
+                        className="items-center justify-center w-14 h-16"
                         onPress={() => navigate('/(app)/venues')}
                         activeOpacity={0.7}
                     >
-                        <View className="relative items-center justify-center">
+                        <View className="items-center">
                             {isActive('/venues') && (
-                                <View className="w-12 h-12 bg-[rgba(34,197,94,0.2)] rounded-full absolute" />
+                                <View className="h-2 w-2 bg-[#22c55e] rounded-full mb-1" />
                             )}
-                            <View className="w-10 h-10 rounded-full items-center justify-center">
-                                <Ionicons name="location" size={24} color="#22c55e" />
+                            {!isActive('/venues') && (
+                                <View className="h-2 w-2 bg-transparent mb-1" />
+                            )}
+                            <View className="w-12 h-12 rounded-full items-center justify-center">
+                                <Ionicons
+                                    name="location"
+                                    size={26}
+                                    color={isActive('/venues') ? activeColor : inactiveColor}
+                                />
                             </View>
                         </View>
-                        <Text className={`text-[#22c55e] text-xs mt-2 ${isActive('/venues') ? 'font-bold' : ''}`}>
-                            Venues
-                        </Text>
-                        {isActive('/venues') && (
-                            <View className="h-1 w-5 bg-[#22c55e] rounded-full mt-1" />
-                        )}
                     </TouchableOpacity>
                 </View>
 
                 {/* FIND */}
                 <View className="flex-1 items-center justify-center">
                     <TouchableOpacity
-                        className="items-center justify-center w-16 h-18"
+                        className="items-center justify-center w-14 h-16"
                         onPress={() => navigate('/(app)/find')}
                         activeOpacity={0.7}
                     >
-                        <View className="relative items-center justify-center">
+                        <View className="items-center">
                             {isActive('/find') && (
-                                <View className="w-14 h-14 bg-[rgba(34,197,94,0.2)] rounded-full absolute" />
+                                <View className="h-2 w-2 bg-[#22c55e] rounded-full mb-1" />
+                            )}
+                            {!isActive('/find') && (
+                                <View className="h-2 w-2 bg-transparent mb-1" />
                             )}
                             <View className="w-12 h-12 rounded-full justify-center items-center bg-white border-2 border-[#22c55e] shadow-md">
-                                <Ionicons name="add" size={30} color="#22c55e" />
+                                <Ionicons
+                                    name="add"
+                                    size={26}
+                                    color={activeColor} // Always green for emphasis
+                                />
                             </View>
                         </View>
-                        <Text className={`text-[#22c55e] text-xs mt-2 ${isActive('/find') ? 'font-bold' : ''}`}>
-                            Find
-                        </Text>
-                        {isActive('/find') && (
-                            <View className="h-1 w-5 bg-[#22c55e] rounded-full mt-1" />
-                        )}
                     </TouchableOpacity>
                 </View>
 
                 {/* LEADERBOARD */}
                 <View className="flex-1 items-center justify-center">
                     <TouchableOpacity
-                        className="items-center justify-center w-16 h-18"
+                        className="items-center justify-center w-14 h-16"
                         onPress={() => navigate('/(app)/leaderboard')}
                         activeOpacity={0.7}
                     >
-                        <View className="relative items-center justify-center">
+                        <View className="items-center">
                             {isActive('/leaderboard') && (
-                                <View className="w-12 h-12 bg-[rgba(34,197,94,0.2)] rounded-full absolute" />
+                                <View className="h-2 w-2 bg-[#22c55e] rounded-full mb-1" />
                             )}
-                            <View className="w-10 h-10 rounded-full items-center justify-center">
-                                <Ionicons name="trophy" size={24} color="#22c55e" />
+                            {!isActive('/leaderboard') && (
+                                <View className="h-2 w-2 bg-transparent mb-1" />
+                            )}
+                            <View className="w-12 h-12 rounded-full items-center justify-center">
+                                <Ionicons
+                                    name="trophy"
+                                    size={26}
+                                    color={isActive('/leaderboard') ? activeColor : inactiveColor}
+                                />
                             </View>
                         </View>
-                        <Text className={`text-[#22c55e] text-xs mt-2 ${isActive('/leaderboard') ? 'font-bold' : ''}`}>
-                            Leaderboard
-                        </Text>
-                        {isActive('/leaderboard') && (
-                            <View className="h-1 w-5 bg-[#22c55e] rounded-full mt-1" />
-                        )}
                     </TouchableOpacity>
                 </View>
 
                 {/* PROFILE */}
                 <View className="flex-1 items-center justify-center">
                     <TouchableOpacity
-                        className="items-center justify-center w-16 h-18"
+                        className="items-center justify-center w-14 h-16"
                         onPress={() => navigate('/(app)/profile')}
                         activeOpacity={0.7}
                     >
-                        <View className="relative items-center justify-center">
+                        <View className="items-center">
                             {isActive('/profile') && (
-                                <View className="w-12 h-12 bg-[rgba(34,197,94,0.2)] rounded-full absolute" />
+                                <View className="h-2 w-2 bg-[#22c55e] rounded-full mb-1" />
                             )}
-                            <View className="w-10 h-10 rounded-full items-center justify-center">
-                                <Ionicons name="person" size={24} color="#22c55e" />
+                            {!isActive('/profile') && (
+                                <View className="h-2 w-2 bg-transparent mb-1" />
+                            )}
+                            <View className="w-12 h-12 rounded-full items-center justify-center">
+                                <Ionicons
+                                    name="person"
+                                    size={26}
+                                    color={isActive('/profile') ? activeColor : inactiveColor}
+                                />
                             </View>
                         </View>
-                        <Text className={`text-[#22c55e] text-xs mt-2 ${isActive('/profile') ? 'font-bold' : ''}`}>
-                            Profile
-                        </Text>
-                        {isActive('/profile') && (
-                            <View className="h-1 w-5 bg-[#22c55e] rounded-full mt-1" />
-                        )}
                     </TouchableOpacity>
                 </View>
             </View>

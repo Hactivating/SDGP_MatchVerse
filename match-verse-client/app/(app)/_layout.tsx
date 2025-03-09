@@ -1,15 +1,15 @@
-// app/(app)/_layout.tsx
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StatusBar } from 'react-native';
+import Navbar from '../../components/Navbar';
+import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function AppLayout() {
     const { state } = useAuth();
     const router = useRouter();
 
-    // Protect app routes by checking authentication
     useEffect(() => {
         if (!state.isAuthenticated && !state.isLoading) {
             router.replace('/(auth)/login');
@@ -18,22 +18,32 @@ export default function AppLayout() {
 
     if (state.isLoading) {
         return (
-            <View className="flex-1 justify-center items-center bg-[#121212]">
-                <ActivityIndicator size="large" color="#4ade80" />
+            <View className="flex-1 justify-center items-center bg-white">
+                <StatusBar backgroundColor="#22c55e" barStyle="dark-content" />
+                <ActivityIndicator size="large" color="#22c55e" />
             </View>
         );
     }
 
     if (!state.isAuthenticated) {
-        return null; // Don't render anything while redirecting
+        return null;
     }
 
     return (
-        <Stack
-            screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#121212' }
-            }}
-        />
+        <SafeAreaProvider>
+            <View className="flex-1 bg-gray-50">
+                <StatusBar backgroundColor="#22c55e" barStyle="dark-content" translucent={true} />
+                <View className="flex-1">
+                    <Stack
+                        screenOptions={{
+                            headerShown: false,
+                            contentStyle: { backgroundColor: 'white' }
+                        }}
+                    />
+                </View>
+
+                <Navbar />
+            </View>
+        </SafeAreaProvider>
     );
 }

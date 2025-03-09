@@ -1,4 +1,3 @@
-// components/VenueImage.tsx
 import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 
@@ -7,19 +6,8 @@ interface VenueImageProps {
 }
 
 export default function VenueImage({ sportType = 'badminton' }: VenueImageProps) {
-    // In a real app, you would have actual venue images
-    // This component serves as a placeholder for venue images
-
     return (
         <View style={styles.imageContainer}>
-            {/* In a real implementation, you would load an actual image */}
-            {/* <Image
-        source={require('@/assets/venues/badminton-court.jpg')}
-        style={styles.image}
-        resizeMode="cover"
-      /> */}
-
-            {/* For now, we'll just use a colored background as placeholder */}
             <View style={[styles.imagePlaceholder,
                 sportType === 'badminton' ? styles.badmintonBg :
                     sportType === 'basketball' ? styles.basketballBg :
@@ -27,8 +15,6 @@ export default function VenueImage({ sportType = 'badminton' }: VenueImageProps)
                             sportType === 'tennis' ? styles.tennisBg :
                                 styles.generalBg
             ]} />
-
-            {/* Gradient overlay for text readability */}
             <View style={styles.gradientOverlay} />
         </View>
     );
