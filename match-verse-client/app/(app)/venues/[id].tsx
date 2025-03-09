@@ -1,68 +1,245 @@
-// app/(app)/venues/[id].tsx
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
-import { getVenueById, getCourtsByVenueId, Venue, Court, getSportIcon, getSportColor } from '@/services/venue';
+import { getAllVenues, getAllCourts, Venue, Court, getSportIcon, getSportColor } from '@/services/venue';
+import { format, addDays } from 'date-fns';
+import { api } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
+
+const bookingsApi = {
+    getByCourtAndDate: (courtId, date) => {
+        if (!courtId) {
+            throw new Error('Court ID is required');
+        }
+
+        if (!date || typeof date !== 'string' || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            throw new Error('Date must be in YYYY-MM-DD format');
+        }
+
+        return api.get(`/bookings/${courtId}/${date}`);
+    },
+    createUserBooking: (bookingData) => {
+        return api.post('/bookings/user', bookingData);
+    }
+};
+
+interface Booking {
+    date: string;
+    starts: string;
+    isBooked: boolean;
+}
 
 export default function VenueDetail() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
+    const { state } = useAuth();
     const [venue, setVenue] = useState<Venue | null>(null);
     const [courts, setCourts] = useState<Court[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(0);
-    const [selectedDate, setSelectedDate] = useState<string>('today');
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
+    const [timeSlots, setTimeSlots] = useState<string[]>([]);
+    const [availableTimeSlots, setAvailableTimeSlots] = useState<number[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [bookingsLoading, setBookingsLoading] = useState(false);
+    const [bookingInProgress, setBookingInProgress] = useState(false);
 
-    // Time slots for booking
-    const timeSlots = ['9:00 AM', '10:30 AM', '12:00 PM', '1:30 PM', '3:00 PM', '4:30 PM', '6:00 PM', '7:30 PM'];
+    const generateNextSevenDays = () => {
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+            days.push(addDays(new Date(), i));
+        }
+        return days;
+    };
 
-    // Date options for booking
-    const dateOptions = [
-        { id: 'today', label: 'Today' },
-        { id: 'tomorrow', label: 'Tomorrow' },
-        { id: 'saturday', label: 'Saturday' }
-    ];
+    const nextSevenDays = generateNextSevenDays();
 
     useEffect(() => {
         fetchVenueData();
     }, [id]);
 
+    useEffect(() => {
+        if (selectedCourt && selectedDate) {
+            fetchBookings();
+        }
+    }, [selectedCourt, selectedDate]);
+
+    const generateTimeSlots = (openingTime: number, closingTime: number) => {
+        const slots = [];
+        const timeValues = [];
+
+        const formatTime = (time: number) => {
+            const hour = Math.floor(time / 100);
+            const minute = time % 100;
+
+            let formattedHour = hour % 12;
+            if (formattedHour === 0) formattedHour = 12;
+
+            const period = hour < 12 ? 'AM' : 'PM';
+
+            return `${formattedHour}:${minute === 0 ? '00' : minute} ${period}`;
+        };
+
+        const startHour = Math.floor(openingTime / 100);
+        const endHour = Math.floor(closingTime / 100);
+
+        for (let hour = startHour; hour < endHour; hour++) {
+            slots.push(formatTime(hour * 100));
+            timeValues.push(hour * 100);
+        }
+
+        return { formattedSlots: slots, timeValues };
+    };
+
+    const fetchBookings = async () => {
+        if (!selectedCourt || !selectedDate) return;
+
+        try {
+            setBookingsLoading(true);
+            const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+            const response = await bookingsApi.getByCourtAndDate(selectedCourt.courtId, formattedDate);
+            setBookings(response.data || []);
+
+            const available = [];
+
+            if (response.data && response.data.length > 0) {
+                response.data.forEach((slot, index) => {
+                    if (!slot.isBooked) {
+                        available.push(index);
+                    }
+                });
+            }
+
+            setAvailableTimeSlots(available);
+
+            if (response.data && response.data.length > 0) {
+                const formattedSlots = response.data.map(slot => {
+                    const [hour] = slot.starts.split(':');
+                    const hourNum = parseInt(hour);
+                    const period = hourNum >= 12 ? 'PM' : 'AM';
+                    const hour12 = hourNum % 12 || 12;
+                    return `${hour12}:00 ${period}`;
+                });
+                setTimeSlots(formattedSlots);
+            }
+        } catch (err) {
+            if (venue?.openingTime && venue?.closingTime) {
+                const { formattedSlots, timeValues } = generateTimeSlots(venue.openingTime, venue.closingTime);
+                setTimeSlots(formattedSlots);
+                setAvailableTimeSlots(timeValues.map((_, index) => index));
+            } else {
+                const defaultSlots = [
+                    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
+                    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM',
+                    '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM',
+                    '8:00 PM'
+                ];
+                setTimeSlots(defaultSlots);
+                setAvailableTimeSlots(Array.from({ length: defaultSlots.length }, (_, i) => i));
+            }
+        } finally {
+            setBookingsLoading(false);
+        }
+    };
+
     const fetchVenueData = async () => {
         try {
             setLoading(true);
-            // Parse the ID to ensure it's a number
             const venueId = parseInt(id as string, 10);
 
-            // Fetch venue details
-            const venueData = await getVenueById(venueId);
-            setVenue(venueData);
+            const [allVenues, allCourts] = await Promise.all([
+                getAllVenues(),
+                getAllCourts()
+            ]);
 
-            // Fetch courts for this venue
-            const courtsData = await getCourtsByVenueId(venueId);
-            setCourts(courtsData);
+            const venueData = allVenues.find(v => v.venueId === venueId);
+            if (!venueData) {
+                throw new Error(`Venue with ID ${venueId} not found`);
+            }
+
+            const venueCourts = allCourts.filter(c => c.venueId === venueId);
+
+            setVenue(venueData);
+            setCourts(venueCourts);
+
+            if (venueCourts.length > 0) {
+                setSelectedCourt(venueCourts[0]);
+            }
+
+            if (venueData.openingTime && venueData.closingTime) {
+                const { formattedSlots } = generateTimeSlots(venueData.openingTime, venueData.closingTime);
+                setTimeSlots(formattedSlots);
+            } else {
+                setTimeSlots([
+                    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
+                    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM',
+                    '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM',
+                    '8:00 PM'
+                ]);
+            }
 
             setError(null);
         } catch (err) {
-            console.error(`Error fetching venue data for ID ${id}:`, err);
             setError('Failed to load venue details. Please try again later.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper function to group courts by sport type
-    const getUniqueSportTypes = () => {
-        if (!courts || courts.length === 0) return [];
+    const bookCourt = async () => {
+        if (!selectedCourt || selectedTimeSlot === null) {
+            Alert.alert('Selection Required', 'Please select a court and time slot');
+            return;
+        }
 
-        const uniqueSportTypes = [...new Set(courts.map(court => court.sportType))];
-        return uniqueSportTypes.map(type => ({
-            id: type,
-            name: type.charAt(0).toUpperCase() + type.slice(1),
-            icon: getSportIcon(type)
-        }));
+        try {
+            setBookingInProgress(true);
+            const selectedBooking = bookings[selectedTimeSlot];
+
+            if (!selectedBooking) {
+                throw new Error('Selected time slot not found');
+            }
+
+            const bookingData = {
+                userId: state.user?.id || 1,
+                courtId: selectedCourt.courtId,
+                startingTime: selectedBooking.starts,
+                date: format(selectedDate, 'yyyy-MM-dd')
+            };
+
+            const response = await bookingsApi.createUserBooking(bookingData);
+
+            Alert.alert(
+                'Booking Successful',
+                `You have successfully booked ${selectedCourt.name || `Court ${selectedCourt.courtId}`} at ${timeSlots[selectedTimeSlot]} on ${format(selectedDate, 'MMMM d, yyyy')}`,
+                [
+                    {
+                        text: 'View My Bookings',
+                        onPress: () => router.push('/(app)/profile/bookings'),
+                    },
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            fetchBookings();
+                        },
+                    },
+                ]
+            );
+
+            setSelectedTimeSlot(null);
+
+        } catch (err) {
+            Alert.alert(
+                'Booking Failed',
+                'There was an error processing your booking. Please try again later.'
+            );
+        } finally {
+            setBookingInProgress(false);
+        }
     };
 
     if (loading) {
@@ -89,8 +266,6 @@ export default function VenueDetail() {
         );
     }
 
-    const sportTypes = getUniqueSportTypes();
-
     return (
         <SafeAreaView className="flex-1 bg-gray-50 relative">
             <Stack.Screen
@@ -103,27 +278,19 @@ export default function VenueDetail() {
                 className="flex-1"
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* Header with Back Button */}
-                {/* Venue Image with Header Overlay */}
                 <View className="w-full h-72 relative">
-                    {/* Background Image */}
-                    <View className="absolute top-0 left-0 right-0 bottom-0 bg-gray-300">
-                        {venue.venueImageUrl ? (
+                    <View className="absolute top-0 left-0 right-0 bottom-0 bg-[#22c55e]">
+                        {venue.venueImageUrl && (
                             <Image
                                 source={{ uri: venue.venueImageUrl }}
-                                className="w-full h-full"
+                                style={{ width: '100%', height: '100%' }}
                                 resizeMode="cover"
                             />
-                        ) : (
-                            // Placeholder color if no image
-                            <View className="w-full h-full bg-[#22c55e]" />
                         )}
                     </View>
 
-                    {/* Gradient overlay for better text readability */}
                     <View className="absolute top-0 left-0 right-0 h-40 bg-black opacity-30" />
 
-                    {/* Header */}
                     <View className="pt-14 px-6 pb-5">
                         <View className="flex-row items-center">
                             <TouchableOpacity
@@ -132,172 +299,204 @@ export default function VenueDetail() {
                             >
                                 <Ionicons name="chevron-back" size={28} color="white" />
                             </TouchableOpacity>
-                            <Text className="text-white text-3xl font-bold">{venue.name}</Text>
+                            <Text className="text-white text-3xl font-bold">Venue {venue.venueId}</Text>
                         </View>
-                        <Text className="text-white text-base opacity-80 ml-10">Sports & Fitness Center</Text>
+                        {venue.location && (
+                            <Text className="text-white text-base opacity-80 ml-10">{venue.location}</Text>
+                        )}
                     </View>
                 </View>
 
-                {/* Venue Info */}
-                {/* Location Card */}
-                <View className="mx-6 my-4">
-                    <TouchableOpacity
-                        className="flex-row items-center p-3 bg-white rounded-full border border-gray-200 shadow-sm"
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="location" size={24} color="#22c55e" />
-                        <Text className="text-gray-800 ml-2 flex-1">{venue.address}</Text>
-                    </TouchableOpacity>
-                </View>
+                {venue.location && (
+                    <View className="mx-6 my-4">
+                        <TouchableOpacity
+                            className="flex-row items-center p-3 bg-white rounded-full border border-gray-200 shadow-sm"
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="location" size={24} color="#22c55e" />
+                            <Text className="text-gray-800 ml-2 flex-1">{venue.location}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
 
-                {/* Venue Info Card */}
                 <View className="mx-6 mb-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
-                    {/* Rating */}
                     <View className="flex-row items-center mb-3">
                         <Ionicons name="star" size={22} color="#22c55e" />
                         <Text className="text-gray-800 ml-2 text-base font-bold">
-                            {venue.rating ? venue.rating.toFixed(1) : "New"}
+                            {venue.rating ? venue.rating.toFixed(1) : "No ratings yet"}
                         </Text>
-                        <Text className="text-gray-500 ml-1 text-base">
-                            ({venue.totalRating || 0} reviews)
-                        </Text>
+                        {venue.totalRating > 0 && (
+                            <Text className="text-gray-500 ml-1 text-base">
+                                ({venue.totalRating} reviews)
+                            </Text>
+                        )}
                     </View>
 
-                    {/* Phone */}
-                    <View className="flex-row items-center">
-                        <Ionicons name="call-outline" size={22} color="#22c55e" />
-                        <Text className="text-gray-800 ml-2 text-base">{venue.contactNumber}</Text>
-                    </View>
-                </View>
-
-                {/* Call and Book Buttons */}
-                <View className="mx-6 mb-4 flex-row justify-between">
-                    <TouchableOpacity
-                        className="bg-[#22c55e] px-8 py-3 rounded-lg flex-row items-center justify-center flex-1 mr-3"
-                        activeOpacity={0.8}
-                    >
-                        <Ionicons name="call-outline" size={20} color="white" style={{ marginRight: 8 }} />
-                        <Text className="text-white font-bold">Call Now</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        className="bg-[#22c55e] px-8 py-3 rounded-lg flex-row items-center justify-center flex-1"
-                        activeOpacity={0.8}
-                    >
-                        <Text className="text-white font-bold mr-2">Book Now</Text>
-                        <Ionicons name="arrow-forward" size={20} color="white" />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Available Courts Section */}
-                <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
-                    <Text className="text-gray-800 text-2xl font-bold text-center mb-6">Available Courts</Text>
-
-                    {sportTypes.length === 0 ? (
-                        <Text className="text-gray-500 text-center py-4">No courts available</Text>
-                    ) : (
-                        <View className="flex-row justify-evenly flex-wrap">
-                            {sportTypes.map((sport) => (
-                                <TouchableOpacity
-                                    key={sport.id}
-                                    className="items-center mb-4"
-                                    activeOpacity={0.7}
-                                >
-                                    <View className="w-24 h-24 rounded-lg border border-[#22c55e] items-center justify-center mb-2 bg-gray-50">
-                                        <Ionicons
-                                            name={sport.icon}
-                                            size={32}
-                                            color={getSportColor(sport.id)}
-                                        />
-                                    </View>
-                                    <Text className="text-gray-700 text-center">{sport.name}</Text>
-                                </TouchableOpacity>
-                            ))}
+                    {venue.openingTime && venue.closingTime && (
+                        <View className="flex-row items-center">
+                            <Ionicons name="time-outline" size={22} color="#22c55e" />
+                            <Text className="text-gray-800 ml-2 text-base">
+                                Open: {Math.floor(venue.openingTime/100)}:
+                                {venue.openingTime % 100 === 0 ? '00' : venue.openingTime % 100} -
+                                {Math.floor(venue.closingTime/100)}:
+                                {venue.closingTime % 100 === 0 ? '00' : venue.closingTime % 100}
+                            </Text>
                         </View>
                     )}
                 </View>
 
-                {/* Court Availability Section */}
                 <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
-                    <Text className="text-gray-800 text-2xl font-bold text-center mb-6">Court Availability</Text>
+                    <Text className="text-gray-800 text-2xl font-bold text-center mb-6">Select a Court</Text>
 
-                    {/* Date Selection */}
-                    <View className="flex-row justify-between mb-4">
-                        {dateOptions.map(date => (
-                            <TouchableOpacity
-                                key={date.id}
-                                className={`${selectedDate === date.id ? 'bg-[#22c55e]' : 'bg-gray-50 border border-gray-200'} px-4 py-2 rounded-lg`}
-                                onPress={() => setSelectedDate(date.id)}
-                            >
-                                <Text className={`${selectedDate === date.id ? 'text-white font-bold' : 'text-gray-800'}`}>
-                                    {date.label}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-
-                    {/* Time Slots */}
-                    <View className="mt-4">
-                        <Text className="text-gray-800 text-lg mb-4">Available Time Slots:</Text>
-
-                        <View className="flex-row flex-wrap justify-between">
-                            {timeSlots.map((time, index) => (
+                    {courts.length === 0 ? (
+                        <Text className="text-gray-500 text-center py-4">No courts available</Text>
+                    ) : (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pb-2">
+                            {courts.map((court) => (
                                 <TouchableOpacity
-                                    key={index}
-                                    className={`px-4 py-2 rounded-lg mb-3 ${selectedTimeSlot === index ? 'bg-[#22c55e]' : 'bg-gray-50 border border-gray-200'}`}
-                                    style={{ width: '48%' }}
-                                    onPress={() => setSelectedTimeSlot(index)}
+                                    key={court.courtId}
+                                    className={`mr-4 items-center ${selectedCourt?.courtId === court.courtId ? 'opacity-100' : 'opacity-70'}`}
+                                    onPress={() => setSelectedCourt(court)}
+                                    activeOpacity={0.7}
                                 >
-                                    <Text
-                                        className={`${selectedTimeSlot === index ? 'text-white font-bold' : 'text-gray-800'} text-center`}
+                                    <View
+                                        className={`w-28 h-28 rounded-lg items-center justify-center mb-2 
+                                            ${selectedCourt?.courtId === court.courtId ?
+                                            'border-2 border-[#22c55e] bg-[rgba(34,197,94,0.1)]' :
+                                            'border border-gray-200 bg-gray-50'}`}
                                     >
-                                        {time}
+                                        <Ionicons
+                                            name={getSportIcon(court.name || '')}
+                                            size={40}
+                                            color={getSportColor(court.name || '')}
+                                        />
+                                    </View>
+                                    <Text
+                                        className={`text-center ${selectedCourt?.courtId === court.courtId ?
+                                            'text-[#22c55e] font-bold' : 'text-gray-700'}`}
+                                    >
+                                        {court.name || `Court ${court.courtId}`}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
-                        </View>
-                    </View>
+                        </ScrollView>
+                    )}
                 </View>
 
-                {/* Reviews Section */}
-                <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md mb-6">
-                    <View className="flex-row justify-between items-center mb-6">
-                        <Text className="text-gray-800 text-2xl font-bold">Reviews</Text>
-                        <TouchableOpacity>
-                            <Text className="text-[#22c55e]">See All</Text>
+                <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
+                    <Text className="text-gray-800 text-2xl font-bold text-center mb-6">Select a Date</Text>
+
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pb-2">
+                        {nextSevenDays.map((day, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                className={`mx-2 w-16 h-20 items-center justify-center rounded-lg
+                                    ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
+                                    'bg-[#22c55e]' : 'bg-gray-50 border border-gray-200'}`}
+                                onPress={() => setSelectedDate(day)}
+                            >
+                                <Text
+                                    className={`font-medium ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
+                                        'text-white' : 'text-gray-500'}`}
+                                >
+                                    {format(day, 'EEE')}
+                                </Text>
+                                <Text
+                                    className={`text-xl font-bold ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
+                                        'text-white' : 'text-gray-800'}`}
+                                >
+                                    {format(day, 'd')}
+                                </Text>
+                                <Text
+                                    className={`text-xs ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
+                                        'text-white' : 'text-gray-500'}`}
+                                >
+                                    {format(day, 'MMM')}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
+
+                {selectedCourt && (
+                    <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
+                        <Text className="text-gray-800 text-2xl font-bold text-center mb-2">
+                            Available Time Slots
+                        </Text>
+                        <Text className="text-gray-600 text-center mb-6">
+                            {format(selectedDate, 'MMMM d, yyyy')}
+                        </Text>
+
+                        {bookingsLoading ? (
+                            <View className="items-center justify-center py-4">
+                                <ActivityIndicator size="small" color="#22c55e" />
+                                <Text className="text-gray-500 mt-2">Loading available times...</Text>
+                            </View>
+                        ) : (
+                            <View className="flex-row flex-wrap justify-between">
+                                {timeSlots.map((time, index) => {
+                                    const isAvailable = bookings.length > 0
+                                        ? !bookings[index]?.isBooked
+                                        : availableTimeSlots.includes(index);
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            disabled={!isAvailable}
+                                            className={`px-4 py-3 rounded-lg mb-3 ${
+                                                selectedTimeSlot === index ? 'bg-[#22c55e]' :
+                                                    isAvailable ?
+                                                        'bg-gray-50 border border-gray-200' :
+                                                        'bg-gray-100 border border-gray-200 opacity-50'
+                                            }`}
+                                            style={{ width: '48%' }}
+                                            onPress={() => setSelectedTimeSlot(index)}
+                                        >
+                                            <Text
+                                                className={`text-center ${
+                                                    selectedTimeSlot === index ? 'text-white font-bold' :
+                                                        isAvailable ?
+                                                            'text-gray-800' : 'text-gray-400'
+                                                }`}
+                                            >
+                                                {time}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        )}
+
+                        <TouchableOpacity
+                            className={`mt-6 py-3 px-6 rounded-lg items-center ${
+                                selectedTimeSlot !== null && !bookingInProgress ? 'bg-[#22c55e]' : 'bg-gray-300'
+                            }`}
+                            disabled={selectedTimeSlot === null || bookingInProgress}
+                            onPress={bookCourt}
+                        >
+                            {bookingInProgress ? (
+                                <View className="flex-row items-center">
+                                    <ActivityIndicator size="small" color="white" />
+                                    <Text className="text-white font-bold ml-2">Processing...</Text>
+                                </View>
+                            ) : (
+                                <Text className="text-white font-bold">Book Now</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
+                )}
 
-                    {venue.totalRating > 0 ? (
-                        <>
-                            {/* Review Card */}
-                            <View className="bg-gray-50 rounded-xl p-4 mb-4 border border-gray-200">
-                                <View className="flex-row items-center mb-2">
-                                    <View className="w-10 h-10 rounded-full bg-gray-200 mr-3" />
-                                    <View>
-                                        <Text className="text-gray-800 font-bold">User Review</Text>
-                                        <View className="flex-row">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <Ionicons
-                                                    key={star}
-                                                    name="star"
-                                                    size={14}
-                                                    color={star <= Math.round(venue.rating) ? "#22c55e" : "#d1d5db"}
-                                                />
-                                            ))}
-                                            <Text className="text-gray-500 ml-2 text-xs">Recent</Text>
-                                        </View>
-                                    </View>
-                                </View>
-                                <Text className="text-gray-700">
-                                    Great facilities and friendly staff. Courts are well maintained and the pricing is reasonable.
-                                </Text>
-                            </View>
-                        </>
-                    ) : (
+                {venue.totalRating > 0 && (
+                    <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md mb-6">
+                        <View className="flex-row justify-between items-center mb-6">
+                            <Text className="text-gray-800 text-2xl font-bold">Reviews</Text>
+                            <TouchableOpacity>
+                                <Text className="text-[#22c55e]">See All</Text>
+                            </TouchableOpacity>
+                        </View>
                         <View className="bg-gray-50 rounded-xl p-4 border border-gray-200 items-center">
                             <Text className="text-gray-500 text-center">
-                                No reviews yet. Be the first to rate this venue!
+                                This venue has {venue.totalRating} reviews with an average rating of {venue.rating.toFixed(1)}.
                             </Text>
                             <TouchableOpacity
                                 className="mt-4 bg-[#22c55e] px-6 py-2 rounded-lg"
@@ -305,8 +504,8 @@ export default function VenueDetail() {
                                 <Text className="text-white font-bold">Write a Review</Text>
                             </TouchableOpacity>
                         </View>
-                    )}
-                </View>
+                    </View>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
