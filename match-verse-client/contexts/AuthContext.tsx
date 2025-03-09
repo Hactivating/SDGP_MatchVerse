@@ -1,510 +1,184 @@
-// contexts/AuthContext.tsx
-import React, { createContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useReducer, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import * as authService from '../services/auth';
 import { setAuthToken } from '../services/api';
-import { mockLogin, mockRegister, mockGetUserById } from '../services/mockAuth';
-import { AuthResponse, LoginCredentials, CreateUserPayload } from '../types/auth';
+import { getUserById } from '../services/user';
+import { User, LoginCredentials, CreateUserPayload, AuthResponse } from '../types/auth';
 
-// Define auth state type
 interface AuthState {
     isLoading: boolean;
     isAuthenticated: boolean;
+    user: User | null;
     token: string | null;
-    userId: number | null;
-    userType: string | null;
-    username: string | null;
     error: string | null;
 }
 
-// Define auth actions
-type AuthAction =
-    | { type: 'LOGIN_SUCCESS' | 'REGISTER_SUCCESS'; payload: AuthResponse }
-    | { type: 'AUTH_ERROR' | 'LOGOUT'; payload: string | null }
-    | { type: 'CLEAR_ERROR' }
-    | { type: 'SET_LOADING' };
-
-// Define auth context value type
-interface AuthContextValue {
-    state: AuthState;
-    login: (credentials: LoginCredentials) => Promise<AuthResponse>;
-    register: (userData: CreateUserPayload) => Promise<AuthResponse>;
-    googleAuth: () => Promise<AuthResponse>;
-    logout: () => Promise<void>;
-    clearError: () => void;
-}
-
-// Define initial state
 const initialState: AuthState = {
     isLoading: true,
     isAuthenticated: false,
+    user: null,
     token: null,
-    userId: null,
-    userType: null,
-    username: null,
     error: null
 };
 
-// Create context
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+type AuthAction =
+    | { type: 'LOGIN_SUCCESS'; payload: AuthResponse }
+    | { type: 'REGISTER_SUCCESS'; payload: AuthResponse }
+    | { type: 'AUTH_ERROR'; payload: string }
+    | { type: 'LOGOUT' }
+    | { type: 'CLEAR_ERROR' }
+    | { type: 'SET_LOADING'; payload: boolean };
 
-// Define reducer
-function authReducer(state: AuthState, action: AuthAction): AuthState {
+interface AuthContextType {
+    state: AuthState;
+    login: (credentials: LoginCredentials) => Promise<AuthResponse>;
+    register: (userData: CreateUserPayload) => Promise<AuthResponse>;
+    logout: () => void;
+    googleAuth: () => Promise<AuthResponse>;
+    clearError: () => void;
+}
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     switch (action.type) {
         case 'LOGIN_SUCCESS':
-            return {
-                ...state,
-                isLoading: false,
-                isAuthenticated: true,
-                token: action.payload.token,
-                userId: action.payload.user.userId,
-                userType: action.payload.user.userType || null,
-                username: action.payload.user.username,
-                error: null
-            };
         case 'REGISTER_SUCCESS':
             return {
                 ...state,
-                isLoading: false,
                 isAuthenticated: true,
+                user: action.payload.user,
                 token: action.payload.token,
-                userId: action.payload.user.userId,
-                userType: action.payload.user.userType || null,
-                username: action.payload.user.username,
+                isLoading: false,
                 error: null
             };
         case 'AUTH_ERROR':
+            return {
+                ...state,
+                isAuthenticated: false,
+                user: null,
+                token: null,
+                isLoading: false,
+                error: action.payload
+            };
         case 'LOGOUT':
             return {
                 ...state,
-                isLoading: false,
                 isAuthenticated: false,
+                user: null,
                 token: null,
-                userId: null,
-                userType: null,
-                username: null,
-                error: action.payload
+                isLoading: false
             };
         case 'CLEAR_ERROR':
-            return {
-                ...state,
-                error: null
-            };
+            return { ...state, error: null };
         case 'SET_LOADING':
-            return {
-                ...state,
-                isLoading: true
-            };
+            return { ...state, isLoading: action.payload };
         default:
             return state;
     }
-}
+};
 
-interface AuthProviderProps {
-    children: ReactNode;
-}
-
-// Create provider component
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(authReducer, initialState);
 
-    // Load token on startup
     useEffect(() => {
         const loadToken = async () => {
             try {
-                console.log("Loading authentication state...");
-                const token = await AsyncStorage.getItem('token');
-                const userIdStr = await AsyncStorage.getItem('userId');
-                const userType = await AsyncStorage.getItem('userType');
-                const username = await AsyncStorage.getItem('username');
+                const token = await AsyncStorage.getItem('authToken');
+                const userString = await AsyncStorage.getItem('user');
 
-                console.log("Stored token:", token);
-                console.log("Stored userId:", userIdStr);
-
-                if (token && userIdStr) {
-                    const userId = parseInt(userIdStr, 10);
-                    console.log("Restoring authentication state...");
-
-                    // Set token in axios headers
+                if (token && userString) {
+                    const user = JSON.parse(userString);
                     setAuthToken(token);
-
                     dispatch({
                         type: 'LOGIN_SUCCESS',
                         payload: {
-                            token,
-                            user: {
-                                userId,
-                                userType: userType || 'player',
-                                username: username || 'User',
-                                email: '' // Add empty email since it's required by the type
-                            }
+                            user,
+                            token
                         }
                     });
-                    console.log("Authentication restored successfully");
+                    router.replace('/(app)/home');
                 } else {
-                    console.log("No stored authentication found");
-                    dispatch({ type: 'AUTH_ERROR', payload: null });
+                    dispatch({ type: 'SET_LOADING', payload: false });
                 }
-            } catch (err) {
-                console.error('Error loading auth data:', err);
-                dispatch({ type: 'AUTH_ERROR', payload: 'Error loading auth data' });
+            } catch (error) {
+                dispatch({ type: 'SET_LOADING', payload: false });
             }
         };
 
         loadToken();
     }, []);
 
-    // Login
+    const handleAuthSuccess = async (response: AuthResponse) => {
+        try {
+            await AsyncStorage.setItem('authToken', response.token);
+            await AsyncStorage.setItem('user', JSON.stringify(response.user));
+            setAuthToken(response.token);
+            dispatch({ type: 'LOGIN_SUCCESS', payload: response });
+            router.replace('/(app)/home');
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    };
+
     const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            console.log("Login attempt with:", credentials.email);
-            dispatch({ type: 'SET_LOADING' });
-
-            // Use mock login instead of actual API
-            const response = await mockLogin(credentials);
-            console.log("Login successful for:", response.user.username);
-
-            // Set token in axios headers
-            setAuthToken(response.token);
-
-            // Store auth data in AsyncStorage
-            await AsyncStorage.setItem('token', response.token);
-            await AsyncStorage.setItem('userId', String(response.user.userId));
-            await AsyncStorage.setItem('userType', response.user.userType || 'player');
-            await AsyncStorage.setItem('username', response.user.username);
-
-            dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: response
-            });
-
-            return response;
-        } catch (err: any) {
-            console.error("Login error:", err.message);
-            dispatch({
-                type: 'AUTH_ERROR',
-                payload: err.message || 'Login failed'
-            });
-            throw err;
+            const response = await authService.login(credentials);
+            return await handleAuthSuccess(response);
+        } catch (error: any) {
+            dispatch({ type: 'AUTH_ERROR', payload: error.message });
+            throw error;
         }
     };
 
-    // Register
     const register = async (userData: CreateUserPayload): Promise<AuthResponse> => {
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            dispatch({ type: 'SET_LOADING' });
-
-            // Use mock register instead of actual API
-            const response = await mockRegister(userData);
-
-            // Set token in axios headers
-            setAuthToken(response.token);
-
-            // Store auth data in AsyncStorage
-            await AsyncStorage.setItem('token', response.token);
-            await AsyncStorage.setItem('userId', String(response.user.userId));
-            await AsyncStorage.setItem('userType', response.user.userType || 'player');
-            await AsyncStorage.setItem('username', response.user.username);
-
-            dispatch({
-                type: 'REGISTER_SUCCESS',
-                payload: response
-            });
-
-            return response;
-        } catch (err: any) {
-            dispatch({
-                type: 'AUTH_ERROR',
-                payload: err.message || 'Registration failed'
-            });
-            throw err;
+            const response = await authService.register(userData);
+            return await handleAuthSuccess(response);
+        } catch (error: any) {
+            dispatch({ type: 'AUTH_ERROR', payload: error.message });
+            throw error;
         }
     };
 
-    // Google Auth (simplified mock version)
     const googleAuth = async (): Promise<AuthResponse> => {
+        dispatch({ type: 'SET_LOADING', payload: true });
         try {
-            // For mock purposes, we'll just log in as a predefined user
-            const mockGoogleResponse: AuthResponse = {
-                token: 'google-mock-token',
-                user: {
-                    userId: 3,
-                    username: 'googleuser',
-                    email: 'google@example.com',
-                    userType: 'player'
-                }
-            };
-
-            // Set token in axios headers
-            setAuthToken(mockGoogleResponse.token);
-
-            // Store auth data in AsyncStorage
-            await AsyncStorage.setItem('token', mockGoogleResponse.token);
-            await AsyncStorage.setItem('userId', String(mockGoogleResponse.user.userId));
-            await AsyncStorage.setItem('userType', mockGoogleResponse.user.userType || 'player');
-            await AsyncStorage.setItem('username', mockGoogleResponse.user.username);
-
-            dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: mockGoogleResponse
-            });
-
-            return mockGoogleResponse;
-        } catch (err: any) {
-            dispatch({
-                type: 'AUTH_ERROR',
-                payload: err.message || 'Google auth failed'
-            });
-            throw err;
+            const response = await authService.googleLogin();
+            return await handleAuthSuccess(response);
+        } catch (error: any) {
+            dispatch({ type: 'AUTH_ERROR', payload: error.message });
+            throw error;
         }
     };
 
-    // Logout
-    const logout = async (): Promise<void> => {
+    const logout = async () => {
         try {
-            console.log("Logging out...");
-            // Remove token from axios headers
+            await AsyncStorage.removeItem('authToken');
+            await AsyncStorage.removeItem('user');
             setAuthToken(null);
-
-            // Remove auth data from AsyncStorage
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('userId');
-            await AsyncStorage.removeItem('userType');
-            await AsyncStorage.removeItem('username');
-
-            dispatch({ type: 'LOGOUT', payload: null });
-            console.log("Logout successful");
-        } catch (err) {
-            console.error('Logout error:', err);
+            dispatch({ type: 'LOGOUT' });
+            router.replace('/(auth)/login');
+        } catch (error) {
         }
     };
 
-    // Clear error
-    const clearError = (): void => {
+    const clearError = () => {
         dispatch({ type: 'CLEAR_ERROR' });
     };
 
-    return (
-        <AuthContext.Provider
-            value={{
-                state,
-                login,
-                register,
-                googleAuth,
-                logout,
-                clearError
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
-};
+    const value = {
+        state,
+        login,
+        register,
+        logout,
+        googleAuth,
+        clearError
+    };
 
-// // contexts/AuthContext.tsx
-// import React, { createContext, useReducer, useEffect } from 'react';
-// import * as SecureStore from 'expo-secure-store';
-// import { AuthState, LoginCredentials, UserType } from '@/types/auth';
-// import { login, googleLogin, register } from '@/services/auth';
-//
-// // Initial auth state
-// const initialState: AuthState = {
-//     isAuthenticated: false,
-//     isLoading: true,
-//     userId: undefined,
-//     token: undefined,
-//     userType: undefined,
-//     error: undefined,
-// };
-//
-// // Define action types
-// type AuthAction =
-//     | { type: 'LOGIN_REQUEST' }
-//     | { type: 'LOGIN_SUCCESS'; payload: { userId: number; token: string; userType: UserType } }
-//     | { type: 'LOGIN_FAILURE'; payload: string }
-//     | { type: 'REGISTER_REQUEST' }
-//     | { type: 'REGISTER_SUCCESS' }
-//     | { type: 'REGISTER_FAILURE'; payload: string }
-//     | { type: 'LOGOUT' }
-//     | { type: 'RESTORE_TOKEN'; payload: { userId: number; token: string; userType: UserType } | null };
-//
-// // Auth reducer
-// const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-//     switch (action.type) {
-//         case 'LOGIN_REQUEST':
-//         case 'REGISTER_REQUEST':
-//             return {
-//                 ...state,
-//                 isLoading: true,
-//                 error: undefined,
-//             };
-//         case 'LOGIN_SUCCESS':
-//             return {
-//                 ...state,
-//                 isLoading: false,
-//                 isAuthenticated: true,
-//                 userId: action.payload.userId,
-//                 token: action.payload.token,
-//                 userType: action.payload.userType,
-//                 error: undefined,
-//             };
-//         case 'LOGIN_FAILURE':
-//         case 'REGISTER_FAILURE':
-//             return {
-//                 ...state,
-//                 isLoading: false,
-//                 error: action.payload,
-//             };
-//         case 'REGISTER_SUCCESS':
-//             return {
-//                 ...state,
-//                 isLoading: false,
-//                 error: undefined,
-//             };
-//         case 'LOGOUT':
-//             return {
-//                 ...initialState,
-//                 isLoading: false,
-//             };
-//         case 'RESTORE_TOKEN':
-//             return {
-//                 ...state,
-//                 isLoading: false,
-//                 isAuthenticated: action.payload !== null,
-//                 userId: action.payload?.userId,
-//                 token: action.payload?.token,
-//                 userType: action.payload?.userType,
-//             };
-//         default:
-//             return state;
-//     }
-// };
-//
-// // Create context
-// type AuthContextType = {
-//     state: AuthState;
-//     login: (credentials: LoginCredentials) => Promise<void>;
-//     googleAuth: () => Promise<void>;
-//     register: (userData: { email: string; password: string; username: string }) => Promise<void>;
-//     logout: () => Promise<void>;
-// };
-//
-// export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-//
-// // Auth provider component
-// export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-//     const [state, dispatch] = useReducer(authReducer, initialState);
-//
-//     // Check if user is already logged in on app start
-//     useEffect(() => {
-//         const bootstrapAsync = async () => {
-//             try {
-//                 const authDataStr = await SecureStore.getItemAsync('authData');
-//                 if (authDataStr) {
-//                     const authData = JSON.parse(authDataStr);
-//                     dispatch({
-//                         type: 'RESTORE_TOKEN',
-//                         payload: {
-//                             userId: authData.userId,
-//                             token: authData.token,
-//                             userType: authData.userType
-//                         }
-//                     });
-//                 } else {
-//                     dispatch({ type: 'RESTORE_TOKEN', payload: null });
-//                 }
-//             } catch (e) {
-//                 console.error('Failed to restore authentication state:', e);
-//                 dispatch({ type: 'RESTORE_TOKEN', payload: null });
-//             }
-//         };
-//
-//         bootstrapAsync();
-//     }, []);
-//
-//     // Login function
-//     const handleLogin = async (credentials: LoginCredentials) => {
-//         dispatch({ type: 'LOGIN_REQUEST' });
-//         try {
-//             const response = await login(credentials);
-//
-//             // Store auth data
-//             const authData = {
-//                 userId: response.userId,
-//                 token: 'token_placeholder', // Replace with actual token when backend provides it
-//                 userType: credentials.type,
-//             };
-//
-//             await SecureStore.setItemAsync('authData', JSON.stringify(authData));
-//
-//             dispatch({
-//                 type: 'LOGIN_SUCCESS',
-//                 payload: authData
-//             });
-//         } catch (error) {
-//             dispatch({
-//                 type: 'LOGIN_FAILURE',
-//                 payload: error instanceof Error ? error.message : 'Login failed'
-//             });
-//         }
-//     };
-//
-//     // Google auth function
-//     const handleGoogleAuth = async () => {
-//         dispatch({ type: 'LOGIN_REQUEST' });
-//         try {
-//             const response = await googleLogin();
-//
-//             // Store auth data
-//             const authData = {
-//                 userId: response.userId,
-//                 token: 'token_placeholder', // Replace with actual token when backend provides it
-//                 userType: 'user' as UserType, // Google auth is always for user type
-//             };
-//
-//             await SecureStore.setItemAsync('authData', JSON.stringify(authData));
-//
-//             dispatch({
-//                 type: 'LOGIN_SUCCESS',
-//                 payload: authData
-//             });
-//         } catch (error) {
-//             dispatch({
-//                 type: 'LOGIN_FAILURE',
-//                 payload: error instanceof Error ? error.message : 'Google login failed'
-//             });
-//         }
-//     };
-//
-//     // Register function
-//     const handleRegister = async (userData: { email: string; password: string; username: string }) => {
-//         dispatch({ type: 'REGISTER_REQUEST' });
-//         try {
-//             await register(userData);
-//             dispatch({ type: 'REGISTER_SUCCESS' });
-//         } catch (error) {
-//             dispatch({
-//                 type: 'REGISTER_FAILURE',
-//                 payload: error instanceof Error ? error.message : 'Registration failed'
-//             });
-//         }
-//     };
-//
-//     // Logout function
-//     const handleLogout = async () => {
-//         await SecureStore.deleteItemAsync('authData');
-//         dispatch({ type: 'LOGOUT' });
-//     };
-//
-//     return (
-//         <AuthContext.Provider
-//             value={{
-//                 state,
-//                 login: handleLogin,
-//                 googleAuth: handleGoogleAuth,
-//                 register: handleRegister,
-//                 logout: handleLogout,
-//             }}
-//         >
-//             {children}
-//         </AuthContext.Provider>
-//     );
-// };
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

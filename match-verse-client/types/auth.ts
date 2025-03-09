@@ -1,63 +1,28 @@
-// types/auth.ts
+export type UserType = 'player' | 'admin';
 
-// Login credentials
-export interface LoginCredentials {
+export interface User {
+    userId: number;
+    username: string;
     email: string;
-    password: string;
+    userType: UserType;
+    experience?: number;
+    rating?: number;
 }
 
-// Create user payload
+export interface LoginCredentials {
+    email?: string;
+    username?: string;
+    password: string;
+    type?: string; // For backend that requires a type field
+}
+
 export interface CreateUserPayload {
     username: string;
     email: string;
     password: string;
 }
 
-// User interface
-export interface User {
-    userId: number;
-    username: string;
-    email: string;
-    userType?: string;
-    experience?: number;
-    rating?: number;
-}
-
-// Auth response
 export interface AuthResponse {
     user: User;
     token: string;
 }
-
-// // types/auth.ts
-// export type UserType = 'user' | 'venue';
-//
-// export interface LoginCredentials {
-//     email: string;
-//     password: string;
-//     type: UserType;
-// }
-//
-// export interface AuthState {
-//     isAuthenticated: boolean;
-//     isLoading: boolean;
-//     userId?: number;
-//     token?: string;
-//     userType?: UserType;
-//     error?: string;
-// }
-//
-// export interface User {
-//     userId: number;
-//     username: string;
-//     email: string;
-//     password?: string; // Include but mark as optional
-//     experience: number;
-//     rating: number;
-// }
-//
-// export interface CreateUserPayload {
-//     email: string;
-//     password: string;
-//     username: string;
-// }

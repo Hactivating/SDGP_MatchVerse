@@ -1,67 +1,53 @@
-// hooks/useAuth.ts
-import { useContext } from 'react';
-import { AuthContext } from '../contexts/AuthContext';
+// services/auth.service.ts
+import { api } from './api';
+import { LoginCredentials, CreateUserPayload, AuthResponse } from '../types/auth';
+import { getUserById } from './user';
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
+export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    try {
+        const isUsingEmail = 'email' in credentials && credentials.email && !credentials.username;
 
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
+        const loginData = {
+            email: isUsingEmail ? credentials.email : credentials.username,
+            password: credentials.password,
+            type: 'user'
+        };
+
+        const response = await api.post('/auth/login', loginData);
+        const userId = response.data;
+        const user = await getUserById(userId);
+        const token = `user-token-${userId}-${Date.now()}`;
+
+        return {
+            user,
+            token
+        };
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
+        throw new Error(errorMessage);
     }
-
-    return context;
 };
-// import { api } from './api';
-// import { LoginCredentials } from '@/types/auth';
-// import { CreateUserPayload } from '@/types/auth';
-// import * as WebBrowser from 'expo-web-browser';
-// import * as AuthSession from 'expo-auth-session';
-//
-// // Register a new user
-// export const register = async (userData: CreateUserPayload) => {
-//     const response = await api.post('/users', userData);
-//     return response.data;
-// };
-//
-// // Login with email and password
-// export const login = async (credentials: LoginCredentials) => {
-//     const response = await api.post('http://localhost:3000/auth/login', credentials);
-//     return response.data;
-// };
-//
-// // Google OAuth login
-// export const googleLogin = async () => {
-//     // Define redirect URI
-//     const redirectUri = AuthSession.makeRedirectUri({
-//         scheme: 'matchverse', // This should match your app.json scheme
-//     });
-//
-//     // Construct Google auth endpoint with params
-//     const authUrl = `${api.defaults.baseURL}/auth?redirect_uri=${encodeURIComponent(redirectUri)}`;
-//
-//     // Open browser for authentication
-//     const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-//
-//     if (result.type === 'success') {
-//         // Extract token from URL
-//         const { url } = result;
-//         const params = new URLSearchParams(url.split('#')[1]);
-//         const accessToken = params.get('access_token');
-//
-//         if (!accessToken) {
-//             throw new Error('Failed to get access token');
-//         }
-//
-//         // Get user info using the token
-//         const userResponse = await api.get('/auth/google/callback', {
-//             headers: {
-//                 Authorization: `Bearer ${accessToken}`,
-//             },
-//         });
-//
-//         return userResponse.data;
-//     } else {
-//         throw new Error('Google authentication was cancelled or failed');
-//     }
-// };
-//
+
+export const register = async (userData: CreateUserPayload): Promise<AuthResponse> => {
+    try {
+        const response = await api.post('/users', userData);
+
+        return await login({
+            email: userData.email,
+            password: userData.password
+        });
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+        throw new Error(errorMessage);
+    }
+};
+
+export const googleLogin = async (): Promise<AuthResponse> => {
+    try {
+        const response = await api.get('/auth/google');
+        return response.data;
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.message || 'Google authentication failed.';
+        throw new Error(errorMessage);
+    }
+};

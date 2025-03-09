@@ -44,15 +44,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateToLogin })
 
         setIsLoading(true);
         try {
+            console.log('Starting registration process...');
             const userData: CreateUserPayload = {
                 username,
                 email,
                 password
             };
+
+            console.log('Sending user data:', { ...userData, password: '****' });
             await register(userData);
+            console.log('Registration completed successfully');
         } catch (error: any) {
-            Alert.alert('Registration Failed', error.message || 'Please try again with different credentials');
-            clearError();
+            console.error('Registration failed with error:', error);
+            Alert.alert(
+                'Registration Failed',
+                error.message || 'Please try again with different credentials',
+                [{ text: 'OK', onPress: () => clearError() }]
+            );
         } finally {
             setIsLoading(false);
         }
