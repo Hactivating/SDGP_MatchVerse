@@ -1,9 +1,10 @@
 // app/(app)/_layout.tsx
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
+import Navbar from '../../components/Navbar';
+import React from 'react';
 
 export default function AppLayout() {
     const { state } = useAuth();
@@ -29,11 +30,19 @@ export default function AppLayout() {
     }
 
     return (
-        <Stack
-            screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: '#121212' }
-            }}
-        />
+        <View className="flex-1 bg-[#121212]">
+            {/* Content area with padding at bottom to avoid navbar overlap */}
+            <View className="flex-1 pb-24">
+                <Stack
+                    screenOptions={{
+                        headerShown: false,
+                        contentStyle: { backgroundColor: '#121212' }
+                    }}
+                />
+            </View>
+
+            {/* Fixed navbar at the bottom */}
+            <Navbar />
+        </View>
     );
 }

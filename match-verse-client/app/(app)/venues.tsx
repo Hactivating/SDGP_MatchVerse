@@ -1,14 +1,35 @@
 // app/(app)/venues.tsx
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Navbar from '@/components/Navbar';
+import { getAllVenues, getSportIcon, getSportColor, Venue } from '@/services/venue';
 
 export default function Venues() {
     const router = useRouter();
     const [selectedSport, setSelectedSport] = useState('badminton');
+    const [venues, setVenues] = useState<Venue[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchVenues();
+    }, []);
+
+    const fetchVenues = async () => {
+        try {
+            setLoading(true);
+            const data = await getAllVenues();
+            setVenues(data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching venues:', err);
+            setError('Failed to load venues. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const navigateToVenue = (venueId) => {
         // Navigate to venue details screen
@@ -20,7 +41,7 @@ export default function Venues() {
         setSelectedSport(sport);
     };
 
-    // Sport colors - matching home page
+    // Sport colors
     const sportColors = {
         football: "#e11d48",
         badminton: "#15803d",
@@ -28,6 +49,10 @@ export default function Venues() {
         tennis: "#facc15",
         other: "#6366f1"
     };
+
+    // Filter venues based on selected sport (in a real app, you'd filter based on venue properties)
+    // Here we're just simulating it since we don't have that data from the backend yet
+    const filteredVenues = venues;
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50 relative">
@@ -121,116 +146,62 @@ export default function Venues() {
                         {selectedSport === 'other' && 'Multi-Sports Facilities 🏆'}
                     </Text>
 
-                    {/* Venue 01 */}
-                    <TouchableOpacity
-                        className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 mb-4"
-                        onPress={() => navigateToVenue(1)}
-                        activeOpacity={0.8}
-                    >
-                        <View className="h-40 relative">
-                            <View className="absolute top-0 left-0 w-full h-full bg-gray-200 opacity-20"></View>
-                            <View className="p-5">
-                                <Text className="text-gray-800 text-xl font-bold mb-1">Venue 01</Text>
-                                <Text className="text-[#22c55e] mb-2">Distance - 4.5km</Text>
+                    {loading ? (
+                        <View className="items-center justify-center py-8">
+                            <ActivityIndicator size="large" color="#22c55e" />
+                        </View>
+                    ) : error ? (
+                        <View className="items-center justify-center py-8">
+                            <Text className="text-red-500 text-center">{error}</Text>
+                            <TouchableOpacity
+                                className="mt-4 bg-[#22c55e] px-4 py-2 rounded-lg"
+                                onPress={fetchVenues}
+                            >
+                                <Text className="text-white font-bold">Try Again</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : filteredVenues.length === 0 ? (
+                        <View className="items-center justify-center py-8">
+                            <Text className="text-gray-500 text-center">No venues found</Text>
+                        </View>
+                    ) : (
+                        // List of venues
+                        filteredVenues.map((venue) => (
+                            <TouchableOpacity
+                                key={venue.venueId}
+                                className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 mb-4"
+                                onPress={() => navigateToVenue(venue.venueId)}
+                                activeOpacity={0.8}
+                            >
+                                <View className="h-40 relative">
+                                    <View className="absolute top-0 left-0 w-full h-full bg-gray-200 opacity-20"></View>
+                                    <View className="p-5">
+                                        <Text className="text-gray-800 text-xl font-bold mb-1">{venue.name}</Text>
+                                        <Text className="text-[#22c55e] mb-2">
+                                            {venue.address.split(',')[0]} {/* Display first part of address */}
+                                        </Text>
 
-                                <View className="flex-row mt-auto items-center justify-between">
-                                    <View className="flex-row items-center bg-white px-2 py-1 rounded-lg">
-                                        <Ionicons name="star" size={16} color="#22c55e" />
-                                        <Text className="text-gray-800 ml-1 font-bold">5.0</Text>
-                                    </View>
+                                        <View className="flex-row mt-auto items-center justify-between">
+                                            <View className="flex-row items-center bg-white px-2 py-1 rounded-lg">
+                                                <Ionicons name="star" size={16} color="#22c55e" />
+                                                <Text className="text-gray-800 ml-1 font-bold">
+                                                    {venue.rating ? venue.rating.toFixed(1) : "New"}
+                                                </Text>
+                                            </View>
 
-                                    <View className="bg-[#22c55e] px-4 py-2 rounded-lg flex-row items-center">
-                                        <Text className="text-white font-bold mr-1">View Now</Text>
-                                        <Ionicons name="arrow-forward" size={16} color="white" />
+                                            <View className="bg-[#22c55e] px-4 py-2 rounded-lg flex-row items-center">
+                                                <Text className="text-white font-bold mr-1">View Now</Text>
+                                                <Ionicons name="arrow-forward" size={16} color="white" />
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-
-                    {/* Venue 02 */}
-                    <TouchableOpacity
-                        className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 mb-4"
-                        onPress={() => navigateToVenue(2)}
-                        activeOpacity={0.8}
-                    >
-                        <View className="h-40 relative">
-                            <View className="absolute top-0 left-0 w-full h-full bg-gray-200 opacity-20"></View>
-                            <View className="p-5">
-                                <Text className="text-gray-800 text-xl font-bold mb-1">Venue 02</Text>
-                                <Text className="text-[#22c55e] mb-2">Distance - 5km</Text>
-
-                                <View className="flex-row mt-auto items-center justify-between">
-                                    <View className="flex-row items-center bg-white px-2 py-1 rounded-lg">
-                                        <Ionicons name="star" size={16} color="#22c55e" />
-                                        <Text className="text-gray-800 ml-1 font-bold">5.0</Text>
-                                    </View>
-
-                                    <View className="bg-[#22c55e] px-4 py-2 rounded-lg flex-row items-center">
-                                        <Text className="text-white font-bold mr-1">View Now</Text>
-                                        <Ionicons name="arrow-forward" size={16} color="white" />
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-
-                    {/* Venue 03 */}
-                    <TouchableOpacity
-                        className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200 mb-4"
-                        onPress={() => navigateToVenue(3)}
-                        activeOpacity={0.8}
-                    >
-                        <View className="h-40 relative">
-                            <View className="absolute top-0 left-0 w-full h-full bg-gray-200 opacity-20"></View>
-                            <View className="p-5">
-                                <Text className="text-gray-800 text-xl font-bold mb-1">Venue 03</Text>
-                                <Text className="text-[#22c55e] mb-2">Distance - 5km</Text>
-
-                                <View className="flex-row mt-auto items-center justify-between">
-                                    <View className="flex-row items-center bg-white px-2 py-1 rounded-lg">
-                                        <Ionicons name="star" size={16} color="#22c55e" />
-                                        <Text className="text-gray-800 ml-1 font-bold">5.0</Text>
-                                    </View>
-
-                                    <View className="bg-[#22c55e] px-4 py-2 rounded-lg flex-row items-center">
-                                        <Text className="text-white font-bold mr-1">View Now</Text>
-                                        <Ionicons name="arrow-forward" size={16} color="white" />
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-
-                    {/* Venue 04 */}
-                    <TouchableOpacity
-                        className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200"
-                        onPress={() => navigateToVenue(4)}
-                        activeOpacity={0.8}
-                    >
-                        <View className="h-40 relative">
-                            <View className="absolute top-0 left-0 w-full h-full bg-gray-200 opacity-20"></View>
-                            <View className="p-5">
-                                <Text className="text-gray-800 text-xl font-bold mb-1">Venue 04</Text>
-                                <Text className="text-[#22c55e] mb-2">Distance - 5km</Text>
-
-                                <View className="flex-row mt-auto items-center justify-between">
-                                    <View className="flex-row items-center bg-white px-2 py-1 rounded-lg">
-                                        <Ionicons name="star" size={16} color="#22c55e" />
-                                        <Text className="text-gray-800 ml-1 font-bold">5.0</Text>
-                                    </View>
-
-                                    <View className="bg-[#22c55e] px-4 py-2 rounded-lg flex-row items-center">
-                                        <Text className="text-white font-bold mr-1">View Now</Text>
-                                        <Ionicons name="arrow-forward" size={16} color="white" />
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
+                            </TouchableOpacity>
+                        ))
+                    )}
                 </View>
 
-                {/* Popular Venues Section */}
+                {/* Popular Venues Section - Keep this as a showcase for now */}
                 <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
                     <Text className="text-gray-800 text-2xl font-bold text-center">Popular Venues</Text>
                     <Text className="text-gray-600 text-lg text-center mb-5">
@@ -241,94 +212,77 @@ export default function Venues() {
                         {selectedSport === 'other' && 'All Sports 🏆'}
                     </Text>
 
-                    {/* Venues Grid - First Row */}
-                    <View className="flex-row justify-between mb-4">
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(5)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-md">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
+                    {loading ? (
+                        <View className="items-center justify-center py-8">
+                            <ActivityIndicator size="large" color="#22c55e" />
+                        </View>
+                    ) : venues.length > 0 ? (
+                        <>
+                            {/* Venues Grid - First Row */}
+                            <View className="flex-row justify-between mb-4">
+                                {venues.slice(0, 3).map((venue) => (
+                                    <TouchableOpacity
+                                        key={venue.venueId}
+                                        className="w-[30%]"
+                                        onPress={() => navigateToVenue(venue.venueId)}
+                                    >
+                                        <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-md">
+                                            {venue.venueImageUrl && (
+                                                <Image
+                                                    source={{ uri: venue.venueImageUrl }}
+                                                    className="w-full h-full rounded-lg"
+                                                    resizeMode="cover"
+                                                />
+                                            )}
+                                            <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
+                                                <Ionicons name="star" size={12} color="white" />
+                                                <Text className="text-white text-xs ml-0.5">
+                                                    {venue.rating ? venue.rating.toFixed(1) : "New"}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Text className="text-gray-700 text-center">{venue.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
                             </View>
-                            <Text className="text-gray-700 text-center">Venue 05</Text>
-                        </TouchableOpacity>
 
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(6)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
+                            {/* Venues Grid - Second Row (if enough venues) */}
+                            {venues.length > 3 && (
+                                <View className="flex-row justify-between">
+                                    {venues.slice(3, 6).map((venue) => (
+                                        <TouchableOpacity
+                                            key={venue.venueId}
+                                            className="w-[30%]"
+                                            onPress={() => navigateToVenue(venue.venueId)}
+                                        >
+                                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
+                                                {venue.venueImageUrl && (
+                                                    <Image
+                                                        source={{ uri: venue.venueImageUrl }}
+                                                        className="w-full h-full rounded-lg"
+                                                        resizeMode="cover"
+                                                    />
+                                                )}
+                                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
+                                                    <Ionicons name="star" size={12} color="white" />
+                                                    <Text className="text-white text-xs ml-0.5">
+                                                        {venue.rating ? venue.rating.toFixed(1) : "New"}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                            <Text className="text-gray-700 text-center">{venue.name}</Text>
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 06</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(7)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 07</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Venues Grid - Second Row */}
-                    <View className="flex-row justify-between">
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(8)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 08</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(9)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 09</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(10)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 10</Text>
-                        </TouchableOpacity>
-                    </View>
+                            )}
+                        </>
+                    ) : (
+                        <View className="items-center justify-center py-8">
+                            <Text className="text-gray-500 text-center">No popular venues found</Text>
+                        </View>
+                    )}
                 </View>
             </ScrollView>
-
-            {/* Navigation Bar */}
-            <Navbar />
         </SafeAreaView>
     );
 }

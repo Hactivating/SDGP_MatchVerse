@@ -1,7 +1,6 @@
 // app/(app)/leaderboard.tsx
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Navbar from '../../components/Navbar';
 
 export default function LeaderboardScreen() {
     return (
@@ -10,9 +9,6 @@ export default function LeaderboardScreen() {
                 <Text className="text-white text-2xl font-bold mb-4">Leaderboard</Text>
                 <Text className="text-[#aaa] text-center">This screen is under development</Text>
             </View>
-
-            {/* Navigation Bar */}
-            <Navbar />
         </SafeAreaView>
     );
 }
