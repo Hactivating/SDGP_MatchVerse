@@ -34,6 +34,8 @@ export class UsersService {
     const SALT = await bcrypt.genSalt(); // generate random salt
     const password = await bcrypt.hash(payload.password, SALT); //hashpassword 0
     payload.password = password;
+    payload.rank = "Beginner 01";
+    payload.rankPoints = 0;
     //save venue details with hash password
     return this.prisma.user.create({
       data: payload,
