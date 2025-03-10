@@ -23,6 +23,8 @@ export class BookingsService {
       include: { venue: true },
     });
 
+    console.log(operatingTime);
+
     //map the booking slots to a set
     const bookingsSet = new Set(
       bookings.map((bookings) => bookings.startingTime),
@@ -35,7 +37,6 @@ export class BookingsService {
       const slots = (closingTime - openingTime) / 100;
       const bookedSlots: Slot[] = [];
       //generate slots for the operating time
-      
 
       let openingHour = Math.floor(openingTime / 100);
       let openingMinute = openingTime % 100;
@@ -56,19 +57,19 @@ export class BookingsService {
     }
   }
 
-  async getBookingsByUser(userId:number){
+  async getBookingsByUser(userId: number) {
     return this.prismaService.booking.findMany({
-      where:{userId:userId}
-    })
+      where: { userId: userId },
+    });
+
   }
 
-  async createVenueBooking(payload:VenueBookingDto) {
-     return this.createBooking(payload);
+  async createVenueBooking(payload: VenueBookingDto) {
+    return this.createBooking(payload);
   }
 
-  async createUserBooking(payload:UserBookingDto) {
-
-     return this.createBooking(payload);
+  async createUserBooking(payload: UserBookingDto) {
+    return this.createBooking(payload);
   }
 
   async createBooking(payload: VenueBookingDto | UserBookingDto) {
@@ -83,7 +84,7 @@ export class BookingsService {
     if (operatingTime) {
       const { openingTime, closingTime } = operatingTime.venue;
       //remove the diving . between HH and MM
-      const bookingTime = parseInt(startingTime.replace(':', ''),10);
+      const bookingTime = parseInt(startingTime.replace(':', ''), 10);
       //check if booking time is within operating hours
       if (closingTime < bookingTime + 100) {
         return 'invalid time exceeds closing Time';

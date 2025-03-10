@@ -117,7 +117,9 @@ describe('VenuesService', () => {
 
   it('delete a venue', async () => {
     const response = await service.deleteVenue(1);
-    expect(mockPrismaService.venue.delete).toHaveBeenCalledWith({where:{venueId:1}});
+    expect(mockPrismaService.venue.delete).toHaveBeenCalledWith({
+      where: { venueId: 1 },
+    });
     expect(response).toEqual(mockVenue);
   });
 });
