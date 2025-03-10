@@ -26,10 +26,12 @@ model User {
   rating       Int     @default(0)
   userImageUrl String?
 
+
   booking          Booking[]
   createdMatches   MatchRequest[]    @relation(name: "matchCreator")
   partneredMatches MatchRequest[]    @relation(name: "matchPartner")
   UserVenueRating  UserVenueRating[]
+
 }
 
 model Venue {
@@ -42,6 +44,7 @@ model Venue {
   venueImageUrl String?
   rating        Int     @default(0)
   totalRating   Int     @default(0)
+
   venueName     String
 
   court           Court[]
@@ -64,6 +67,7 @@ model Booking {
   startingTime String
   userId       Int?
   user         User?  @relation(fields: [userId], references: [userId])
+
 
   matchRequest MatchRequest[]
   court        Court          @relation(fields: [courtId], references: [courtId])
@@ -101,5 +105,6 @@ model UserVenueRating {
   rating       Int
 
   user  User  @relation(fields: [userId], references: [userId])
+
   Venue Venue @relation(fields: [venueId], references: [venueId])
 }
