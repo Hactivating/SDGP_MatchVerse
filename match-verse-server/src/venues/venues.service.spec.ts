@@ -109,15 +109,15 @@ describe('VenuesService', () => {
 
   it('create a venue', async () => {
     const response = await service.createNewVenue(mockCreateVenueDto);
-    expect(mockPrismaService.venue.create).toHaveBeenCalledWith(
-      {data:mockCreateVenueDto}
-    );
+    expect(mockPrismaService.venue.create).toHaveBeenCalledWith({
+      data: mockCreateVenueDto,
+    });
     expect(response).toEqual(mockVenue);
   });
 
   it('delete a venue', async () => {
     const response = await service.deleteVenue(1);
-    expect(mockPrismaService.venue.delete).toHaveBeenCalledWith(1);
+    expect(mockPrismaService.venue.delete).toHaveBeenCalledWith({where:{venueId:1}});
     expect(response).toEqual(mockVenue);
   });
 });
