@@ -15,6 +15,8 @@ export class BookingsService {
       select: { startingTime: true },
     });
 
+    console.log(bookings);
+
     //select venue where court exists
     let operatingTime = await this.prismaService.court.findUnique({
       where: { courtId: courtId },
@@ -33,18 +35,19 @@ export class BookingsService {
       const slots = (closingTime - openingTime) / 100;
       const bookedSlots: Slot[] = [];
       //generate slots for the operating time
+      
 
       let openingHour = Math.floor(openingTime / 100);
       let openingMinute = openingTime % 100;
 
       for (let i = 0; i < slots; i++) {
-        let startingTime = `${openingHour}.${openingMinute}`;
+        let startingTime = `${String(openingHour).padStart(2, '0')}:${String(openingMinute).padStart(2, '0')}`;
 
         //push slots into the array with updated starting time and a boolean of isBooked
         bookedSlots.push({
           date: date,
           starts: startingTime,
-          isBooked: bookingsSet.has(startingTime)
+          isBooked: bookingsSet.has(startingTime),
         });
         //increase hour by 1 for every iteration
         openingHour += 1;
@@ -80,7 +83,7 @@ export class BookingsService {
     if (operatingTime) {
       const { openingTime, closingTime } = operatingTime.venue;
       //remove the diving . between HH and MM
-      const bookingTime = parseInt(startingTime.replace('.', ''),10);
+      const bookingTime = parseInt(startingTime.replace(':', ''),10);
       //check if booking time is within operating hours
       if (closingTime < bookingTime + 100) {
         return 'invalid time exceeds closing Time';
