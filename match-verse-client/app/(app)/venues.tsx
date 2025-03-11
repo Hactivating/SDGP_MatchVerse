@@ -75,7 +75,7 @@ export default function Venues() {
                         activeOpacity={0.7}
                     >
                         <View className={`w-12 h-12 rounded-full border border-[#22c55e] items-center justify-center ${selectedSport === 'badminton' ? 'bg-[rgba(34,197,94,0.1)]' : ''}`}>
-                            <Ionicons name="tennisball" size={32} color={sportColors.badminton} />
+                            <Text style={{ fontSize: 24 }}>🏸</Text>
                         </View>
                         <View className={`h-1 w-5 rounded-full mt-1 ${selectedSport === 'badminton' ? 'bg-[#22c55e]' : 'bg-transparent'}`} />
                     </TouchableOpacity>
