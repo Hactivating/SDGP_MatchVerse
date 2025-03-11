@@ -14,4 +14,6 @@ export class CreateVenueDto {
   @Min(0)
   @Max(2359)
   closingTime: number;
+  @IsString()
+  venueName:string
 }

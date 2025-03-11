@@ -26,8 +26,12 @@ model User {
   rating       Int     @default(0)
   userImageUrl String?
 
-  booking         Booking[]
-  UserVenueRating UserVenueRating[]
+
+  booking          Booking[]
+  createdMatches   MatchRequest[]    @relation(name: "matchCreator")
+  partneredMatches MatchRequest[]    @relation(name: "matchPartner")
+  UserVenueRating  UserVenueRating[]
+
 }
 
 model Venue {
@@ -40,6 +44,8 @@ model Venue {
   venueImageUrl String?
   rating        Int     @default(0)
   totalRating   Int     @default(0)
+
+  venueName     String
 
   court           Court[]
   UserVenueRating UserVenueRating[]
@@ -62,9 +68,27 @@ model Booking {
   userId       Int?
   user         User?  @relation(fields: [userId], references: [userId])
 
-  court Court @relation(fields: [courtId], references: [courtId])
+
+  matchRequest MatchRequest[]
+  court        Court          @relation(fields: [courtId], references: [courtId])
 
   @@unique([courtId, date, startingTime])
+}
+
+model MatchRequest {
+  requestId   Int    @id @default(autoincrement())
+  bookingId   Int    @unique
+  matchType   String
+  createdById Int
+  partnerId   Int?
+  status      String @default("pending")
+
+  createdBy User  @relation(fields: [createdById], references: [userId], name: "matchCreator")
+  partner   User? @relation(fields: [partnerId], references: [userId], name: "matchPartner")
+
+  booking Booking @relation(fields: [bookingId], references: [bookingId])
+
+  @@index([bookingId])
 }
 
 model CourtImage {
@@ -76,10 +100,11 @@ model CourtImage {
 
 model UserVenueRating {
   userRatingId Int @id @default(autoincrement())
-  venueId Int
-  userId  Int
-  rating  Int
+  venueId      Int
+  userId       Int
+  rating       Int
 
-  user  User   @relation(fields: [userId], references: [userId])
+  user  User  @relation(fields: [userId], references: [userId])
+
   Venue Venue @relation(fields: [venueId], references: [venueId])
 }

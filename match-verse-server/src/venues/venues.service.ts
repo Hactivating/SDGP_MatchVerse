@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateVenueDto } from './dto/create-venue.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { UpdateVenueDto } from './dto/update-venue.dto';
 import * as bcrypt from 'bcrypt';
-import { S3Service } from 'src/s3/s3.service';
+import { S3Service } from '../s3/s3.service';
 
 @Injectable()
 export class VenuesService {

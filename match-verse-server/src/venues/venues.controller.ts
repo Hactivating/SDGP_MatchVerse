@@ -53,9 +53,7 @@ export class VenuesController {
   }
 
   @Post('rate/:id')
-  rateVenue(@Param('id') id:string, @Body() payload:RateVenueDto){
-
-    return this.venuesService.rateVenue(parseInt(id,10),payload)
-    
+  rateVenue(@Param('id') id: string, @Body() payload: RateVenueDto) {
+    return this.venuesService.rateVenue(parseInt(id, 10), payload);
   }
 }
