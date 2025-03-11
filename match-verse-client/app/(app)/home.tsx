@@ -1,24 +1,42 @@
-// app/(app)/home.tsx
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import Navbar from '@/components/Navbar';
+import { getAllVenues, Venue } from '@/services/venue';
 
 export default function Home() {
     const { state } = useAuth();
     const router = useRouter();
     const [selectedSport, setSelectedSport] = useState('badminton');
+    const [venues, setVenues] = useState<Venue[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchVenues();
+    }, []);
+
+    const fetchVenues = async () => {
+        try {
+            setLoading(true);
+            const data = await getAllVenues();
+            setVenues(data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching venues:', err);
+            setError('Failed to load venues. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const navigateToVenue = (venueId) => {
-        // Navigate to venue details screen
         router.push(`/(app)/venues/${venueId}`);
     };
 
     const joinMatch = () => {
-        // Join the current match
         console.log('Joining match...');
     };
 
@@ -31,7 +49,6 @@ export default function Home() {
         setSelectedSport(sport);
     };
 
-    // Sport colors
     const sportColors = {
         football: "#e11d48",
         badminton: "#15803d",
@@ -40,20 +57,31 @@ export default function Home() {
         other: "#6366f1"
     };
 
+    const isAvailableSport = selectedSport === 'badminton';
+
     return (
         <SafeAreaView className="flex-1 bg-gray-50 relative">
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* Header */}
                 <View className="pt-14 px-6 pb-5 bg-[#22c55e]">
                     <Text className="text-white text-3xl font-bold">MatchVerse</Text>
                     <Text className="text-white text-base opacity-80">Your sports booking platform</Text>
                 </View>
 
-                {/* Sport Icons */}
                 <View className="flex-row justify-evenly py-4 mx-2 bg-white rounded-xl -mt-3 shadow-md">
+                    <TouchableOpacity
+                        className="items-center"
+                        onPress={() => selectSport('badminton')}
+                        activeOpacity={0.7}
+                    >
+                        <View className={`w-12 h-12 rounded-full border border-[#22c55e] items-center justify-center ${selectedSport === 'badminton' ? 'bg-[rgba(34,197,94,0.1)]' : ''}`}>
+                            <Text style={{ fontSize: 24 }}>🏸</Text>
+                        </View>
+                        <View className={`h-1 w-5 rounded-full mt-1 ${selectedSport === 'badminton' ? 'bg-[#22c55e]' : 'bg-transparent'}`} />
+                    </TouchableOpacity>
+
                     <TouchableOpacity
                         className="items-center"
                         onPress={() => selectSport('football')}
@@ -63,17 +91,6 @@ export default function Home() {
                             <Ionicons name="football" size={32} color={sportColors.football} />
                         </View>
                         <View className={`h-1 w-5 rounded-full mt-1 ${selectedSport === 'football' ? 'bg-[#22c55e]' : 'bg-transparent'}`} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        className="items-center"
-                        onPress={() => selectSport('badminton')}
-                        activeOpacity={0.7}
-                    >
-                        <View className={`w-12 h-12 rounded-full border border-[#22c55e] items-center justify-center ${selectedSport === 'badminton' ? 'bg-[rgba(34,197,94,0.1)]' : ''}`}>
-                            <Ionicons name="tennisball" size={32} color={sportColors.badminton} />
-                        </View>
-                        <View className={`h-1 w-5 rounded-full mt-1 ${selectedSport === 'badminton' ? 'bg-[#22c55e]' : 'bg-transparent'}`} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -110,140 +127,145 @@ export default function Home() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Match Starting Soon Card */}
-                <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
-                    <Text className="text-gray-800 text-2xl font-bold text-center mb-2">Match Starting Soon...</Text>
-                    <Text className="text-gray-600 text-lg text-center mb-5">
-                        {selectedSport === 'football' && 'Football - 5v5 🏈'}
-                        {selectedSport === 'badminton' && 'Badminton - Doubles 🏸'}
-                        {selectedSport === 'basketball' && 'Basketball - 3v3 🏀'}
-                        {selectedSport === 'tennis' && 'Tennis - Doubles 🎾'}
-                        {selectedSport === 'other' && 'Mixed Sports 🏆'}
-                    </Text>
+                {isAvailableSport ? (
+                    <>
+                        <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
+                            <Text className="text-gray-800 text-2xl font-bold text-center mb-2">Match Starting Soon...</Text>
+                            <Text className="text-gray-600 text-lg text-center mb-5">
+                                Badminton - Doubles 🏸
+                            </Text>
 
-                    <View className="flex-row justify-between items-center">
-                        <Text className="text-gray-500 text-base">3/4 players found</Text>
+                            <View className="flex-row justify-between items-center">
+                                <Text className="text-gray-500 text-base">3/4 players found</Text>
+                                <TouchableOpacity
+                                    className="flex-row bg-[#22c55e] py-2 px-4 rounded-full items-center"
+                                    onPress={joinMatch}
+                                >
+                                    <Text className="text-white font-bold mr-1">Join Now</Text>
+                                    <Ionicons name="arrow-forward" size={20} color="white" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md flex-row justify-between items-center">
+                            <Text className="text-gray-800 text-2xl font-bold">Find a Match</Text>
+                            <TouchableOpacity
+                                className="flex-row bg-[#22c55e] py-2 px-4 rounded-full items-center"
+                                onPress={findMatch}
+                            >
+                                <Text className="text-white font-bold mr-1">Find Now</Text>
+                                <Ionicons name="arrow-forward" size={20} color="white" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
+                            <Text className="text-gray-800 text-2xl font-bold text-center">Popular Venues</Text>
+                            <Text className="text-gray-600 text-lg text-center mb-5">
+                                Badminton 🏸
+                            </Text>
+
+                            {loading ? (
+                                <View className="items-center justify-center py-8">
+                                    <ActivityIndicator size="large" color="#22c55e" />
+                                </View>
+                            ) : error ? (
+                                <View className="items-center justify-center py-8">
+                                    <Text className="text-red-500 text-center">{error}</Text>
+                                    <TouchableOpacity
+                                        className="mt-4 bg-[#22c55e] px-4 py-2 rounded-lg"
+                                        onPress={fetchVenues}
+                                    >
+                                        <Text className="text-white font-bold">Try Again</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : venues.length > 0 ? (
+                                <>
+                                    <View className="flex-row justify-between mb-4">
+                                        {venues.slice(0, 3).map((venue) => (
+                                            <TouchableOpacity
+                                                key={venue.venueId}
+                                                className="w-[30%]"
+                                                onPress={() => navigateToVenue(venue.venueId)}
+                                            >
+                                                <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-md">
+                                                    {venue.venueImageUrl && (
+                                                        <Image
+                                                            source={{ uri: venue.venueImageUrl }}
+                                                            style={{ width: '100%', height: '100%', borderRadius: 8 }}
+                                                            resizeMode="cover"
+                                                        />
+                                                    )}
+                                                    <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
+                                                        <Ionicons name="star" size={12} color="white" />
+                                                        <Text className="text-white text-xs ml-0.5">
+                                                            {venue.rating ? venue.rating.toFixed(1) : "New"}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                                <Text className="text-gray-700 text-center">
+                                                    Venue {venue.venueId}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+
+                                    {venues.length > 3 && (
+                                        <View className="flex-row justify-between mb-4">
+                                            {venues.slice(3, 6).map((venue) => (
+                                                <TouchableOpacity
+                                                    key={venue.venueId}
+                                                    className="w-[30%]"
+                                                    onPress={() => navigateToVenue(venue.venueId)}
+                                                >
+                                                    <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
+                                                        {venue.venueImageUrl && (
+                                                            <Image
+                                                                source={{ uri: venue.venueImageUrl }}
+                                                                style={{ width: '100%', height: '100%', borderRadius: 8 }}
+                                                                resizeMode="cover"
+                                                            />
+                                                        )}
+                                                        <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
+                                                            <Ionicons name="star" size={12} color="white" />
+                                                            <Text className="text-white text-xs ml-0.5">
+                                                                {venue.rating ? venue.rating.toFixed(1) : "New"}
+                                                            </Text>
+                                                        </View>
+                                                    </View>
+                                                    <Text className="text-gray-700 text-center">
+                                                        Venue {venue.venueId}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+                                </>
+                            ) : (
+                                <View className="items-center justify-center py-8">
+                                    <Text className="text-gray-500 text-center">No venues found</Text>
+                                </View>
+                            )}
+                        </View>
+                    </>
+                ) : (
+                    <View className="mx-6 my-10 p-8 rounded-xl border border-gray-200 bg-white shadow-md items-center">
+                        <Ionicons name="hourglass-outline" size={80} color="#22c55e" />
+                        <Text className="text-gray-800 text-3xl font-bold text-center mt-6 mb-2">Coming Soon!</Text>
+                        <Text className="text-gray-600 text-lg text-center mb-4">
+                            We're working hard to bring {selectedSport.charAt(0).toUpperCase() + selectedSport.slice(1)} to MatchVerse.
+                        </Text>
+                        <Text className="text-gray-500 text-base text-center">
+                            In the meantime, try Badminton to find your perfect match.
+                        </Text>
                         <TouchableOpacity
-                            className="flex-row bg-[#22c55e] py-2 px-4 rounded-full items-center"
-                            onPress={joinMatch}
+                            className="mt-6 bg-[#22c55e] py-3 px-6 rounded-full"
+                            onPress={() => selectSport('badminton')}
                         >
-                            <Text className="text-white font-bold mr-1">Join Now</Text>
-                            <Ionicons name="arrow-forward" size={20} color="white" />
+                            <Text className="text-white font-bold">Try Badminton</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-
-                {/* Find a Match Card */}
-                <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md flex-row justify-between items-center">
-                    <Text className="text-gray-800 text-2xl font-bold">Find a Match</Text>
-                    <TouchableOpacity
-                        className="flex-row bg-[#22c55e] py-2 px-4 rounded-full items-center"
-                        onPress={findMatch}
-                    >
-                        <Text className="text-white font-bold mr-1">Find Now</Text>
-                        <Ionicons name="arrow-forward" size={20} color="white" />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Popular Venues Section */}
-                <View className="mx-6 my-4 p-5 rounded-xl border border-gray-200 bg-white shadow-md">
-                    <Text className="text-gray-800 text-2xl font-bold text-center">Popular Venues</Text>
-                    <Text className="text-gray-600 text-lg text-center mb-5">
-                        {selectedSport === 'football' && 'Football 🏈'}
-                        {selectedSport === 'badminton' && 'Badminton 🏸'}
-                        {selectedSport === 'basketball' && 'Basketball 🏀'}
-                        {selectedSport === 'tennis' && 'Tennis 🎾'}
-                        {selectedSport === 'other' && 'All Sports 🏆'}
-                    </Text>
-
-                    {/* Venues Grid - First Row */}
-                    <View className="flex-row justify-between mb-4">
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(1)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-md">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 01</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(2)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 02</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(3)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 03</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Venues Grid - Second Row */}
-                    <View className="flex-row justify-between mb-4">
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(4)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 04</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(5)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 05</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            className="w-[30%]"
-                            onPress={() => navigateToVenue(6)}
-                        >
-                            <View className="h-24 rounded-lg border border-gray-200 bg-gray-50 mb-1 relative shadow-sm">
-                                <View className="absolute bottom-1 right-1 bg-[rgba(0,0,0,0.6)] rounded-lg px-1 py-0.5 flex-row items-center">
-                                    <Ionicons name="star" size={12} color="white" />
-                                    <Text className="text-white text-xs ml-0.5">5.0</Text>
-                                </View>
-                            </View>
-                            <Text className="text-gray-700 text-center">Venue 06</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                )}
             </ScrollView>
-
-            {/* Navigation Bar */}
-            <Navbar />
         </SafeAreaView>
     );
 }
