@@ -5,7 +5,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { getUserById } from '@/services/user';
 import { User } from '@/types/auth';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Navbar from '@/components/Navbar';
 
 export default function ProfileScreen() {
     const { state, logout } = useAuth();
@@ -53,7 +52,6 @@ export default function ProfileScreen() {
                         <Text className="text-white font-medium">Logout</Text>
                     </TouchableOpacity>
                 </View>
-                <Navbar />
             </SafeAreaView>
         );
     }
@@ -97,9 +95,6 @@ export default function ProfileScreen() {
                     <Text className="text-white font-bold">Logout</Text>
                 </TouchableOpacity>
             </ScrollView>
-
-            {/* Navigation Bar */}
-            <Navbar />
         </SafeAreaView>
     );
 }
