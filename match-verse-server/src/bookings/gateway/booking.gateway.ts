@@ -3,10 +3,11 @@ import {
   OnGatewayDisconnect,
   OnGatewayInit,
   WebSocketServer,
+  WebSocketGateway
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
-@Gateway()
+@WebSocketGateway()
 export class BookingGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -26,8 +27,5 @@ export class BookingGateway
     this.socket.emit("booking updated");
 
   }
-}
-function Gateway(): (target: typeof BookingGateway) => void | typeof BookingGateway {
-    throw new Error('Function not implemented.');
 }
 
