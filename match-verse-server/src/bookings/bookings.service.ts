@@ -3,10 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Slot } from './interface/slot';
 import { UserBookingDto } from './dto/user-booking.dto';
 import { VenueBookingDto } from './dto/venue-booking.dto';
+import { BookingGateway } from './gateway/booking.gateway';
 
 @Injectable()
 export class BookingsService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private prismaService: PrismaService, private gateway: BookingGateway) {}
 
   async getBookings(courtId: number, date: string) {
     //get starting time of all existing bookings
@@ -61,7 +62,6 @@ export class BookingsService {
     return this.prismaService.booking.findMany({
       where: { userId: userId },
     });
-
   }
 
   async createVenueBooking(payload: VenueBookingDto) {
@@ -92,8 +92,13 @@ export class BookingsService {
         return 'invalid time ';
       }
     }
-    return this.prismaService.booking.create({
+    const booking=await this.prismaService.booking.create({
       data: payload,
     });
+
+    this.gateway.emitEventUpdate();
+
+    return booking;
+    
   }
 }
