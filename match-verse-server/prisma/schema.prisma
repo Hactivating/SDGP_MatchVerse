@@ -114,7 +114,8 @@ model MatchResult {
   matchId       Int     @unique
   winner1Id     Int
   winner2Id     Int
-  votes         String
+  loser1Id      Int
+  loser2Id      Int
   confirmed     Boolean @default(false)
 
   match MatchRequest @relation(fields: [matchId], references: [requestId])

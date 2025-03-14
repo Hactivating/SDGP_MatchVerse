@@ -4,70 +4,54 @@ import { MatchService } from 'src/match/match.service';
 
 @Injectable()
 export class MatchResultService {
-    constructor(private prisma: PrismaService, private matchService: MatchService) {}
+  constructor(private prisma: PrismaService, private matchService: MatchService) {}
 
-    async submitMatchWinners(matchId: number, voterId: number, winner1Id: number, winner2Id: number) {
-        const matchRequests = await this.matchService.getMatchedUsers(matchId);
+  async submitMatchWinners(matchId: number, winner1Id: number, winner2Id: number) {
+    const matchRequest = await this.prisma.matchRequest.findUnique({
+      where: { requestId: matchId },
+      include: { createdBy: true, partner: true },
+    });
 
-        if (!matchRequests || matchRequests.length !== 2) {
-            throw new NotFoundException('Match not found or invalid match setup');
-        }
-
-        const players = [
-            matchRequests[0].createdById,
-            matchRequests[0].partnerId,
-            matchRequests[1].createdById,
-            matchRequests[1].partnerId,
-        ].filter(id => id !== null);
-
-        if (!players.includes(voterId)) {
-            throw new BadRequestException('Only players from this match can vote');
-        }
-
-        if (!players.includes(winner1Id) || !players.includes(winner2Id)) {
-            throw new BadRequestException('Winners must be from the matched players');
-        }
-
-        if (winner1Id === winner2Id) {
-            throw new BadRequestException('Winner IDs must be different');
-        }
-
-        let matchResult = await this.prisma.matchResult.findUnique({
-            where: { matchId },
-        });
-
-        if (!matchResult) {
-            matchResult = await this.prisma.matchResult.create({
-                data: {
-                    matchId,
-                    winner1Id,
-                    winner2Id,
-                    votes: JSON.stringify([voterId]),
-                },
-            });
-        } else {
-            const votes = JSON.parse(matchResult.votes);
-            if (votes.includes(voterId)) {
-                throw new BadRequestException('User has already voted for this match');
-            }
-
-            votes.push(voterId);
-
-            if (votes.length >= 3) {
-                await this.prisma.matchResult.update({
-                    where: { matchId },
-                    data: { confirmed: true, votes: JSON.stringify(votes) },
-                });
-
-                return { message: 'Winners confirmed!', winner1Id, winner2Id };
-            }
-
-            await this.prisma.matchResult.update({
-                where: { matchId },
-                data: { votes: JSON.stringify(votes) },
-            });
-        }
-
-        return { message: 'Vote submitted, waiting for majority confirmation' };
+    if (!matchRequest) {
+      throw new NotFoundException('Match not found!');
     }
+
+    const players = [
+      matchRequest.createdById,
+      matchRequest.partnerId,
+    ];
+
+    const winners = [winner1Id, winner2Id];
+    const allPlayers = [
+      matchRequest.createdById,
+      matchRequest.partnerId,
+    ];
+
+    if (!winners.every((winner) => allPlayers.includes(winner))) {
+      throw new BadRequestException('Winners must be part of the matched players.');
+    }
+
+    if (winners[0] === winners[1]) {
+      throw new BadRequestException('Winners must be distinct.');
+    }
+
+    const losers = allPlayers.filter((player) => !winners.includes(player));
+
+    if (losers.length !== 2) {
+      throw new BadRequestException('There should be exactly two losers.');
+    }
+
+    const matchResult = await this.prisma.matchResult.create({
+      data: {
+        matchId: matchId,
+        winner1Id: winners[0],
+        winner2Id: winners[1],
+        loser1Id: losers[0],
+        loser2Id: losers[1],
+        confirmed: false,
+      },
+    });
+
+    return `Winners: ${winner1Id}, ${winner2Id}. Losers: ${losers[0]}, ${losers[1]}. Match result saved successfully!`;
+  }
 }
