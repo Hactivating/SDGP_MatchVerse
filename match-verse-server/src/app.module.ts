@@ -10,10 +10,12 @@ import { UsersModule } from './users/users.module';
 
 import { MatchModule } from './match/match.module';
 import { S3Module } from './s3/s3.module';
+import { RankingModule } from './ranking/ranking.module';
+import { MatchResultModule } from './match-result/match-result.module';
 
 
 @Module({
-  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule,S3Module],
+  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule,S3Module, RankingModule, MatchResultModule],
 
   controllers: [AppController],
   providers: [AppService],

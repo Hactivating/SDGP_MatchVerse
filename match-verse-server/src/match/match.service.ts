@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMatchRequestDto } from './DTO/create-match-request.dto';
 
@@ -59,6 +59,25 @@ export class MatchService {
             console.log('Match confirmed')
         }
     }
+
+    async getMatchedUsers(matchId: number) {
+        const matchRequest = await this.prisma.matchRequest.findUnique({
+            where: { requestedId: matchId},
+            include: { createdBy: true, partner: true},
+        })
+
+        if (!matchRequest) throw new NotFoundException("Match not found!");
+
+        const opponentMatch = await this.prisma.matchRequest.findDFirst({
+            where: { bookingId: matchRequest.bookingId, requetedId: {not: matchId},},
+            include: { createdBy: true, partner: true},
+        })
+
+        if (!opponentMatch) throw new NotFoundException("Opponents not found!");
+
+        return [matchRequest, opponentMatch];
+    }
+
 
     async getPendingRequests() {
         return this.prisma.matchRequest.findMany({

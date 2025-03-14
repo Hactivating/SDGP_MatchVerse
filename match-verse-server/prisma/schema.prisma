@@ -85,7 +85,8 @@ model MatchRequest {
   createdBy User  @relation(fields: [createdById], references: [userId], name: "matchCreator")
   partner   User? @relation(fields: [partnerId], references: [userId], name: "matchPartner")
 
-  booking Booking @relation(fields: [bookingId], references: [bookingId])
+  booking     Booking      @relation(fields: [bookingId], references: [bookingId])
+  MatchResult MatchResult?
 
   @@index([bookingId])
 }
@@ -106,4 +107,17 @@ model UserVenueRating {
   user User @relation(fields: [userId], references: [userId])
 
   Venue Venue @relation(fields: [venueId], references: [venueId])
+}
+
+model MatchResult {
+  matchResultId Int     @id @default(autoincrement())
+  matchId       Int     @unique
+  winner1Id     Int
+  winner2Id     Int
+  votes         String
+  confirmed     Boolean @default(false)
+
+  match MatchRequest @relation(fields: [matchId], references: [requestId])
+
+  @@index([matchId])
 }
