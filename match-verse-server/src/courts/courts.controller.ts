@@ -18,7 +18,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('courts')
 export class CourtsController {
-  constructor(private courtsService: CourtsService) {}
+  constructor(private courtsService: CourtsService) { }
+
 
   @Get()
   getAllCourts() {

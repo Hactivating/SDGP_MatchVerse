@@ -17,7 +17,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   @Get()
   getAllUsers() {
@@ -41,13 +41,13 @@ export class UsersController {
   }
 
   @UseInterceptors(FileInterceptor('file'))
-    @Post(':id/upload-file')
-    async addImageToUser(
-      @UploadedFile() file: Express.Multer.File,
-      @Param('id') id: string,
-      @Request() req,
-    ) {
-      console.log(file);
-      return this.usersService.addImageToVenue(file, parseInt(id));
-    }
+  @Post(':id/upload-file')
+  async addImageToUser(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    console.log(file);
+    return this.usersService.addImageToVenue(file, parseInt(id));
+  }
 }
