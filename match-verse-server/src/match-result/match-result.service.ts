@@ -1,10 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { MatchService } from 'src/match/match.service';
 
 @Injectable()
 export class MatchResultService {
-  constructor(private prisma: PrismaService, private matchService: MatchService) {}
+  constructor(private prisma: PrismaService) {}
 
   async submitMatchWinners(matchId: number, winner1Id: number, winner2Id: number) {
     const matchRequest = await this.prisma.matchRequest.findUnique({
@@ -16,42 +15,37 @@ export class MatchResultService {
       throw new NotFoundException('Match not found!');
     }
 
-    const players = [
-      matchRequest.createdById,
-      matchRequest.partnerId,
-    ];
+    const allPlayers = [matchRequest.createdById, matchRequest.partnerId];
 
-    const winners = [winner1Id, winner2Id];
-    const allPlayers = [
-      matchRequest.createdById,
-      matchRequest.partnerId,
-    ];
-
-    if (!winners.every((winner) => allPlayers.includes(winner))) {
+    if (!allPlayers.includes(winner1Id) || !allPlayers.includes(winner2Id)) {
       throw new BadRequestException('Winners must be part of the matched players.');
     }
 
-    if (winners[0] === winners[1]) {
-      throw new BadRequestException('Winners must be distinct.');
+    if (winner1Id === winner2Id) {
+      throw new BadRequestException('Winners must be two distinct players.');
     }
 
-    const losers = allPlayers.filter((player) => !winners.includes(player));
+    const losers = allPlayers.filter(player => player !== winner1Id && player !== winner2Id);
 
     if (losers.length !== 2) {
       throw new BadRequestException('There should be exactly two losers.');
     }
 
-    const matchResult = await this.prisma.matchResult.create({
+    await this.prisma.matchResult.create({
       data: {
-        matchId: matchId,
-        winner1Id: winners[0],
-        winner2Id: winners[1],
+        matchId,
+        winner1Id,
+        winner2Id,
         loser1Id: losers[0],
         loser2Id: losers[1],
-        confirmed: false,
+        confirmed: true,
       },
     });
 
-    return `Winners: ${winner1Id}, ${winner2Id}. Losers: ${losers[0]}, ${losers[1]}. Match result saved successfully!`;
+    return {
+      message: 'Match result saved successfully!',
+      winners: [winner1Id, winner2Id],
+      losers: [losers[0], losers[1]],
+    };
   }
 }
