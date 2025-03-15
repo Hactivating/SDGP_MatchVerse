@@ -1,7 +1,5 @@
-// app/(app)/find.tsx
 import { View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Navbar from '@/components/Navbar';
 
 export default function FindScreen() {
     return (
@@ -10,9 +8,6 @@ export default function FindScreen() {
                 <Text className="text-white text-2xl font-bold mb-4">Find a Match</Text>
                 <Text className="text-[#aaa] text-center">This screen is under development</Text>
             </View>
-
-            {/* Navigation Bar */}
-            <Navbar />
         </SafeAreaView>
     );
 }

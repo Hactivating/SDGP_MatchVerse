@@ -10,10 +10,8 @@ export default function Index() {
     useEffect(() => {
         if (!state.isLoading) {
             if (state.isAuthenticated) {
-                // Redirect to app home screen
                 router.replace('/(app)/home');
             } else {
-                // Redirect to login screen
                 router.replace('/(auth)/login');
             }
         }
