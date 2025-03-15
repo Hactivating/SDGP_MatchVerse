@@ -9,7 +9,12 @@ export class MatchResultService {
     private rankingService: RankingService
   ) {}
 
-  async submitMatchWinners(matchId: number, winner1Id: number, winner2Id: number) {
+  async submitMatchWinners(
+    matchId: number,
+    winner1Id: number,
+    winner2Id: number
+  ) {
+
     const matchRequest = await this.prisma.matchRequest.findUnique({
       where: { requestId: matchId },
       include: { createdBy: true, partner: true },
@@ -20,7 +25,6 @@ export class MatchResultService {
     }
 
     const allPlayers = [matchRequest.createdById, matchRequest.partnerId];
-
     const winners = [winner1Id, winner2Id];
     const losers = allPlayers.filter((player) => !winners.includes(player));
 
@@ -35,14 +39,11 @@ export class MatchResultService {
         winner2Id: winners[1],
         loser1Id: losers[0],
         loser2Id: losers[1],
-        confirmed: true,
+        confirmed: true,  
       },
     });
 
-    await this.rankingService.updateUserRanking(winners[0], true);
-    await this.rankingService.updateUserRanking(winners[1], true);
-    await this.rankingService.updateUserRanking(losers[0], false);
-    await this.rankingService.updateUserRanking(losers[1], false);
+    await this.rankingService.updateUserRanking(winners[0], winners[1], losers[0], losers[1]);
 
     return `Winners: ${winner1Id}, ${winner2Id}. Losers: ${losers[0]}, ${losers[1]}. Rankings updated!`;
   }
