@@ -14,7 +14,6 @@ CREATE TABLE "User" (
     "experience" INTEGER NOT NULL DEFAULT 0,
     "rating" INTEGER NOT NULL DEFAULT 0,
     "userImageUrl" TEXT,
-    "venueName" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("userId")
 );
@@ -30,6 +29,7 @@ CREATE TABLE "Venue" (
     "venueImageUrl" TEXT,
     "rating" INTEGER NOT NULL DEFAULT 0,
     "totalRating" INTEGER NOT NULL DEFAULT 0,
+    "venueName" TEXT NOT NULL,
 
     CONSTRAINT "Venue_pkey" PRIMARY KEY ("venueId")
 );
@@ -52,6 +52,18 @@ CREATE TABLE "Booking" (
     "userId" INTEGER,
 
     CONSTRAINT "Booking_pkey" PRIMARY KEY ("bookingId")
+);
+
+-- CreateTable
+CREATE TABLE "MatchRequest" (
+    "requestId" SERIAL NOT NULL,
+    "bookingId" INTEGER NOT NULL,
+    "matchType" TEXT NOT NULL,
+    "createdById" INTEGER NOT NULL,
+    "partnerId" INTEGER,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+
+    CONSTRAINT "MatchRequest_pkey" PRIMARY KEY ("requestId")
 );
 
 -- CreateTable
@@ -85,6 +97,12 @@ CREATE UNIQUE INDEX "Venue_email_key" ON "Venue"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "Booking_courtId_date_startingTime_key" ON "Booking"("courtId", "date", "startingTime");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "MatchRequest_bookingId_key" ON "MatchRequest"("bookingId");
+
+-- CreateIndex
+CREATE INDEX "MatchRequest_bookingId_idx" ON "MatchRequest"("bookingId");
+
 -- AddForeignKey
 ALTER TABLE "Court" ADD CONSTRAINT "Court_venueId_fkey" FOREIGN KEY ("venueId") REFERENCES "Venue"("venueId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -93,6 +111,15 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_courtId_fkey" FOREIGN KEY ("courtId") REFERENCES "Court"("courtId") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("userId") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "User"("userId") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("bookingId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CourtImage" ADD CONSTRAINT "CourtImage_courtId_fkey" FOREIGN KEY ("courtId") REFERENCES "Court"("courtId") ON DELETE RESTRICT ON UPDATE CASCADE;
