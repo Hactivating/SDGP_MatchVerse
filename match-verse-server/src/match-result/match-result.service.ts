@@ -1,9 +1,13 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RankingService } from 'src/ranking/ranking.service';
 
 @Injectable()
 export class MatchResultService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private rankingService: RankingService
+  ) {}
 
   async submitMatchWinners(matchId: number, winner1Id: number, winner2Id: number) {
     const matchRequest = await this.prisma.matchRequest.findUnique({
@@ -17,15 +21,8 @@ export class MatchResultService {
 
     const allPlayers = [matchRequest.createdById, matchRequest.partnerId];
 
-    if (!allPlayers.includes(winner1Id) || !allPlayers.includes(winner2Id)) {
-      throw new BadRequestException('Winners must be part of the matched players.');
-    }
-
-    if (winner1Id === winner2Id) {
-      throw new BadRequestException('Winners must be two distinct players.');
-    }
-
-    const losers = allPlayers.filter(player => player !== winner1Id && player !== winner2Id);
+    const winners = [winner1Id, winner2Id];
+    const losers = allPlayers.filter((player) => !winners.includes(player));
 
     if (losers.length !== 2) {
       throw new BadRequestException('There should be exactly two losers.');
@@ -33,19 +30,20 @@ export class MatchResultService {
 
     await this.prisma.matchResult.create({
       data: {
-        matchId,
-        winner1Id,
-        winner2Id,
+        matchId: matchId,
+        winner1Id: winners[0],
+        winner2Id: winners[1],
         loser1Id: losers[0],
         loser2Id: losers[1],
         confirmed: true,
       },
     });
 
-    return {
-      message: 'Match result saved successfully!',
-      winners: [winner1Id, winner2Id],
-      losers: [losers[0], losers[1]],
-    };
+    await this.rankingService.updateUserRanking(winners[0], true);
+    await this.rankingService.updateUserRanking(winners[1], true);
+    await this.rankingService.updateUserRanking(losers[0], false);
+    await this.rankingService.updateUserRanking(losers[1], false);
+
+    return `Winners: ${winner1Id}, ${winner2Id}. Losers: ${losers[0]}, ${losers[1]}. Rankings updated!`;
   }
 }

@@ -6,6 +6,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
     controllers:[RankingController],
-    providers:[RankingService,PrismaService]
+    providers:[RankingService,PrismaService],
 })
 export class RankingModule {}
