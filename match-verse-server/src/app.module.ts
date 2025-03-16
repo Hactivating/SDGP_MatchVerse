@@ -11,10 +11,12 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 import { MatchModule } from './match/match.module';
 import { S3Module } from './s3/s3.module';
+import { RankingModule } from './ranking/ranking.module';
+import { MatchResultModule } from './match-result/match-result.module';
 
 
 @Module({
-  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule,S3Module,LeaderboardModule],
+  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule,S3Module,LeaderboardModule,MatchResultModule,RankingModule],
   controllers: [AppController],
   providers: [AppService],
 })
