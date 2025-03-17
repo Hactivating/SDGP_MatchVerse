@@ -24,7 +24,14 @@ export class MatchResultService {
       throw new NotFoundException('Match not found!');
     }
 
-    const allPlayers = [matchRequest.createdById, matchRequest.partnerId];
+    const createdById = matchRequest.createdById;
+    const partnerId = matchRequest.partnerId;
+
+    if (createdById === null || partnerId === null) {
+      throw new BadRequestException('Match players are incomplete!');
+    }
+
+    const allPlayers = [createdById, partnerId];
     const winners = [winner1Id, winner2Id];
     const losers = allPlayers.filter((player) => !winners.includes(player));
 
