@@ -9,11 +9,11 @@ export class LeaderboardService {
     async getSortedUsers() {
         const users = await this.prisma.user.findMany({
             orderBy:{
-                id:"asc"
+                rankPoints:"asc"
             },
             select: {
-                id: true,
-                username: true
+                username: true,
+                rankPoints: true
             },
                 
         });

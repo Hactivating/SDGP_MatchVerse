@@ -68,7 +68,7 @@ export class MatchService {
 
         if (!matchRequest) throw new NotFoundException("Match not found!");
 
-        const opponentMatch = await this.prisma.matchRequest.findDFirst({
+        const opponentMatch = await this.prisma.matchRequest.findFirst({
             where: { bookingId: matchRequest.bookingId, requetedId: {not: matchId},},
             include: { createdBy: true, partner: true},
         })
@@ -91,10 +91,3 @@ export class MatchService {
         });
     }
 }
-
-
-
-
-
-
-
