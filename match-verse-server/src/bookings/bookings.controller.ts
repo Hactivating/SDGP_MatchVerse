@@ -5,7 +5,7 @@ import { VenueBookingDto } from './dto/venue-booking.dto';
 
 @Controller('bookings')
 export class BookingsController {
-  constructor(private bookingService: BookingsService) {}
+  constructor(private bookingService: BookingsService) { }
 
   //Date has to be sent in the format of YYYY-MM-DD
   @Get(':courtId/:date')
