@@ -35,17 +35,17 @@ model User {
 }
 
 model Venue {
-  venueId       Int     @id @default(autoincrement())
-  email         String  @unique
-  password      String
-  location      String
-  openingTime   Int
-  closingTime   Int
-  venueImageUrl String?
-  rating        Int     @default(0)
-  totalRating   Int     @default(0)
-
-  venueName String
+  venueId         Int     @id @default(autoincrement())
+  email           String  @unique
+  password        String
+  location        String
+  openingTime     Int
+  closingTime     Int
+  venueImageUrl   String?
+  rating          Int     @default(0)
+  totalRating     Int     @default(0)
+  pricePerBooking Float
+  venueName       String
 
   court           Court[]
   UserVenueRating UserVenueRating[]
@@ -61,12 +61,14 @@ model Court {
 }
 
 model Booking {
-  bookingId    Int    @id @default(autoincrement())
+  bookingId    Int     @id @default(autoincrement())
   courtId      Int
   date         String
   startingTime String
   userId       Int?
-  user         User?  @relation(fields: [userId], references: [userId])
+  user         User?   @relation(fields: [userId], references: [userId])
+  price        Float
+  isPaid       Boolean @default(false)
 
   matchRequest MatchRequest[]
   court        Court          @relation(fields: [courtId], references: [courtId])

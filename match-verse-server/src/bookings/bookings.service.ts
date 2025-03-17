@@ -6,7 +6,7 @@ import { VenueBookingDto } from './dto/venue-booking.dto';
 
 @Injectable()
 export class BookingsService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private prismaService: PrismaService) { }
 
   async getBookings(courtId: number, date: string) {
     //get starting time of all existing bookings
@@ -94,6 +94,14 @@ export class BookingsService {
     }
     return this.prismaService.booking.create({
       data: payload,
+
+    });
+  }
+
+  async updateBookingStatus(bookingId: number, isPaid: boolean) {
+    return this.prismaService.booking.update({
+      where: { bookingId },
+      data: { isPaid },
     });
   }
 }
