@@ -6,7 +6,8 @@ import {
     TextInput,
     TouchableOpacity,
     ActivityIndicator,
-    Alert
+    Alert,
+    Image
 } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,13 +108,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity className="self-end mt-2">
-                    <Text className="text-[#22c55e] text-sm font-medium">Forgot Password?</Text>
+                    <Text style={{ color: '#046d64' }} className="text-sm font-medium">Forgot Password?</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Login Button */}
             <TouchableOpacity
-                className="bg-[#22c55e] py-4 rounded-xl items-center mb-4 shadow-sm"
+                style={{ backgroundColor: '#046d64' }}
+                className="py-4 rounded-xl items-center mb-4 shadow-sm"
                 onPress={handleLogin}
                 disabled={state.isLoading}
             >
@@ -134,7 +136,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
             {/* Social Login */}
             <View className="flex-row justify-center space-x-4 mb-6">
                 <TouchableOpacity className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center border border-gray-300">
-                    <Ionicons name="logo-google" size={24} color="#DB4437" />
+                    {/* Google logo */}
+                    <Image
+                        source={require('@/assets/images/google-logo.png')}
+                        style={{ width: 30, height: 30 }}
+                        resizeMode="contain"
+                    />
                 </TouchableOpacity>
                 <TouchableOpacity className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center border border-gray-300">
                     <Ionicons name="logo-apple" size={24} color="#000" />
@@ -148,7 +155,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
             <View className="flex-row justify-center mt-4">
                 <Text className="text-gray-600">Don't have an account? </Text>
                 <TouchableOpacity onPress={onNavigateToRegister}>
-                    <Text className="text-[#22c55e] font-bold">Sign Up</Text>
+                    <Text style={{ color: '#046d64' }} className="font-bold">Sign Up</Text>
                 </TouchableOpacity>
             </View>
 

@@ -7,16 +7,14 @@ import {
     Platform,
     TouchableOpacity,
     SafeAreaView,
-    Image,
-    ImageBackground,
     ScrollView
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Register() {
     const router = useRouter();
@@ -37,73 +35,70 @@ export default function Register() {
     }
 
     return (
-        <SafeAreaView className="flex-1">
+        <View className="flex-1">
             <StatusBar style="light" />
 
-            {/* Background Image with Gradient Overlay */}
-            <ImageBackground
-                source={require('@/assets/images/Futsal Court Wallpaper.jpg')}
-                className="absolute w-full h-full"
-                resizeMode="cover"
-            >
-                <LinearGradient
-                    colors={['rgba(0, 0, 0, 0.7)', 'rgba(0, 0, 0, 0.5)', 'rgba(255, 255, 255, 0.9)']}
-                    locations={[0, 0.3, 1]}
-                    className="absolute w-full h-full"
-                />
-            </ImageBackground>
+            {/* Gradient Background - matching login page */}
+            <LinearGradient
+                colors={['#10b68d', '#046d64']}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            />
 
-            <KeyboardAvoidingView
-                className="flex-1 z-10"
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-            >
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    className="flex-1"
-                    showsVerticalScrollIndicator={false}
+            <SafeAreaView className="flex-1">
+                <KeyboardAvoidingView
+                    className="flex-1 z-10"
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
                 >
-                    <View className="flex-1 p-6">
-                        {/* Header */}
-                        <View className="flex-row items-center justify-between mb-2 mt-2">
-                            <TouchableOpacity
-                                onPress={navigateToLogin}
-                                className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
-                            >
-                                <Ionicons name="arrow-back" size={24} color="#22c55e" />
-                            </TouchableOpacity>
+                    <ScrollView
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        className="flex-1"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <View className="flex-1 p-6">
+                            {/* Header - Logo removed */}
+                            <View className="flex-row items-center mb-2 mt-2">
+                                <TouchableOpacity
+                                    onPress={navigateToLogin}
+                                    className="w-10 h-10 bg-white rounded-full items-center justify-center shadow-sm"
+                                >
+                                    <Ionicons name="arrow-back" size={24} color="#046d64" />
+                                </TouchableOpacity>
+                            </View>
 
-                            {/* Logo Only (No Text) */}
-                            <Image
-                                source={require('@/assets/images/MV.png')}
-                                className="w-14 h-14"
-                                resizeMode="contain"
-                            />
-                        </View>
+                            {/* Title */}
+                            <View className="items-center mt-4 mb-4">
+                                <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-2xl text-white">Create Account</Text>
+                                <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-white text-center mt-1 opacity-90">
+                                    Join to start finding matches
+                                </Text>
+                            </View>
 
-                        {/* Title */}
-                        <View className="items-center mt-4 mb-4">
-                            <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-2xl text-white">Create Account</Text>
-                            <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-white text-center mt-1 opacity-90">
-                                Join to start finding matches
-                            </Text>
-                        </View>
+                            {/* Register Card - translucent with same styling as login */}
+                            <View className="bg-white bg-opacity-60 backdrop-blur-md rounded-3xl shadow-lg p-6 mt-2">
+                                {/* Register Form */}
+                                <RegisterForm onNavigateToLogin={navigateToLogin} />
+                            </View>
 
-                        {/* Register Card - translucent */}
-                        <View className="bg-white bg-opacity-75 backdrop-blur-md rounded-3xl shadow-lg p-6 mt-2">
-                            {/* Register Form */}
-                            <RegisterForm onNavigateToLogin={navigateToLogin} />
+                            {/* Footer with consistent styling */}
+                            <View className="mt-6 items-center">
+                                <Text
+                                    style={{
+                                        fontFamily: 'Poppins-Regular',
+                                        fontSize: 11,
+                                        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                                        textShadowOffset: {width: 0, height: 1},
+                                        textShadowRadius: 2
+                                    }}
+                                    className="text-white text-center"
+                                >
+                                    By signing up, you agree to our Terms of Service and Privacy Policy
+                                </Text>
+                            </View>
                         </View>
-
-                        {/* Footer */}
-                        <View className="mt-6 items-center">
-                            <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-white text-sm text-center">
-                                By signing up, you agree to our Terms of Service and Privacy Policy
-                            </Text>
-                        </View>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </View>
     );
 }

@@ -6,22 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="a662c68c-86fa-43e6-94e4-962c3f43cab0" name="Changes" comment="Log in and Register">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/find.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/find.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/profile.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/app/(auth)/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(auth)/login.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/app/(auth)/register.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(auth)/register.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/components/auth/LoginForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/components/auth/LoginForm.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/components/auth/RegisterForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/components/auth/RegisterForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/services/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250303104954_add_match_model/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250303184520_match_requests/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250307075212_init/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250308053536_init/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250309183521_init/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250309183649_init_2/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/migration_lock.toml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,7 +115,7 @@
       <workItem from="1741281623463" duration="676000" />
       <workItem from="1741282306862" duration="10612000" />
       <workItem from="1741333041153" duration="19000" />
-      <workItem from="1741847399821" duration="19111000" />
+      <workItem from="1741847399821" duration="26774000" />
     </task>
     <task id="LOCAL-00001" summary="Log in and Register">
       <option name="closed" value="true" />

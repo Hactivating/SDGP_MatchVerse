@@ -6,7 +6,8 @@ import {
     TextInput,
     TouchableOpacity,
     ActivityIndicator,
-    Alert
+    Alert,
+    Image
 } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -146,7 +147,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateToLogin })
 
             {/* Register Button */}
             <TouchableOpacity
-                className="bg-[#22c55e] py-4 rounded-xl items-center mb-6 shadow-sm"
+                style={{ backgroundColor: '#10b68d' }}
+                className="py-4 rounded-xl items-center mb-6 shadow-sm"
                 onPress={handleRegister}
                 disabled={isLoading}
             >
@@ -167,7 +169,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateToLogin })
             {/* Social Register */}
             <View className="flex-row justify-center space-x-4 mb-6">
                 <TouchableOpacity className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center border border-gray-300">
-                    <Ionicons name="logo-google" size={24} color="#DB4437" />
+                    {/* Google logo */}
+                    <Image
+                        source={require('@/assets/images/google-logo.png')}
+                        style={{ width: 30, height: 30 }}
+                        resizeMode="contain"
+                    />
                 </TouchableOpacity>
                 <TouchableOpacity className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center border border-gray-300">
                     <Ionicons name="logo-apple" size={24} color="#000" />
@@ -181,7 +188,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onNavigateToLogin })
             <View className="flex-row justify-center mt-4">
                 <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">Already have an account? </Text>
                 <TouchableOpacity onPress={onNavigateToLogin}>
-                    <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-[#22c55e]">Sign In</Text>
+                    <Text style={{ fontFamily: 'Poppins-Bold', color: '#10b68d' }}>Sign In</Text>
                 </TouchableOpacity>
             </View>
 

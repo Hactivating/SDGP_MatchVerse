@@ -7,14 +7,13 @@ import {
     Platform,
     Image,
     SafeAreaView,
-    ImageBackground,
     Dimensions
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 export default function Login() {
@@ -43,28 +42,11 @@ export default function Login() {
         <View className="flex-1">
             <StatusBar style="light" />
 
-            {/* Background Image with Gradient Overlay */}
-            <ImageBackground
-                source={require('@/assets/images/Futsal Court Wallpaper.jpg')}
-                className="absolute w-full h-full"
-                resizeMode="cover"
-                imageStyle={{
-                    width: '100%',
-                    height: '100%'
-                }}
-            >
-                <LinearGradient
-                    colors={[
-                        'rgba(0, 0, 0, 0.7)',
-                        'rgba(0, 0, 0, 0.5)',
-                        'rgba(0, 0, 0, 0.3)',
-                        'rgba(0, 0, 0, 0.1)',
-                        'rgba(0, 0, 0, 0)'
-                    ]}
-                    locations={[0, 0.3, 0.6, 0.8, 1]}
-                    className="absolute w-full h-full"
-                />
-            </ImageBackground>
+            {/* Gradient Background */}
+            <LinearGradient
+                colors={['#10b68d', '#046d64']}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            />
 
             <SafeAreaView className="flex-1">
                 <KeyboardAvoidingView
@@ -85,8 +67,8 @@ export default function Login() {
 
                             <View className="flex-row items-center justify-center mb-2">
                                 <View className="items-center mx-2">
-                                    <View className="bg-green-500 w-7 h-7 rounded-full items-center justify-center">
-                                        <Text style={{ fontFamily: 'Poppins-Bold', color: 'white' }}>1</Text>
+                                    <View className="bg-white w-7 h-7 rounded-full items-center justify-center">
+                                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#046d64' }}>1</Text>
                                     </View>
                                     <Text
                                         style={{
@@ -105,8 +87,8 @@ export default function Login() {
                                 <View className="h-0.5 w-4 bg-white opacity-50 mx-1" />
 
                                 <View className="items-center mx-2">
-                                    <View className="bg-green-500 w-7 h-7 rounded-full items-center justify-center">
-                                        <Text style={{ fontFamily: 'Poppins-Bold', color: 'white' }}>2</Text>
+                                    <View className="bg-white w-7 h-7 rounded-full items-center justify-center">
+                                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#046d64' }}>2</Text>
                                     </View>
                                     <Text
                                         style={{
@@ -125,8 +107,8 @@ export default function Login() {
                                 <View className="h-0.5 w-4 bg-white opacity-50 mx-1" />
 
                                 <View className="items-center mx-2">
-                                    <View className="bg-green-500 w-7 h-7 rounded-full items-center justify-center">
-                                        <Text style={{ fontFamily: 'Poppins-Bold', color: 'white' }}>3</Text>
+                                    <View className="bg-white w-7 h-7 rounded-full items-center justify-center">
+                                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#046d64' }}>3</Text>
                                     </View>
                                     <Text
                                         style={{
