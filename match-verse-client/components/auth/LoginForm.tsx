@@ -6,7 +6,8 @@ import {
     TextInput,
     TouchableOpacity,
     ActivityIndicator,
-    Alert
+    Alert,
+    Image
 } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,12 +47,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
                 credentials = {
                     email: emailOrUsername,
                     password,
-                    type: 'user' // Assuming this is needed based on your backend
+                    type: 'user'
                 };
             } else {
                 credentials = {
                     username: emailOrUsername,
-                    email: '', // Might still need this field depending on your API
+                    email: '',
                     password,
                     type: 'user'
                 };
@@ -68,7 +69,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
         <View className="w-full">
             {/* Email or Username */}
             <View className="mb-4">
-                <Text className="text-gray-700 mb-2">Email or Username</Text>
+                <Text className="text-gray-700 mb-2 font-medium">Email or Username</Text>
                 <View className="flex-row items-center border border-gray-300 rounded-xl px-4 py-3 bg-gray-50">
                     <Ionicons name="person-outline" size={20} color="#666" />
                     <TextInput
@@ -79,14 +80,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
                         onChangeText={setEmailOrUsername}
                         autoCapitalize="none"
                         keyboardType="email-address"
-                        autoComplete="email" // This helps with autofill
+                        autoComplete="email"
                     />
                 </View>
             </View>
 
             {/* Password */}
             <View className="mb-6">
-                <Text className="text-gray-700 mb-2">Password</Text>
+                <Text className="text-gray-700 mb-2 font-medium">Password</Text>
                 <View className="flex-row items-center border border-gray-300 rounded-xl px-4 py-3 bg-gray-50">
                     <Ionicons name="lock-closed-outline" size={20} color="#666" />
                     <TextInput
@@ -96,7 +97,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
-                        autoComplete="password" // This helps with autofill
+                        autoComplete="password"
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                         <Ionicons
@@ -107,13 +108,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity className="self-end mt-2">
-                    <Text className="text-primary text-sm">Forgot Password?</Text>
+                    <Text style={{ color: '#10b68d' }} className="text-sm font-medium">Forgot Password?</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Login Button */}
             <TouchableOpacity
-                className="bg-primary py-4 rounded-xl items-center mb-4"
+                style={{ backgroundColor: '#10b68d' }}
+                className="py-4 rounded-xl items-center mb-4 shadow-sm"
                 onPress={handleLogin}
                 disabled={state.isLoading}
             >
@@ -134,7 +136,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
             {/* Social Login */}
             <View className="flex-row justify-center space-x-4 mb-6">
                 <TouchableOpacity className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center border border-gray-300">
-                    <Ionicons name="logo-google" size={24} color="#DB4437" />
+                    {/* Google logo */}
+                    <Image
+                        source={require('@/assets/images/google-logo.png')}
+                        style={{ width: 30, height: 30 }}
+                        resizeMode="contain"
+                    />
                 </TouchableOpacity>
                 <TouchableOpacity className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center border border-gray-300">
                     <Ionicons name="logo-apple" size={24} color="#000" />
@@ -148,7 +155,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
             <View className="flex-row justify-center mt-4">
                 <Text className="text-gray-600">Don't have an account? </Text>
                 <TouchableOpacity onPress={onNavigateToRegister}>
-                    <Text className="text-primary font-bold">Sign Up</Text>
+                    <Text style={{ color: '#10b68d' }} className="font-bold">Sign Up</Text>
                 </TouchableOpacity>
             </View>
 

@@ -5,60 +5,159 @@ import {
     Text,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
-    TouchableOpacity,
     Image,
-    SafeAreaView
+    SafeAreaView,
+    Dimensions
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
+
 
 export default function Login() {
     const router = useRouter();
+    const screenWidth = Dimensions.get('window').width;
+
+    // Calculate logo size based on screen width
+    const logoWidth = screenWidth * 0.9; // 90% of screen width
+
+    // Load Poppins font
+    const [fontsLoaded] = useFonts({
+        'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
+        'Poppins-Medium': require('@/assets/fonts/Poppins-Medium.ttf'),
+        'Poppins-Regular': require('@/assets/fonts/Poppins-Regular.ttf'),
+    });
 
     const navigateToRegister = () => {
         router.push('/(auth)/register');
     };
 
+    if (!fontsLoaded) {
+        return null; // Return null or a loading indicator while fonts load
+    }
+
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <StatusBar style="dark" />
-            <KeyboardAvoidingView
-                className="flex-1"
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-            >
-                <ScrollView
-                    contentContainerStyle={{ flexGrow: 1 }}
-                    className="flex-1"
-                    showsVerticalScrollIndicator={false}
+        <View className="flex-1">
+            <StatusBar style="light" />
+
+            {/* Gradient Background */}
+            <LinearGradient
+                colors={['#10b68d', '#046d64']}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            />
+
+            <SafeAreaView className="flex-1">
+                <KeyboardAvoidingView
+                    className="flex-1 z-10"
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
                 >
-                    <View className="flex-1 p-6">
-                        {/* Logo & Header */}
-                        <View className="items-center justify-center py-10">
-                            {/* You can replace this with your actual logo */}
-                            <View className="w-20 h-20 rounded-full bg-primary items-center justify-center mb-4">
-                                <Text className="text-white text-3xl font-bold">MV</Text>
+                    {/* Main container with more space above login card */}
+                    <View className="flex-1 p-2 justify-between" style={{ paddingTop: 4 }}>
+                        {/* Logo and tagline section */}
+                        <View className="items-center justify-center">
+                            {/* Logo with minimum bottom spacing */}
+                            <Image
+                                source={require('@/assets/images/login.png')}
+                                style={{ width: logoWidth, height: logoWidth * 0.56, marginBottom: -12}}
+                                resizeMode="contain"
+                            />
+
+                            <View className="flex-row items-center justify-center mb-2">
+                                <View className="items-center mx-2">
+                                    <View className="bg-white w-7 h-7 rounded-full items-center justify-center">
+                                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#046d64' }}>1</Text>
+                                    </View>
+                                    <Text
+                                        style={{
+                                            fontFamily: 'Poppins-Bold',
+                                            fontSize: 12,
+                                            textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                                            textShadowOffset: {width: 0, height: 1},
+                                            textShadowRadius: 2,
+                                        }}
+                                        className="text-white text-center mt-1"
+                                    >
+                                        Book your Court
+                                    </Text>
+                                </View>
+
+                                <View className="h-0.5 w-4 bg-white opacity-50 mx-1" />
+
+                                <View className="items-center mx-2">
+                                    <View className="bg-white w-7 h-7 rounded-full items-center justify-center">
+                                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#046d64' }}>2</Text>
+                                    </View>
+                                    <Text
+                                        style={{
+                                            fontFamily: 'Poppins-Bold',
+                                            fontSize: 12,
+                                            textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                                            textShadowOffset: {width: 0, height: 1},
+                                            textShadowRadius: 2,
+                                        }}
+                                        className="text-white text-center mt-1"
+                                    >
+                                        Join a Team
+                                    </Text>
+                                </View>
+
+                                <View className="h-0.5 w-4 bg-white opacity-50 mx-1" />
+
+                                <View className="items-center mx-2">
+                                    <View className="bg-white w-7 h-7 rounded-full items-center justify-center">
+                                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#046d64' }}>3</Text>
+                                    </View>
+                                    <Text
+                                        style={{
+                                            fontFamily: 'Poppins-Bold',
+                                            fontSize: 12,
+                                            textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                                            textShadowOffset: {width: 0, height: 1},
+                                            textShadowRadius: 2,
+                                        }}
+                                        className="text-white text-center mt-1"
+                                    >
+                                        Challenge Others
+                                    </Text>
+                                </View>
                             </View>
-                            <Text className="text-2xl font-bold text-gray-800">MatchVerse</Text>
-                            <Text className="text-gray-500 text-center mt-2">
-                                Sign in to find and book your perfect venue
-                            </Text>
                         </View>
 
-                        {/* Login Form */}
-                        <LoginForm onNavigateToRegister={navigateToRegister} />
+                        {/* Login section with more space at top */}
+                        <View className="pb-4" style={{ marginTop: 20 }}>
+                            {/* Login Card - Lengthier */}
+                            <View className="bg-white bg-opacity-60 backdrop-blur-md rounded-3xl shadow-lg p-6 mx-6">
+                                {/* Welcome text with more vertical space */}
+                                <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 22 }} className="text-gray-800 mb-5 text-center">
+                                    Welcome Back
+                                </Text>
 
-                        {/* Footer */}
-                        <View className="mt-6 items-center">
-                            <Text className="text-gray-500 text-sm">
-                                By continuing, you agree to our Terms of Service and Privacy Policy
-                            </Text>
+                                {/* Login Form */}
+                                <LoginForm onNavigateToRegister={navigateToRegister} />
+
+                                {/* Additional space at bottom of card */}
+                                <View className="h-2"></View>
+                            </View>
+
+                            {/* Footer with transparent background */}
+                            <View className="mt-3 items-center mx-4">
+                                <Text style={{
+                                    fontFamily: 'Poppins-Regular',
+                                    fontSize: 11, // Smaller font size for terms text
+                                    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+                                    textShadowOffset: {width: 0, height: 1},
+                                    textShadowRadius: 2
+                                }} className="text-white text-center">
+                                    By continuing, you agree to our Terms of Service and Privacy Policy
+                                </Text>
+                            </View>
                         </View>
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </View>
     );
 }
