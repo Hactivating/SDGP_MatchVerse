@@ -7,10 +7,7 @@
     <list default="true" id="a662c68c-86fa-43e6-94e4-962c3f43cab0" name="Changes" comment="Log in and Register">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/profile.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(auth)/login.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(auth)/login.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(auth)/register.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(auth)/register.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/components/auth/LoginForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/components/auth/LoginForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/components/auth/RegisterForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/components/auth/RegisterForm.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,7 +112,7 @@
       <workItem from="1741281623463" duration="676000" />
       <workItem from="1741282306862" duration="10612000" />
       <workItem from="1741333041153" duration="19000" />
-      <workItem from="1741847399821" duration="26774000" />
+      <workItem from="1741847399821" duration="30817000" />
     </task>
     <task id="LOCAL-00001" summary="Log in and Register">
       <option name="closed" value="true" />

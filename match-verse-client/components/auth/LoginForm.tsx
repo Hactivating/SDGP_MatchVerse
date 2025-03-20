@@ -108,13 +108,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity className="self-end mt-2">
-                    <Text style={{ color: '#046d64' }} className="text-sm font-medium">Forgot Password?</Text>
+                    <Text style={{ color: '#10b68d' }} className="text-sm font-medium">Forgot Password?</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Login Button */}
             <TouchableOpacity
-                style={{ backgroundColor: '#046d64' }}
+                style={{ backgroundColor: '#10b68d' }}
                 className="py-4 rounded-xl items-center mb-4 shadow-sm"
                 onPress={handleLogin}
                 disabled={state.isLoading}
@@ -155,7 +155,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onNavigateToRegister }) =>
             <View className="flex-row justify-center mt-4">
                 <Text className="text-gray-600">Don't have an account? </Text>
                 <TouchableOpacity onPress={onNavigateToRegister}>
-                    <Text style={{ color: '#046d64' }} className="font-bold">Sign Up</Text>
+                    <Text style={{ color: '#10b68d' }} className="font-bold">Sign Up</Text>
                 </TouchableOpacity>
             </View>
 
