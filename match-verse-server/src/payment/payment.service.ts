@@ -12,14 +12,21 @@ export class PaymentService {
         });
     }
 
-    async createPayment(amount: Number) {
-        const payment = await this.stripe.payment.create({
-            amount: amount * 100,
-            payment_method_types: ['card'],
-        });
+    async createPayment(amount: number, currency = 'LKR') {
+        try {
+            const paymentIntent = await this.stripe.paymentIntents.create({
+                amount: Math.round(amount * 100),
+                currency,
+                metadata: {
+                    source: 'court booking'
+                }
+            });
 
-        return payment.client_secret;
+            return paymentIntent.client_secret;
+        } catch (error) {
+            console.error('stripe payment error');
+            throw new Error('payment failed')
+        }
     }
 }
-
 

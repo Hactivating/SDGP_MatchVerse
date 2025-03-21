@@ -65,14 +65,14 @@ export class BookingsService {
   }
 
   async createVenueBooking(payload: VenueBookingDto) {
-    return this.createBooking(payload);
+    return this.createBooking(payload, false);
   }
 
   async createUserBooking(payload: UserBookingDto) {
-    return this.createBooking(payload);
+    return this.createBooking(payload, true);
   }
 
-  async createBooking(payload: VenueBookingDto | UserBookingDto) {
+  async createBooking(payload: VenueBookingDto | UserBookingDto, isUserBooking: boolean) {
     //get seperate court id and starting time variables derived from the values in payload
     const { courtId, startingTime } = payload;
 
@@ -92,8 +92,17 @@ export class BookingsService {
         return 'invalid time ';
       }
     }
+
+
+
+    const bookingData: any = {
+      ...payload,
+      price: isUserBooking ? pricePerBooking : undefined,
+      isPaid: isUserBooking ? false : undefined,
+    };
+
     return this.prismaService.booking.create({
-      data: payload,
+      data: bookingData,
 
     });
   }

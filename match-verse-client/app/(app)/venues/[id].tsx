@@ -7,6 +7,8 @@ import { getAllVenues, getAllCourts, Venue, Court, getSportIcon, getSportColor }
 import { format, addDays } from 'date-fns';
 import { api } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
+import { loadStripe } from '@stripe/stripe-js'
+import { useStripe } from '@stripe/stripe-react-native'
 
 const bookingsApi = {
     getByCourtAndDate: (courtId, date) => {
@@ -24,6 +26,8 @@ const bookingsApi = {
         return api.post('/bookings/user', bookingData);
     }
 };
+
+
 
 interface Booking {
     date: string;
@@ -190,6 +194,35 @@ export default function VenueDetail() {
         }
     };
 
+    const makePayment = async (courtId, amount) => {
+        const stripe = await loadStripe("pk_test_51R1dZ6CpJGOC8BnBhPhOYZHX7wO2AWHCWisvHNNlf9xzvTdsiffHnt47a14nKWcOxwNKt9KCwJTGLOi5iWIrzrAB00L2300Ezl")
+
+        const body = {
+            amount: amount,
+            courtId: courtId,
+            date: selectedDate,
+            timeSlot: selectedTimeSlot,
+        };
+
+        const response = await fetch('${apiURL}/payment/create-payment-intent', {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+
+        const session = await response.json();
+
+        if (session.clientSecret) {
+            const result = await stripe.redirectToCheckout({ sessionId: session.clientSecret });
+
+            if (result.error) {
+                console.error('stripe checkout error', result.error);
+            }
+        }
+    };
+
     const bookCourt = async () => {
         if (!selectedCourt || selectedTimeSlot === null) {
             Alert.alert('Selection Required', 'Please select a court and time slot');
@@ -212,6 +245,8 @@ export default function VenueDetail() {
             };
 
             const response = await bookingsApi.createUserBooking(bookingData);
+
+            await makePayment(selectedCourt.courtId, selectedCourt.pricePerBooking);
 
             Alert.alert(
                 'Booking Successful',
@@ -241,6 +276,7 @@ export default function VenueDetail() {
             setBookingInProgress(false);
         }
     };
+
 
     if (loading) {
         return (
@@ -336,9 +372,9 @@ export default function VenueDetail() {
                         <View className="flex-row items-center">
                             <Ionicons name="time-outline" size={22} color="#22c55e" />
                             <Text className="text-gray-800 ml-2 text-base">
-                                Open: {Math.floor(venue.openingTime/100)}:
+                                Open: {Math.floor(venue.openingTime / 100)}:
                                 {venue.openingTime % 100 === 0 ? '00' : venue.openingTime % 100} -
-                                {Math.floor(venue.closingTime/100)}:
+                                {Math.floor(venue.closingTime / 100)}:
                                 {venue.closingTime % 100 === 0 ? '00' : venue.closingTime % 100}
                             </Text>
                         </View>
@@ -362,8 +398,8 @@ export default function VenueDetail() {
                                     <View
                                         className={`w-28 h-28 rounded-lg items-center justify-center mb-2 
                                             ${selectedCourt?.courtId === court.courtId ?
-                                            'border-2 border-[#22c55e] bg-[rgba(34,197,94,0.1)]' :
-                                            'border border-gray-200 bg-gray-50'}`}
+                                                'border-2 border-[#22c55e] bg-[rgba(34,197,94,0.1)]' :
+                                                'border border-gray-200 bg-gray-50'}`}
                                     >
                                         <Ionicons
                                             name={getSportIcon(court.name || '')}
@@ -392,7 +428,7 @@ export default function VenueDetail() {
                                 key={index}
                                 className={`mx-2 w-16 h-20 items-center justify-center rounded-lg
                                     ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
-                                    'bg-[#22c55e]' : 'bg-gray-50 border border-gray-200'}`}
+                                        'bg-[#22c55e]' : 'bg-gray-50 border border-gray-200'}`}
                                 onPress={() => setSelectedDate(day)}
                             >
                                 <Text
@@ -443,21 +479,19 @@ export default function VenueDetail() {
                                         <TouchableOpacity
                                             key={index}
                                             disabled={!isAvailable}
-                                            className={`px-4 py-3 rounded-lg mb-3 ${
-                                                selectedTimeSlot === index ? 'bg-[#22c55e]' :
-                                                    isAvailable ?
-                                                        'bg-gray-50 border border-gray-200' :
-                                                        'bg-gray-100 border border-gray-200 opacity-50'
-                                            }`}
+                                            className={`px-4 py-3 rounded-lg mb-3 ${selectedTimeSlot === index ? 'bg-[#22c55e]' :
+                                                isAvailable ?
+                                                    'bg-gray-50 border border-gray-200' :
+                                                    'bg-gray-100 border border-gray-200 opacity-50'
+                                                }`}
                                             style={{ width: '48%' }}
                                             onPress={() => setSelectedTimeSlot(index)}
                                         >
                                             <Text
-                                                className={`text-center ${
-                                                    selectedTimeSlot === index ? 'text-white font-bold' :
-                                                        isAvailable ?
-                                                            'text-gray-800' : 'text-gray-400'
-                                                }`}
+                                                className={`text-center ${selectedTimeSlot === index ? 'text-white font-bold' :
+                                                    isAvailable ?
+                                                        'text-gray-800' : 'text-gray-400'
+                                                    }`}
                                             >
                                                 {time}
                                             </Text>
@@ -468,9 +502,8 @@ export default function VenueDetail() {
                         )}
 
                         <TouchableOpacity
-                            className={`mt-6 py-3 px-6 rounded-lg items-center ${
-                                selectedTimeSlot !== null && !bookingInProgress ? 'bg-[#22c55e]' : 'bg-gray-300'
-                            }`}
+                            className={`mt-6 py-3 px-6 rounded-lg items-center ${selectedTimeSlot !== null && !bookingInProgress ? 'bg-[#22c55e]' : 'bg-gray-300'
+                                }`}
                             disabled={selectedTimeSlot === null || bookingInProgress}
                             onPress={bookCourt}
                         >
