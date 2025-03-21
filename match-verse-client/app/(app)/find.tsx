@@ -39,7 +39,7 @@ export default function FindScreen() {
     const [partnerId, setPartnerId] = useState('');
     const [selectedDate, setSelectedDate] = useState(getCurrentDate());
 
-    // Get current date in the format YYYY-MM-DD
+    // Get current date in the format YYYY-MM-DDzx
     function getCurrentDate() {
         const date = new Date();
         return date.toISOString().split('T')[0];

@@ -20,7 +20,7 @@ export default function GoogleAuthCallback() {
             } catch (error) {
                 console.error('Google auth callback error:', error);
                 // Navigate back to login on error
-                router.replace('/(auth)1/login');
+                router.replace('/(auth)/login');
             }
         };
 
