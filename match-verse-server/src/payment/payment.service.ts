@@ -1,21 +1,35 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 
 @Injectable()
 export class PaymentService {
-    private stripe: Stripe
+    private stripe: Stripe;
 
 
-    constructor() {
-        this.stripe = new Stripe(process.env.sk_test_51R1dZ6CpJGOC8BnBSRWATHkFPCmdM9y3gUfMblLvmb5PTPpF45S63SYsh9AitR5JkpjDqRNoth5oUFWs9epe0Qdw00IVTsKH5h, {
-            apiVersion: '2023-10-16',
+    constructor(private configService: ConfigService) {
+        const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+
+        if (!stripeSecretKey) {
+            throw new Error('STRIPE_SECRET_KEY is not defined in env file')
+        }
+
+        this.stripe = new Stripe(stripeSecretKey, {
+
+            apiVersion: '2023-10-16' as any,
         });
+
     }
+
+
 
     async createPayment(amount: number, currency = 'LKR') {
         try {
+
+            const amountInSmallestUnit = Math.round(amount * 100);
+
             const paymentIntent = await this.stripe.paymentIntents.create({
-                amount: Math.round(amount * 100),
+                amount: amountInSmallestUnit,
                 currency,
                 metadata: {
                     source: 'court booking'

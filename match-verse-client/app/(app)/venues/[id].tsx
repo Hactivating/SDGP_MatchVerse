@@ -7,8 +7,9 @@ import { getAllVenues, getAllCourts, Venue, Court, getSportIcon, getSportColor }
 import { format, addDays } from 'date-fns';
 import { api } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
-import { loadStripe } from '@stripe/stripe-js'
-import { useStripe } from '@stripe/stripe-react-native'
+import { initPaymentSheet, presentPaymentSheet, useStripe } from '@stripe/stripe-react-native';
+
+
 
 const bookingsApi = {
     getByCourtAndDate: (courtId, date) => {
@@ -194,32 +195,55 @@ export default function VenueDetail() {
         }
     };
 
-    const makePayment = async (courtId, amount) => {
-        const stripe = await loadStripe("pk_test_51R1dZ6CpJGOC8BnBhPhOYZHX7wO2AWHCWisvHNNlf9xzvTdsiffHnt47a14nKWcOxwNKt9KCwJTGLOi5iWIrzrAB00L2300Ezl")
 
-        const body = {
-            amount: amount,
-            courtId: courtId,
-            date: selectedDate,
-            timeSlot: selectedTimeSlot,
-        };
 
-        const response = await fetch('${apiURL}/payment/create-payment-intent', {
-            method: "POST",
-            headers: {
-                "Content-type": "application/json"
-            },
-            body: JSON.stringify(body)
-        });
+    const initializePaymentSheet = async (amount: number, courtId: number) => {
+        try {
+            const paymentData = {
+                amount: amount,
+                courtId: courtId,
+                date: format(selectedDate, 'yyyy-MM-dd'),
+                timeSlot: selectedTimeSlot
+            };
 
-        const session = await response.json();
+            const response = await api.post('payment/create-payment-intent', paymentData);
 
-        if (session.clientSecret) {
-            const result = await stripe.redirectToCheckout({ sessionId: session.clientSecret });
 
-            if (result.error) {
-                console.error('stripe checkout error', result.error);
+            if (!response.data.clientSecret) {
+                throw new Error('Failed to create payment intent')
             }
+
+            const { error } = await initPaymentSheet({
+                merchantDisplayName: 'Sports Court Booking',
+                paymentIntentClientSecret: response.data.clientSecret,
+            });
+
+            if (error) {
+                throw new Error(error.message);
+
+            }
+
+            return true;
+        } catch (err) {
+            console.error('Payment initialization error : ', err);
+            return false;
+
+        }
+
+    };
+
+    const handlePayment = async () => {
+        try {
+            const { error } = await presentPaymentSheet();
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            return true;
+        } catch (err) {
+            console.error('Payment error', err);
+            return false;
         }
     };
 
@@ -237,16 +261,31 @@ export default function VenueDetail() {
                 throw new Error('Selected time slot not found');
             }
 
+            const isPaymentinitialized = await initializePaymentSheet(
+                selectedCourt.pricePerBooking,
+                selectedCourt.courtId
+            );
+
+            if (!isPaymentinitialized) {
+                throw new Error('Failed to initialize payment')
+            }
+
+            const isPaymentSuccessful = await handlePayment();
+
+            if (!isPaymentSuccessful) {
+                throw new Error('Payment failed');
+            }
+
             const bookingData = {
-                userId: state.user?.id || 1,
+                // userId: state.user?.id || 1,
                 courtId: selectedCourt.courtId,
                 startingTime: selectedBooking.starts,
                 date: format(selectedDate, 'yyyy-MM-dd')
             };
 
-            const response = await bookingsApi.createUserBooking(bookingData);
+            await bookingsApi.createUserBooking(bookingData);
 
-            await makePayment(selectedCourt.courtId, selectedCourt.pricePerBooking);
+
 
             Alert.alert(
                 'Booking Successful',

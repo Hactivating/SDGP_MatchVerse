@@ -39,7 +39,7 @@ export class BookingsController {
   }
 
   @Post('/update-status/:bookingId')
-  updateBookingStatus(@Param('bookingId') bookingId: string, @Body() body: { isPaid: boolea }) {
+  updateBookingStatus(@Param('bookingId') bookingId: string, @Body() body: { isPaid: boolean }) {
     return this.bookingService.updateBookingStatus(+bookingId, body.isPaid);
   }
 }

@@ -67,7 +67,6 @@ model Booking {
   startingTime String
   userId       Int?
   user         User?   @relation(fields: [userId], references: [userId])
-  price        Float
   isPaid       Boolean @default(false)
 
   matchRequest MatchRequest[]

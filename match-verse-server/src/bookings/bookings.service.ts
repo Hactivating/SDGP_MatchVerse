@@ -101,6 +101,8 @@ export class BookingsService {
       isPaid: isUserBooking ? false : undefined,
     };
 
+
+
     return this.prismaService.booking.create({
       data: bookingData,
 

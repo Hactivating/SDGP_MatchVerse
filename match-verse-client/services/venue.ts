@@ -29,6 +29,7 @@ export interface Court {
     hourlyRate?: number;
     createdAt?: string;
     updatedAt?: string;
+    pricePerBooking: number;
 }
 
 export interface CourtImage {
