@@ -236,7 +236,7 @@ export default function Navbar() {
                                         marginTop: 5
                                     }}
                                 >
-                                    Find Match
+                                    Matches
                                 </Animated.Text>
                             </Animated.View>
                         </TouchableOpacity>

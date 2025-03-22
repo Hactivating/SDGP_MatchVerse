@@ -1,0 +1,830 @@
+commit e5e16b60d17f36d25c25a7a581a5e5211b35b59e
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Sat Mar 22 15:54:21 2025 +0530
+
+    updated dependencies
+
+commit a08730446a2e337575bd2cc46c0ef75398e07119
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Sat Mar 22 04:16:36 2025 +0530
+
+    UI UX Redesign
+    
+    Implemented frosted glass cards, unified gradient theme, and improved interactions across home, profile, courts screens and navbar. Added animations, haptic feedback, and standardized component styles.
+
+commit 49ed831d0bc561d2f9b4deafdcc41f1e3afa25c9
+Merge: e7b882656 25ec29093
+Author: DhuwarakeshV <168993985+DhuwarakeshV@users.noreply.github.com>
+Date:   Thu Mar 20 21:26:53 2025 +0530
+
+    Merge pull request #28 from Hactivating/ui-users
+    
+    Merge Pull Request
+
+commit 25ec290933a47fb6716648aa8ac4aefa435bd1f0
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Thu Mar 20 17:55:08 2025 +0530
+
+    Minor changes
+
+commit 936abe307a77b6111b04bddddb0cb983093c85cc
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Tue Mar 18 15:34:45 2025 +0530
+
+    UI enhancements and Profile Screen Functionality
+
+commit e7b8826563faf67ea6e961c03c580c8bb6dab5b7
+Merge: ef6ec827d f22c141f1
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 17 23:48:45 2025 +0530
+
+    Merge pull request #27 from Hactivating/feature/websockets
+    
+    feat: bug fix in google strategy
+
+commit f22c141f1f5c64b89d0fc74ff9abdc386640fd82
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 17 22:17:37 2025 +0530
+
+    feat: bug fix in google strategy
+    
+    - fixed a minor bug where typescript failed to compile because there was a possibility the client ID and secret could be undefined
+
+commit ef6ec827d85b1ebb01415b981f815c52245cc57c
+Merge: 70b9fa27a b40022b43
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 17 22:07:27 2025 +0530
+
+    Merge pull request #25 from Hactivating/feature/websockets
+    
+    Feature/websockets
+
+commit b40022b438ac56047f27dccb7fbe02a429ceeef5
+Merge: ec0297575 70b9fa27a
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Mon Mar 17 22:06:39 2025 +0530
+
+    Merge branch 'main' into feature/websockets
+
+commit 70b9fa27a65c25f41a286d45a89f2e92d9266afd
+Merge: b714cda40 186e666e6
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 17 22:02:37 2025 +0530
+
+    Merge pull request #26 from Hactivating/feature/Ranking
+    
+    Feature/ranking
+
+commit 186e666e6874ff95bbb1901cf3728abd7771d981
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 17 21:52:52 2025 +0530
+
+    feat: resolved dependencies
+
+commit 3d780b23af1f98f2dbe51911a2aec2e12b82cd99
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Mon Mar 17 21:22:32 2025 +0530
+
+    Fixed bugs in the leaderboard
+
+commit 83e65828c63ffef4ca2ef689d2621a26e55853bf
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Mon Mar 17 21:11:09 2025 +0530
+
+    Fixed the leaderbaord
+
+commit b9efcd61723a0bcdbc4738c4fd1b779ce673ed19
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Mon Mar 17 21:04:11 2025 +0530
+
+    Fixed bugs
+
+commit ec02975756a105a43f62fbd02e5f6d917a9d47e5
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 17 17:29:47 2025 +0530
+
+    feat: updated dependencies
+
+commit b714cda4003323106b88df8d5c1c8953d89bbfec
+Merge: ea83f2181 bba859992
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Sun Mar 16 23:00:30 2025 +0530
+
+    Merge pull request #23 from feature/Ranking
+    
+    Feature/ranking
+
+commit ea83f218143a6eaa3718115fef5b62cd42582961
+Merge: b17721245 c8d47453a
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Sun Mar 16 06:39:45 2025 +0530
+
+    Merge pull request #24 from Hactivating/feature/court-tests
+    
+    Feature/court unit testing
+
+commit 91b805ffc7534c4d180a53e31465760f6648fc88
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Sun Mar 16 02:24:21 2025 +0530
+
+    Login improvements + Matching
+
+commit c8d47453a08e127fab33159503220117fe9eb913
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Sat Mar 15 23:37:32 2025 +0530
+
+    test / court module completed
+
+commit bba859992b452d6e66da5e635f5e2a8869b32f7f
+Merge: 01c0ddfa0 b17721245
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Sat Mar 15 18:15:13 2025 +0530
+
+    Merge branch 'main' into feature/Ranking
+
+commit 01c0ddfa0b9b454a6b48bceca069094cf4b071a2
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Sat Mar 15 18:02:35 2025 +0530
+
+    Updated Ranking
+
+commit b5ea3bbb0dda75e0a157087243ff7f3ad9013fde
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Sat Mar 15 16:19:13 2025 +0530
+
+    Updated the match result
+
+commit a43a686491ad05893b91423e916ea708be9910ca
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Sat Mar 15 08:16:25 2025 +0530
+
+    test / court service test
+
+commit 34ff24777f7ac9c527c895ac236015935eef6b92
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Sat Mar 15 07:09:26 2025 +0530
+
+    test / court controller test completed
+
+commit 7992715dbff8f7dc337a78925727a5642b29ef0b
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Fri Mar 14 22:00:53 2025 +0530
+
+    updated ranking service
+
+commit 94be0c8c1ebffb5b93adc9e20352a35dbbde20f5
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Fri Mar 14 20:37:28 2025 +0530
+
+    Fixed bugs in the code
+
+commit 71c34b232ba0b45a2870f008397fdeab461c85e9
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Fri Mar 14 20:03:09 2025 +0530
+
+    Updated the match result
+
+commit 9fa7aea2f5961e0f6bd8b5960e039fd278ab17fb
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Fri Mar 14 16:15:26 2025 +0530
+
+    Added match result
+
+commit ced870bc64fdd716950c1bfc9ebecf0fdd714087
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Fri Mar 14 15:52:12 2025 +0530
+
+    feature/court unit testing
+
+commit b177212453e259996b2c72adcf59a9314e0f6464
+Merge: 0e5a7dd97 ff00ea511
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Thu Mar 13 10:36:39 2025 +0530
+
+    Merge pull request #14 from Hactivating/leaderboard
+    
+    Created the leaderboard
+
+commit b6ace89f60be628ccdbfa360aabaf154a2b9b971
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Thu Mar 13 00:30:14 2025 +0530
+
+    feat: reset migrations
+
+commit fb77c2668e1cac7b4710c5cf86c2164fc6b5e935
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Thu Mar 13 00:23:32 2025 +0530
+
+    feat: added websockets for realtime booking updates
+
+commit ea477b205966f4e3d0b4230edb5a7e2eb7ea24d5
+Merge: b33f3fda1 0e5a7dd97
+Author: DhuwarakeshV <168993985+DhuwarakeshV@users.noreply.github.com>
+Date:   Wed Mar 12 21:43:17 2025 +0530
+
+    Merge pull request #22 from Hactivating/main
+    
+    .
+
+commit 0e5a7dd97a5c132b99ca1b86224d7e5502151310
+Merge: 20fa49d4d 87ffeeb1e
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Tue Mar 11 13:38:28 2025 +0530
+
+    Merge pull request #15 from Hactivating/feature/test-cases
+    
+    Feature/test cases
+
+commit 20fa49d4d83d0903b9d506c0760ef08958a50c30
+Merge: e48798dc6 dee501494
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Tue Mar 11 13:34:26 2025 +0530
+
+    Merge pull request #18 from Hactivating/ui/navbar
+    
+    Update VenueProfile.jsx
+
+commit e48798dc64685bcb3cb702223aa923ba83eac04c
+Merge: 5958e0d92 3a75eeffa
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Tue Mar 11 13:30:16 2025 +0530
+
+    Merge pull request #17 from Hactivating/ui/booking
+    
+    UI/booking
+
+commit 3a75eeffa945c67b61abb12a200e1920f5df5183
+Author: kyehali <upekshanav@gmail.com>
+Date:   Tue Mar 11 12:06:10 2025 +0530
+
+    changed the navbar issue in venue page
+
+commit b33f3fda158893abdd4e89645613d6f9f8375fd2
+Merge: 69e597b6a 5958e0d92
+Author: DhuwarakeshV <168993985+DhuwarakeshV@users.noreply.github.com>
+Date:   Tue Mar 11 12:01:28 2025 +0530
+
+    Merge pull request #16 from Hactivating/main
+    
+    pulling main to users
+
+commit 3de29ea7a4cc0ebf20f4b914d1c6db4f0ad90f30
+Author: kyehali <upekshanav@gmail.com>
+Date:   Tue Mar 11 11:59:45 2025 +0530
+
+    fixed the badminton icon issue in navbar
+
+commit 87ffeeb1e358f6ebf6a12eb544297e8c77458f99
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Tue Mar 11 00:06:44 2025 +0530
+
+    feat: added unit tests for bookings service
+    
+    Added unit tests for the following methods in bookings.service.ts
+    -getBookings
+    -getBookingsByUser
+    -createBooking
+
+commit fa04eecacbaad13e91722411968598d089edc3e7
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 10 19:37:01 2025 +0530
+
+    feat: added unit tests for users service
+    
+    Added unit tests for the following methods in users.service.ts
+    -getAllUsers
+    -getUserByEmail
+    -createNewUser
+    -deleteUser
+
+commit 2cfe2cb855a86268308c507ac40aea91fc53c962
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 10 19:08:44 2025 +0530
+
+    feat: added unit tests for venue service
+    
+    Added unit test for the following methods in venues.service.ts
+    -getAllVenues
+    -getVenueByEmail
+    -createNewVenue
+    -deleteVenue
+
+commit 935bf744e902c7d1f9d91d8df1e6e554b7ac4ef0
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Mon Mar 10 16:02:22 2025 +0530
+
+    Added rank and rank points to the user
+
+commit ff00ea5119d2837e859ca4caa259323f0456a257
+Merge: a3e3c8b70 5958e0d92
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Mon Mar 10 15:33:22 2025 +0530
+
+    Merge branch 'main' into leaderboard
+
+commit be1b38b2583ec95b8641402373fb21ed5f98db18
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 10 12:26:16 2025 +0530
+
+    feat: added unit tests for booking controller
+
+commit 5958e0d9271d9e1225be380d8140e948b1e7f508
+Merge: d0f991a0d 23effbadd
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 10 12:09:51 2025 +0530
+
+    Merge pull request #13 from Hactivating/feature/matching
+    
+    Feature/matching merge conflicts resolved
+
+commit 23effbadd79165f337d4b120cbd61860d5def3d4
+Merge: b0754568e d0f991a0d
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 10 12:09:26 2025 +0530
+
+    Merge branch 'main' into feature/matching
+
+commit b0754568e4588223a4af66a2ba25b4838e8e17c9
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 10 12:06:11 2025 +0530
+
+    resolved merge conflict
+
+commit 9cc59608b0bba1fad8c85f79b0479482eba5c011
+Author: lkavi <mail@lkavi.com>
+Date:   Mon Mar 10 01:42:53 2025 +0530
+
+    fidxed photo upload in admin dashboard
+
+commit dee50149409489b6c298c2ff0c82f0a9d21da824
+Author: lkavi <mail@lkavi.com>
+Date:   Mon Mar 10 01:41:55 2025 +0530
+
+    Update VenueProfile.jsx
+
+commit 81efd28a5bcf602986a8ecda403fe63ad3666a2d
+Merge: f1e7ff5be 6d76139ea
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Mon Mar 10 01:19:42 2025 +0530
+
+    Merge pull request #12 from Hactivating/ui/navbar
+    
+    UI/navbar merged to UI/booking
+
+commit d0f991a0d92409e621eba55552b865f971578608
+Merge: 3f118ded5 b8b96d881
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Mon Mar 10 01:09:21 2025 +0530
+
+    Merge pull request #11 from Hactivating/feature/test-cases
+    
+    feat: added unit test
+
+commit 6d76139eabc256d9c1975985ed70b7b04ac0b568
+Author: lkavi <mail@lkavi.com>
+Date:   Mon Mar 10 01:08:08 2025 +0530
+
+    gitignore and package.json, new package fdate-fns
+
+commit 67848dfd5606c7ecb054273bb445e403ade4bc39
+Author: lkavi <mail@lkavi.com>
+Date:   Mon Mar 10 01:07:16 2025 +0530
+
+    Booking has been connected to backend and general cleanup
+
+commit ce3222f0769d653d83c3c8c93425109bf59ae189
+Author: lkavi <mail@lkavi.com>
+Date:   Mon Mar 10 01:06:51 2025 +0530
+
+    Only badminton now, others show coming soon, and now phots are fetched properly and data too.
+
+commit b8b96d881ff73221e31fe2b60bc3836f92f806ef
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 10 01:06:46 2025 +0530
+
+    feat: added unit tests (Venues, Users)
+    
+    - Added unit tests to test the methods in users.controller.ts and venues.controller.ts
+
+commit cca2a93f5dda0b8d12377c66d638fe9a0528b324
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Mar 10 00:08:56 2025 +0530
+
+    feat: added unit test
+    
+    - Added a unit test to test createVenue method in venue.controller.ts
+    -Added a venueName attribute to the venue model
+
+commit 3f118ded5a20f1967d40ad50b8439740120e4569
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 22:42:25 2025 +0530
+
+    Added photo upload, and fixed localstorage altering issue. now shouldn't forget venue details once saved changes.
+
+commit faeee708ed8f82d4ed822b0d9759f8048c5b6a6e
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 22:15:07 2025 +0530
+
+    fixed navbar implementation only on layout.
+
+commit ea32b05eebf993aaef94d02e6689b93da5602594
+Merge: 1e1fd4f8d f1e7ff5be
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Sun Mar 9 13:37:31 2025 +0530
+
+    Merge pull request #10 from Hactivating/ui/booking
+    
+    Merge pull request #9 from Hactivating/main
+
+commit f1e7ff5bee62ae682cf9fa5f36e67769eb96305f
+Merge: 36304b133 1e1fd4f8d
+Author: Kaviseshan Lavakumar <160271997+lkavi@users.noreply.github.com>
+Date:   Sun Mar 9 13:35:38 2025 +0530
+
+    Merge pull request #9 from Hactivating/main
+    
+    merge from main
+
+commit 1e1fd4f8dcddba26e32007c092ba2701b812a300
+Merge: 36304b133 69e597b6a
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 13:22:57 2025 +0530
+
+    Merge branch 'ui-users'
+
+commit 69e597b6a6c786e5803db8e2b7721d4c59da506b
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 13:02:47 2025 +0530
+
+    Fixed login with email address
+    
+    Fixed login with email, but username is still not working.
+
+commit 36304b13315c4a377afb49459f26365f3e432b1c
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 11:17:12 2025 +0530
+
+    added venue editing functionality
+
+commit e6ef33083a060e248947e5e5acb3e708c219227b
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 11:16:56 2025 +0530
+
+    Added court adding functinality
+
+commit 2b1ffbc856eb6b5ff175c651a5d92f64d373bf5b
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 11:16:35 2025 +0530
+
+    Added deletable booking with password confirmation
+
+commit 4adcfe0f200cc4d5a4861a3392a89b1a2818b548
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 11:16:11 2025 +0530
+
+    added booking calendar and functinality
+
+commit fecf77f40a213d37dcc9e253525a90b2e884eb1e
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 9 11:15:30 2025 +0530
+
+    Barebone admin dashboard added. ViteJS
+
+commit 5be17d12fcce826c2becc507aeb72b542ea0af73
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sun Mar 9 02:10:14 2025 +0530
+
+    fix: booking time
+    
+    -Fixed a issue where the booking slots generated did not match the expected format
+    - Changed all time slots to be represented using 4 digits in a HH:MM format
+
+commit d00b5c6d7e2f292c7312d615a5a191e55f871be8
+Author: kyehali <upekshanav@gmail.com>
+Date:   Sat Mar 8 14:47:49 2025 +0530
+
+    created the venue 2 page
+    
+    where user sees the each venue details, navigates to the different venues .
+
+commit 893326fd13fa74643b836e1edcb854c0d01c41e2
+Merge: 5ce74a2fe 66b930971
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Sat Mar 8 13:48:19 2025 +0530
+
+    Merge pull request #7 from Hactivating/feature/s3-image-upload
+    
+    Feature/s3 image upload
+
+commit 7b312f91af8f3c8590f6f2e7972a2185e522e0ae
+Author: kyehali <upekshanav@gmail.com>
+Date:   Sat Mar 8 13:46:23 2025 +0530
+
+    created the venues page
+
+commit 66b930971a6d63e19771e5fdbed557e46e69d9fc
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sat Mar 8 13:44:22 2025 +0530
+
+    Reapply "feat: added venue rating"
+    
+    This reverts commit 8d6fd6c70b82dd3dfe8ba444735c6e2a88de8049.
+
+commit 8d6fd6c70b82dd3dfe8ba444735c6e2a88de8049
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sat Mar 8 13:42:03 2025 +0530
+
+    Revert "feat: added venue rating"
+    
+    This reverts commit aa33ac2a7608cd50c4a372eff408f3650b23aec9.
+
+commit aa33ac2a7608cd50c4a372eff408f3650b23aec9
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sat Mar 8 13:40:19 2025 +0530
+
+    feat: added venue rating
+    
+    -Added request for users to rate venues
+    -Modified upload image file in courts to accept multiple files
+
+commit da4b77050b7131cfd23937b05080ebcc2cd3cf02
+Author: kyehali <upekshanav@gmail.com>
+Date:   Sat Mar 8 12:39:31 2025 +0530
+
+    Added homescreen and the navbar pages placehodlers
+
+commit ce4c4c5dbffea7177ea99e61b10f3039c2195978
+Author: kyehali <upekshanav@gmail.com>
+Date:   Sat Mar 8 12:37:49 2025 +0530
+
+    bypassed sign in, sign up
+
+commit 8a6c4944c3ab6223f0abf13aa0c4d15f7ea15125
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Sat Mar 8 11:22:23 2025 +0530
+
+    feature: schema fixed
+
+commit 1e7242dcec8d8500cdc9338ecb11a83c021ec278
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sat Mar 8 02:12:26 2025 +0530
+
+    feat: added image upload endpoints to users and venues
+
+commit a3e3c8b702f8f593873907aea500dc177c920c63
+Author: Sihala-Weragama <160596715+Sihala-Weragama@users.noreply.github.com>
+Date:   Fri Mar 7 13:12:53 2025 +0530
+
+    Created the leaderboard
+
+commit fb53edb5bc8a12376b109045f5794f67acd45a98
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Fri Mar 7 12:50:01 2025 +0530
+
+    Login + Register
+
+commit b6c355d091b7b91c52a730188622321888a8490d
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Fri Mar 7 12:38:57 2025 +0530
+
+    Log in and Register
+
+commit 10f1dbc447918621ff80ba2fc0b5a8b2646003b1
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Thu Mar 6 00:18:34 2025 +0530
+
+    feat: added s3 client
+    
+    - Integrated AWS S3 client to upload images to the cloud
+
+commit 424f607a3a9339942b74a796b01ae62cc87647d7
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Mar 3 23:44:06 2025 +0530
+
+    feature : matching
+    
+    creates a match request and matches
+
+commit 5ce74a2fe3420143b0e56bd7dfaa9affb2e85a58
+Author: kyehali <upekshanav@gmail.com>
+Date:   Mon Mar 3 23:41:47 2025 +0530
+
+    Reset the project
+
+commit 0f2c8295eb4d93b9b7bc09ca6480a11d0146f33b
+Merge: 91c427350 ffc15dffe
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Mon Mar 3 18:49:30 2025 +0530
+
+    Merge pull request #6 from Hactivating/feature/google
+    
+    Feature/google
+
+commit ffc15dffea8811d852ed53168b2f1ab8352b61c2
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sun Mar 2 20:27:25 2025 +0530
+
+    feat: enabled cors
+    
+    -enable requests from react and react native to backend
+
+commit 91c427350090107e4c7a5feab2a3864a0cc37d2b
+Merge: 3ccd92e36 fa20a2646
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 2 12:29:14 2025 +0530
+
+    Merge branch 'main' of https://github.com/Hactivating/SDGP_MatchVerse
+
+commit 3ccd92e36663971d277fb7f7d7528fe0738f219f
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Mar 2 12:24:07 2025 +0530
+
+    .gitignore
+
+commit 02bb91c6b2e890796c645f14855b6c92cca562a0
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Sat Mar 1 18:02:22 2025 +0530
+
+    feat: added google validation
+    
+    -Added Google authentication Using passport and oauth2.0
+    -Added dotenv to handle environment variables
+
+commit 644921dcc5875288dee64f9166a3c50b15734bb2
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Fri Feb 28 11:15:16 2025 +0530
+
+    Update api.ts
+
+commit dddaf2e93c3c015fad8b116fa4a1e8134c28283d
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Fri Feb 28 11:12:02 2025 +0530
+
+    User Creation
+
+commit fa20a2646b06378a6bbc7fffeb17e47654dd176f
+Merge: 04bd41ad1 387e8fc47
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Sun Feb 23 21:59:03 2025 +0530
+
+    Merge branch 'main' of https://github.com/Hactivating/SDGP_MatchVerse
+
+commit a9b78abccc618aa669fe81a61034b0babe98a0fd
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Feb 23 01:27:06 2025 +0530
+
+    Revert "Added landind page"
+    
+    This reverts commit 387e8fc47a6cc3b9c70de12913d4653c7a4e5747.
+
+commit 387e8fc47a6cc3b9c70de12913d4653c7a4e5747
+Author: lkavi <mail@lkavi.com>
+Date:   Sun Feb 23 01:03:11 2025 +0530
+
+    Added landind page
+
+commit 04bd41ad1b3ef3e4b12646b999e190dd627ed966
+Author: Dhuwarakesh <dhuwatck@gmail.com>
+Date:   Thu Feb 20 14:57:14 2025 +0530
+
+    Created match-verse-client
+
+commit 3236777cf11e8c2ef9c4c1f26c880057ac457008
+Author: Spyder1022 <dhuwarakesh0101@gmail.com>
+Date:   Thu Feb 20 14:29:19 2025 +0530
+
+    Delete match-verse-client
+
+commit 9f5e714b397b9d4b9d4b85616b20c4b5986f9a1d
+Author: DhuwarakeshV <168993985+DhuwarakeshV@users.noreply.github.com>
+Date:   Thu Feb 20 14:23:50 2025 +0530
+
+    Create match-verse-client
+
+commit ae692eae0783c66f338c3af20a5b9d437414f184
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Tue Feb 18 14:13:09 2025 +0530
+
+    refactor: added experience and rating for user entity
+
+commit c82e83584279576695b89991285a8e1e1ea11ed7
+Merge: ef2b9c65a bb00dc4d2
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Tue Feb 18 10:06:28 2025 +0530
+
+    Merge pull request #5 from Hactivating/feature/users
+    
+    feat: added users
+
+commit bb00dc4d251ce31b8e2d27861acc609cc4f75985
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Fri Feb 14 11:34:51 2025 +0530
+
+    feat: added users
+    
+    -Added requests to register new users
+    -Modified create booking requests to optionally include userId
+    -Modified auth service and controller to handle both venue and user logins
+
+commit ef2b9c65a96bf8840f413e423cbb3231b018ee25
+Merge: 90e43509e 46b03b225
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Thu Feb 13 22:24:24 2025 +0530
+
+    Merge pull request #4 from Hactivating/feature/bookings
+    
+    feat: added bookings
+
+commit 46b03b225e7ee9dcd1ef13b9f4679f3e6f4b100e
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Wed Feb 12 17:11:31 2025 +0530
+
+    feat: added bookings
+    
+    -Implemented booking creation by passing in time, date and courtId
+    -Added validation to ensure booking is within operating hours
+    - Generate and sends back an array of booking slots for a particular day and court
+
+commit 90e43509e684f9bb0bde4357af21733dd1318dc5
+Merge: 9b403d57d 8c904a6e8
+Author: Humayra <159514668+Hactivating@users.noreply.github.com>
+Date:   Wed Feb 12 10:07:41 2025 +0530
+
+    Merge pull request #3 from Hactivating/feature/court-
+    
+    Feature/court
+
+commit 8c904a6e88b9ec0de79cda0ab76ae5ccdb66af5c
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Tue Feb 11 23:25:22 2025 +0530
+
+    bugfix: minor issues
+
+commit 45f94dab544c7ba4af15280865c8d341d0265830
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Tue Feb 11 22:42:48 2025 +0530
+
+    refactors : court feature
+
+commit 3e0aa78dcef2973e18b6f4a2b6f1c664a8eb4697
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Tue Feb 11 22:37:28 2025 +0530
+
+    court feature
+
+commit 9b403d57dd5e220a4b5301e9f11d2b62ece93900
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Tue Feb 11 09:19:31 2025 +0530
+
+    refactor: switched auth to auth controller
+    
+    -Moved login from app controller to auth controller
+
+commit f58be8ab54e675da5e51261f3611226dcfd8d0c3
+Merge: 89bda4d59 7d8516619
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Wed Feb 5 21:31:00 2025 +0530
+
+    Merge pull request #2 from Hactivating/feature/venue-signup
+    
+    refactor: switch to passport .js for authentication
+
+commit 7d851661928c900695b39e28646a26538b92402f
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Wed Feb 5 21:30:06 2025 +0530
+
+    refactor: switch to passport .js for authentication
+    
+    -Removed AuthController
+    -Switched to using Passport authentication
+
+commit 89bda4d5958f5590766d47e2e67093375757a9b3
+Merge: 5bea5fb9a 4fd6625c6
+Author: Gowtham <146926540+Gowii3K@users.noreply.github.com>
+Date:   Tue Feb 4 21:42:31 2025 +0530
+
+    Merge pull request #1 from Hactivating/feature/venue-signup
+    
+    feat: added venue and authentication operations
+
+commit 4fd6625c630e01b06529f66a1ee22bf1f8c92664
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Tue Feb 4 20:47:57 2025 +0530
+
+    feat: added venue and authentication operations
+    
+    - Added prisma schema for venue
+    - Implemented essential CRUD operations related to venues.
+    - Hash Password before storing them using bcrypt
+
+commit 5bea5fb9a788c44821ec236deb6d475ae158693a
+Author: Gowii3K <rgadithya997@gmail.com>
+Date:   Mon Feb 3 23:39:56 2025 +0530
+
+    chore: initialize MatchVerse project
+
+commit 3c3d8033f50e8394b9e0e81cfca6b08593894176
+Author: Hactivating <159514668+Hactivating@users.noreply.github.com>
+Date:   Mon Dec 2 11:30:37 2024 +0530
+
+    Initial commit

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // You may need to adjust this URL to match your backend
 // For development on a real device, this should point to your computer's IP address
-export const API_URL = 'http://192.168.8.101:3000';
+export const API_URL = 'http://172.20.10.2:3000';
 
 export const api = axios.create({
     baseURL: API_URL,

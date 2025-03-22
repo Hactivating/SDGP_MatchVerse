@@ -1,61 +1,13 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Dimensions, Animated, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Dimensions, Animated, TouchableWithoutFeedback, FlatList } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { getAllVenues, Venue } from '@/services/venue';
+import { getAllVenues } from '@/services/venue';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 import * as Haptics from 'expo-haptics';
-
-// Venue Card Component - same as in Home page
-const VenueCard = ({ venue, onPress }) => {
-    const [pressed, setPressed] = useState(false);
-
-    return (
-        <TouchableWithoutFeedback
-            onPressIn={() => setPressed(true)}
-            onPressOut={() => setPressed(false)}
-            onPress={onPress}
-        >
-            <Animated.View
-                className="w-[30%]"
-                style={{
-                    transform: [{ scale: pressed ? 0.97 : 1 }]
-                }}
-            >
-                <View className="h-28 rounded-xl overflow-hidden mb-1.5 relative shadow-md">
-                    {venue.venueImageUrl ? (
-                        <Image
-                            source={{ uri: venue.venueImageUrl }}
-                            style={{ width: '100%', height: '100%' }}
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <LinearGradient
-                            colors={['rgba(16,182,141,0.5)', 'rgba(4,109,100,0.3)']}
-                            style={{ width: '100%', height: '100%' }}
-                        />
-                    )}
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.6)']}
-                        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '70%' }}
-                    />
-                    <View className="absolute bottom-1.5 right-1.5 bg-[rgba(0,0,0,0.7)] rounded-lg px-1.5 py-0.5 flex-row items-center">
-                        <Ionicons name="star" size={12} color="#FFD700" />
-                        <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-white text-xs ml-0.5">
-                            {venue.rating ? venue.rating.toFixed(1) : "New"}
-                        </Text>
-                    </View>
-                </View>
-                <Text style={{ fontFamily: 'Poppins-Medium', lineHeight: 18 }} className="text-gray-700 text-center">
-                    {venue.venueName || venue.name || `Venue ${venue.venueId}`}
-                </Text>
-            </Animated.View>
-        </TouchableWithoutFeedback>
-    );
-};
 
 // Enhanced Button Component - same as in Home page
 const GradientButton = ({ onPress, text, icon, small }) => {
@@ -116,11 +68,19 @@ export default function Venues() {
         popular: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) }
     }).current;
 
+    // Create animation values for venue cards
+    const venueCardAnimations = useRef(Array(12).fill().map(() => ({
+        translateY: new Animated.Value(15),
+        opacity: new Animated.Value(0)
+    }))).current;
+
     const headerOpacity = scrollY.interpolate({
         inputRange: [0, 100],
         outputRange: [1, 0.8],
         extrapolate: 'clamp',
     });
+
+    const screenWidth = Dimensions.get('window').width;
 
     // Load Poppins font
     const [fontsLoaded] = useFonts({
@@ -174,6 +134,24 @@ export default function Venues() {
                         duration: 500,
                         delay: delays[key],
                         useNativeDriver: true,
+                    })
+                ]).start();
+            });
+
+            // Animate venue cards
+            venueCardAnimations.forEach((anim, index) => {
+                Animated.parallel([
+                    Animated.timing(anim.translateY, {
+                        toValue: 0,
+                        duration: 500,
+                        delay: 300 + (index * 80),
+                        useNativeDriver: true
+                    }),
+                    Animated.timing(anim.opacity, {
+                        toValue: 1,
+                        duration: 500,
+                        delay: 300 + (index * 80),
+                        useNativeDriver: true
                     })
                 ]).start();
             });
@@ -424,7 +402,7 @@ export default function Venues() {
                                                     <GradientButton
                                                         onPress={fetchVenues}
                                                         text="Try Again"
-                                                        small
+                                                        small={true}
                                                     />
                                                 </View>
                                             ) : venues.length === 0 ? (
@@ -441,19 +419,9 @@ export default function Venues() {
                                                         <Animated.View
                                                             className="bg-[rgba(16,182,141,0.05)] rounded-xl overflow-hidden mb-4 border border-[rgba(16,182,141,0.2)]"
                                                             style={{
-                                                                opacity: fadeAnim,
+                                                                opacity: venueCardAnimations[index % 12].opacity,
                                                                 transform: [
-                                                                    {
-                                                                        translateY: Animated.timing(
-                                                                            new Animated.Value(15),
-                                                                            {
-                                                                                toValue: 0,
-                                                                                duration: 500,
-                                                                                delay: 300 + (index * 80),
-                                                                                useNativeDriver: true
-                                                                            }
-                                                                        )
-                                                                    }
+                                                                    { translateY: venueCardAnimations[index % 12].translateY }
                                                                 ]
                                                             }}
                                                         >
@@ -538,80 +506,114 @@ export default function Venues() {
                                                     <GradientButton
                                                         onPress={fetchVenues}
                                                         text="Try Again"
-                                                        small
+                                                        small={true}
                                                     />
                                                 </View>
                                             ) : venues.length > 0 ? (
-                                                <>
-                                                    <View className="flex-row justify-between mb-6">
-                                                        {venues.slice(0, 3).map((venue, index) => (
-                                                            <Animated.View
-                                                                key={venue.venueId}
+                                                <View style={{ paddingHorizontal: 4 }}>
+                                                    <FlatList
+                                                        data={venues.slice(0, 6)}
+                                                        numColumns={2}
+                                                        columnWrapperStyle={{
+                                                            justifyContent: 'space-between',
+                                                            marginBottom: 24 // More space between rows
+                                                        }}
+                                                        contentContainerStyle={{ paddingHorizontal: 4 }}
+                                                        renderItem={({ item, index }) => (
+                                                            <TouchableOpacity
                                                                 style={{
-                                                                    opacity: fadeAnim,
-                                                                    transform: [
-                                                                        {
-                                                                            translateY: Animated.timing(
-                                                                                new Animated.Value(15),
-                                                                                {
-                                                                                    toValue: 0,
-                                                                                    duration: 500,
-                                                                                    delay: 400 + (index * 100),
-                                                                                    useNativeDriver: true
-                                                                                }
-                                                                            )
-                                                                        }
-                                                                    ]
+                                                                    width: (screenWidth - 120) / 2, // Even more space between cards horizontally
+                                                                    marginBottom: 16,
+                                                                    borderRadius: 12,
                                                                 }}
+                                                                onPress={() => navigateToVenue(item.venueId)}
+                                                                activeOpacity={0.8}
                                                             >
-                                                                <VenueCard
-                                                                    venue={venue}
-                                                                    onPress={() => navigateToVenue(venue.venueId)}
-                                                                />
-                                                            </Animated.View>
-                                                        ))}
-                                                    </View>
-
-                                                    {venues.length > 3 && (
-                                                        <View className="flex-row justify-between mb-4">
-                                                            {venues.slice(3, 6).map((venue, index) => (
                                                                 <Animated.View
-                                                                    key={venue.venueId}
                                                                     style={{
-                                                                        opacity: fadeAnim,
+                                                                        opacity: venueCardAnimations[index % 12].opacity,
                                                                         transform: [
-                                                                            {
-                                                                                translateY: Animated.timing(
-                                                                                    new Animated.Value(15),
-                                                                                    {
-                                                                                        toValue: 0,
-                                                                                        duration: 500,
-                                                                                        delay: 500 + (index * 100),
-                                                                                        useNativeDriver: true
-                                                                                    }
-                                                                                )
-                                                                            }
+                                                                            { translateY: venueCardAnimations[index % 12].translateY }
                                                                         ]
                                                                     }}
                                                                 >
-                                                                    <VenueCard
-                                                                        venue={venue}
-                                                                        onPress={() => navigateToVenue(venue.venueId)}
-                                                                    />
+                                                                    <View style={{
+                                                                        aspectRatio: 1,
+                                                                        borderRadius: 12,
+                                                                        overflow: 'hidden',
+                                                                        borderWidth: 1,
+                                                                        borderColor: 'rgba(0,0,0,0.05)',
+                                                                        backgroundColor: '#f5f5f5'
+                                                                    }}>
+                                                                        {item.venueImageUrl ? (
+                                                                            <Image
+                                                                                source={{ uri: item.venueImageUrl }}
+                                                                                style={{ width: '100%', height: '100%' }}
+                                                                                resizeMode="cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <LinearGradient
+                                                                                colors={['rgba(16,182,141,0.5)', 'rgba(4,109,100,0.3)']}
+                                                                                style={{ width: '100%', height: '100%' }}
+                                                                            />
+                                                                        )}
+                                                                        <LinearGradient
+                                                                            colors={['transparent', 'rgba(0,0,0,0.6)']}
+                                                                            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%' }}
+                                                                        />
+                                                                        <View style={{
+                                                                            position: 'absolute',
+                                                                            bottom: 8,
+                                                                            left: 8,
+                                                                            backgroundColor: 'rgba(0,0,0,0.7)',
+                                                                            paddingHorizontal: 6,
+                                                                            paddingVertical: 3,
+                                                                            borderRadius: 6,
+                                                                            flexDirection: 'row',
+                                                                            alignItems: 'center'
+                                                                        }}>
+                                                                            <Ionicons name="star" size={14} color="#FFD700" />
+                                                                            <Text style={{
+                                                                                color: 'white',
+                                                                                marginLeft: 3,
+                                                                                fontFamily: 'Poppins-Medium',
+                                                                                fontSize: 11
+                                                                            }}>
+                                                                                {item.rating ? item.rating.toFixed(1) : "New"}
+                                                                            </Text>
+                                                                        </View>
+                                                                    </View>
+                                                                    <Text style={{
+                                                                        textAlign: 'center',
+                                                                        marginTop: 6,
+                                                                        fontFamily: 'Poppins-Medium',
+                                                                        color: '#4b5563',
+                                                                        fontSize: 13,
+                                                                        paddingHorizontal: 4,
+                                                                        lineHeight: 18
+                                                                    }} numberOfLines={2} ellipsizeMode="tail">
+                                                                        {item.venueName || `Venue ${item.venueId}`}
+                                                                    </Text>
                                                                 </Animated.View>
-                                                            ))}
-                                                        </View>
-                                                    )}
-
+                                                            </TouchableOpacity>
+                                                        )}
+                                                        keyExtractor={item => item.venueId.toString()}
+                                                        scrollEnabled={false}
+                                                    />
                                                     <TouchableOpacity
-                                                        className="flex-row items-center justify-center mt-2"
+                                                        style={{
+                                                            flexDirection: 'row',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            marginTop: 8
+                                                        }}
                                                         activeOpacity={0.7}
                                                         onPress={() => console.log('View all venues')}
                                                     >
-                                                        <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] mr-1">View All Venues</Text>
+                                                        <Text style={{ color: '#10b68d', fontFamily: 'Poppins-Medium', marginRight: 4 }}>View All Venues</Text>
                                                         <Ionicons name="chevron-forward" size={16} color="#10b68d" />
                                                     </TouchableOpacity>
-                                                </>
+                                                </View>
                                             ) : (
                                                 <View className="items-center justify-center py-8">
                                                     <Ionicons name="location-outline" size={48} color="#9ca3af" />
@@ -644,7 +646,7 @@ export default function Venues() {
                                         <GradientButton
                                             onPress={() => selectSport('badminton')}
                                             text="Try Badminton Venues"
-                                            className="mt-6"
+                                            small={false}
                                         />
                                     </LinearGradient>
                                 </Animated.View>
