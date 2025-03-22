@@ -5,26 +5,31 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMatchRequestDto } from './DTO/create-match-request.dto';
+import { throws } from 'assert';
 
 @Injectable()
 export class MatchService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async createMatchRequest(data: CreateMatchRequestDto) {
-    const booking = await this.prisma.booking.findUnique({
-      where: { bookingId: data.bookingId },
+    //fetch user details
+
+    if (data.bookingId) {
+      const booking = await this.prisma.booking.findUnique({
+        where: { bookingId: data.bookingId },
+      });
+
+      if (!booking) {
+        throw new BadRequestException('Booking not found');
+      }
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { userId: data.createdById },
     });
 
-    if (!booking) {
-      throw new BadRequestException('booking not found');
-    }
-
-    if (data.matchType === 'double' && !data.partnerId) {
-      throw new BadRequestException('doubles match, requires only 1 player');
-    }
-
-    if (data.matchType === 'double' && data.createdById === data.partnerId) {
-      throw new BadRequestException('you cannot add yourself as a partner');
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
     const matchRequest = await this.prisma.matchRequest.create({
@@ -35,34 +40,63 @@ export class MatchService {
         partnerId: data.partnerId,
         status: 'pending',
       },
+
     });
 
-    await this.tryMatchRequest(matchRequest);
+
+    await this.tryMatchRequest(matchRequest, user.rankPoints);
+
 
     return matchRequest;
   }
 
-  async tryMatchRequest(newRequest) {
+  async tryMatchRequest(newRequest, userRankPoints) {
     const matchingRequest = await this.prisma.matchRequest.findFirst({
       where: {
         matchType: newRequest.matchType,
         status: 'pending',
-        requestId: {
-          not: newRequest.requestId,
-        },
+        requestId: { not: newRequest.requestId },
+        bookingId: { not: null },
       },
+      include: {
+        createdBy: true,
+      },
+
     });
 
-    if (matchingRequest) {
-      await this.prisma.matchRequest.updateMany({
-        where: {
-          requestId: { in: [newRequest.requestId, matchingRequest.requestId] },
-        },
-        data: { status: 'matched' },
-      });
 
-      console.log('Match confirmed');
+    if (!matchingRequest) {
+      console.log('No suitable match found');
+      return;
     }
+
+    const opponent = await this.prisma.user.findUnique({
+      where: {
+        userId: matchingRequest.createdById
+      }
+    });
+
+    if (!opponent) {
+      console.log('Opponent user not found')
+      return;
+    }
+
+    if (Math.abs(userRankPoints - opponent.rankPoints) > 200) {
+      console.log('Match found, but rank not within range');
+      return;
+    }
+
+    await this.prisma.matchRequest.updateMany({
+      where: {
+        requestId: { in: [newRequest.requestId, matchingRequest.requestId] },
+
+      },
+      data: { status: 'matched' },
+
+    });
+
+    console.log('match confirmed')
+
   }
 
   async getMatchedUsers(matchId: number) {
@@ -97,4 +131,7 @@ export class MatchService {
       where: { status: 'matched' },
     });
   }
+
+
+
 }

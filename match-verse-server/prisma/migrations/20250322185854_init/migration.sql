@@ -59,7 +59,7 @@ CREATE TABLE "Booking" (
 -- CreateTable
 CREATE TABLE "MatchRequest" (
     "requestId" SERIAL NOT NULL,
-    "bookingId" INTEGER NOT NULL,
+    "bookingId" INTEGER,
     "matchType" TEXT NOT NULL,
     "createdById" INTEGER NOT NULL,
     "partnerId" INTEGER,
@@ -113,9 +113,6 @@ CREATE UNIQUE INDEX "Venue_email_key" ON "Venue"("email");
 CREATE UNIQUE INDEX "Booking_courtId_date_startingTime_key" ON "Booking"("courtId", "date", "startingTime");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "MatchRequest_bookingId_key" ON "MatchRequest"("bookingId");
-
--- CreateIndex
 CREATE INDEX "MatchRequest_bookingId_idx" ON "MatchRequest"("bookingId");
 
 -- CreateIndex
@@ -140,7 +137,7 @@ ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_createdById_fkey" FOREIG
 ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "User"("userId") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("bookingId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MatchRequest" ADD CONSTRAINT "MatchRequest_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("bookingId") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CourtImage" ADD CONSTRAINT "CourtImage_courtId_fkey" FOREIGN KEY ("courtId") REFERENCES "Court"("courtId") ON DELETE RESTRICT ON UPDATE CASCADE;
