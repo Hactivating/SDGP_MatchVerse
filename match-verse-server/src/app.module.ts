@@ -13,11 +13,14 @@ import { MatchModule } from './match/match.module';
 import { S3Module } from './s3/s3.module';
 import { RankingModule } from './ranking/ranking.module';
 import { MatchResultModule } from './match-result/match-result.module';
+import { AchivementsModule } from './achivements/achivements.module';
+import { AchievementsController } from './achievements/achievements.controller';
+import { AchievementsModule } from './achievements/achievements.module';
 
 
 @Module({
-  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule,S3Module,LeaderboardModule,MatchResultModule,RankingModule],
-  controllers: [AppController],
+  imports: [PrismaModule, VenuesModule, AuthModule, CourtsModule, BookingsModule, UsersModule, MatchModule,S3Module,LeaderboardModule,MatchResultModule,RankingModule, AchivementsModule, AchievementsModule],
+  controllers: [AppController, AchievementsController],
   providers: [AppService],
 })
 export class AppModule { }
