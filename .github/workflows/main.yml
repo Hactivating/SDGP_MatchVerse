@@ -1,0 +1,44 @@
+name: MatchVerse CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: match-verse-server
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate dev --name init
+        working-directory: match-verse-server
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb?schema=public 
+
+      - name: Run tests
+        run: npm test
+        working-directory: match-verse-server
+        env:
+          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb?schema=public 
