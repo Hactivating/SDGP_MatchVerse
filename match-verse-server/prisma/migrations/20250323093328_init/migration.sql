@@ -16,6 +16,9 @@ CREATE TABLE "User" (
     "rank" TEXT NOT NULL DEFAULT 'Beginner 01',
     "rankPoints" INTEGER NOT NULL DEFAULT 0,
     "userImageUrl" TEXT,
+    "gamesPlayed" INTEGER NOT NULL DEFAULT 0,
+    "gamesWon" INTEGER NOT NULL DEFAULT 0,
+    "achievements" TEXT[] DEFAULT ARRAY[]::TEXT[],
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("userId")
 );

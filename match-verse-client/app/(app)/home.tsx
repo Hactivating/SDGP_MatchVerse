@@ -428,7 +428,7 @@ export default function Home() {
                                             colors={frostedGlassStyle.colors}
                                             className="p-4 backdrop-blur-md"
                                         >
-                                            <View className="flex-row justify-between items-center mb-2">
+                                            <View className="flex-row justify-between items-center mb-3">
                                                 <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800">Popular Venues</Text>
                                                 <View className="flex-row items-center">
                                                     <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] mr-1">Badminton</Text>
@@ -460,13 +460,13 @@ export default function Home() {
                                                         contentContainerStyle={{ paddingHorizontal: 12 }}
                                                         columnWrapperStyle={{
                                                             justifyContent: 'space-between',
-                                                            marginBottom: 24 // More space between rows
+                                                            marginBottom: 6 // More space between rows
                                                         }}
                                                         renderItem={({ item }) => (
                                                             <TouchableOpacity
                                                                 style={{
                                                                     width: (screenWidth - 120) / 2, // Even more space between cards horizontally
-                                                                    marginBottom: 16,
+                                                                    marginBottom: 6,
                                                                     borderRadius: 12,
                                                                 }}
                                                                 onPress={() => navigateToVenue(item.venueId)}
