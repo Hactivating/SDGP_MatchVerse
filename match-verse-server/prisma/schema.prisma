@@ -18,15 +18,18 @@ model Temp {
 }
 
 model User {
-  userId       Int     @id @default(autoincrement())
-  username     String  @unique
-  email        String  @unique
+  userId       Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
   password     String
-  experience   Int     @default(0)
-  rating       Int     @default(0)
-  rank         String  @default("Beginner 01")
-  rankPoints   Int     @default(0)
+  experience   Int      @default(0)
+  rating       Int      @default(0)
+  rank         String   @default("Beginner 01")
+  rankPoints   Int      @default(0)
   userImageUrl String?
+  gamesPlayed  Int      @default(0)
+  gamesWon     Int      @default(0)
+  achievements String[] @default([])
 
   booking          Booking[]
   createdMatches   MatchRequest[]    @relation(name: "matchCreator")
