@@ -4,25 +4,38 @@ import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
+  // constructor() {
+  //   const clientID = process.env.GOOGLE_CLIENT_ID as string;
+  //   const clientSecret = process.env.GOOGLE_CLIENT_SECRET as string;
+
+  //   super({
+  //     clientID,
+  //     clientSecret,
+  //     callbackURL: 'http://localhost:3000/auth/google/callback',
+  //     scope: ['email', 'profile'],
+  //     passReqToCallback: true,
+  //   });
+  // }
+
   constructor() {
-    const clientID = process.env.GOOGLE_CLIENT_ID as string;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET as string;
+    console.log(process.env.GOOGLE_CLIENT_ID);
 
-    super({
-      clientID,
-      clientSecret,
-      callbackURL: 'http://localhost:3000/auth/google/callback',
-      scope: ['email', 'profile'],
-      passReqToCallback: true,
-    });
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+      super({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: 'http://localhost:3000/auth/google/callback',
+        scope: ['email', 'profile'],
+        passReqToCallback: true,
+
+      });
   }
-
   async validate(
-      request: any,
-      accessToken: string,
-      refreshToken: string,
-      profile: any,
-      done: VerifyCallback,
+    request: any,
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: VerifyCallback,
   ) {
     const { name, emails, photos } = profile;
     const user = {

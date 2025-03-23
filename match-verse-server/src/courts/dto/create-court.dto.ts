@@ -1,13 +1,16 @@
-import { IsInt, IsString, Min } from 'class-validator'
+import { IsInt, IsNumber, IsString, Min } from 'class-validator'
 
 export class CreateCourtDto {
 
     @IsString()
-    name: string
+    name: string;
 
     @IsInt()
     @Min(1)
-    venueId: number
+    venueId: number;
+
+    @IsNumber()
+    pricePerBooking: number;
 
 
 
