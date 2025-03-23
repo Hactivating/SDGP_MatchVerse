@@ -38,7 +38,6 @@ export const bookingsApi = {
         if (!userId) {
             throw new Error('User ID is required');
         }
-
         return api.get(`/bookings/${userId}`);
     },
 

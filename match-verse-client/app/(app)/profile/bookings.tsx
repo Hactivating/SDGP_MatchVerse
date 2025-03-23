@@ -60,7 +60,7 @@ const GradientButton = ({ onPress, text, icon, small, disabled = false, loading 
 
 export default function BookingsPage() {
     const router = useRouter();
-    const { state, user } = useAuth();
+    const { state } = useAuth();
     const [bookings, setBookings] = useState([]);
     const [courts, setCourts] = useState([]);
     const [venues, setVenues] = useState([]);
@@ -97,7 +97,8 @@ export default function BookingsPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const userId = 1;
+
+            const userId = state?.user?.userId || 4;
 
             const [courtsData, venuesData] = await Promise.all([
                 getAllCourts(),
@@ -107,23 +108,30 @@ export default function BookingsPage() {
             setCourts(courtsData);
             setVenues(venuesData);
 
-            const response = await bookingsApi.getUserBookings(userId);
+            try {
+                const response = await bookingsApi.getUserBookings(userId);
 
-            if (response.data && Array.isArray(response.data)) {
-                const sortedBookings = response.data.sort((a, b) => {
-                    const dateA = new Date(`${a.date}T${a.startingTime}`);
-                    const dateB = new Date(`${b.date}T${b.startingTime}`);
-                    return dateB - dateA;
-                });
+                if (response.data && Array.isArray(response.data)) {
+                    const sortedBookings = response.data.sort((a, b) => {
+                        const dateA = new Date(`${a.date}T${a.startingTime}`);
+                        const dateB = new Date(`${b.date}T${b.startingTime}`);
+                        return dateB - dateA;
+                    });
 
-                setBookings(sortedBookings);
-            } else {
+                    const userBookings = sortedBookings.filter(booking =>
+                        booking.userId === userId || booking.userId === null
+                    );
+
+                    setBookings(userBookings);
+                } else {
+                    setBookings([]);
+                }
+            } catch (apiError) {
                 setBookings([]);
             }
 
             setError(null);
         } catch (err) {
-            console.error('Error fetching bookings:', err);
             setError('Failed to load your bookings. Please try again later.');
             setBookings([]);
         } finally {

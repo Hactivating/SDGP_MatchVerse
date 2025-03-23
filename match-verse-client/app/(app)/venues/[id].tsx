@@ -1,45 +1,23 @@
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert, Animated } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Animated } from 'react-native';
+import { useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect, useRef } from 'react';
-import { getAllVenues, getAllCourts, Venue, Court, getSportIcon, getSportColor } from '@/services/venue';
-import { format, addDays } from 'date-fns';
-import { api } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
+import { format, parseISO, isBefore } from 'date-fns';
+import { bookingsApi } from '@/services/bookings';
+import { getAllCourts, getAllVenues } from '@/services/venue';
+import * as Haptics from 'expo-haptics';
 
-const bookingsApi = {
-    getByCourtAndDate: (courtId, date) => {
-        if (!courtId) {
-            throw new Error('Court ID is required');
-        }
-
-        if (!date || typeof date !== 'string' || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            throw new Error('Date must be in YYYY-MM-DD format');
-        }
-
-        return api.get(`/bookings/${courtId}/${date}`);
-    },
-    createUserBooking: (bookingData) => {
-        return api.post('/bookings/user', bookingData);
-    }
-};
-
-interface Booking {
-    date: string;
-    starts: string;
-    isBooked: boolean;
-}
-
-// Enhanced Button Component
 const GradientButton = ({ onPress, text, icon, small, disabled = false, loading = false }) => {
     const [pressed, setPressed] = useState(false);
 
     const handlePress = () => {
         if (!disabled && !loading) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onPress();
         }
     };
@@ -80,48 +58,27 @@ const GradientButton = ({ onPress, text, icon, small, disabled = false, loading 
     );
 };
 
-export default function VenueDetail() {
-    const { id } = useLocalSearchParams();
+export default function BookingsPage() {
     const router = useRouter();
-    const { state } = useAuth();
-    const [venue, setVenue] = useState<Venue | null>(null);
-    const [courts, setCourts] = useState<Court[]>([]);
+    const { state } = useAuth();  // Directly destructure state from useAuth
+    const [bookings, setBookings] = useState([]);
+    const [courts, setCourts] = useState([]);
+    const [venues, setVenues] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [selectedTimeSlot, setSelectedTimeSlot] = useState<number | null>(null);
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-    const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
-    const [timeSlots, setTimeSlots] = useState<string[]>([]);
-    const [availableTimeSlots, setAvailableTimeSlots] = useState<number[]>([]);
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [bookingsLoading, setBookingsLoading] = useState(false);
-    const [bookingInProgress, setBookingInProgress] = useState(false);
+    const [error, setError] = useState(null);
 
-    // Animation references
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
-    // Load Poppins font
     const [fontsLoaded] = useFonts({
         'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
         'Poppins-Medium': require('@/assets/fonts/Poppins-Medium.ttf'),
         'Poppins-Regular': require('@/assets/fonts/Poppins-Regular.ttf'),
     });
 
-    const generateNextSevenDays = () => {
-        const days = [];
-        for (let i = 0; i < 7; i++) {
-            days.push(addDays(new Date(), i));
-        }
-        return days;
-    };
-
-    const nextSevenDays = generateNextSevenDays();
-
     useEffect(() => {
-        fetchVenueData();
+        fetchData();
 
-        // Start animations
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -135,226 +92,152 @@ export default function VenueDetail() {
                 useNativeDriver: true,
             }),
         ]).start();
-    }, [id]);
+    }, []);
 
-    useEffect(() => {
-        if (selectedCourt && selectedDate) {
-            fetchBookings();
-        }
-    }, [selectedCourt, selectedDate]);
-
-    const generateTimeSlots = (openingTime: number, closingTime: number) => {
-        const slots = [];
-        const timeValues = [];
-
-        const formatTime = (time: number) => {
-            const hour = Math.floor(time / 100);
-            const minute = time % 100;
-
-            let formattedHour = hour % 12;
-            if (formattedHour === 0) formattedHour = 12;
-
-            const period = hour < 12 ? 'AM' : 'PM';
-
-            return `${formattedHour}:${minute === 0 ? '00' : minute} ${period}`;
-        };
-
-        const startHour = Math.floor(openingTime / 100);
-        const endHour = Math.floor(closingTime / 100);
-
-        for (let hour = startHour; hour < endHour; hour++) {
-            slots.push(formatTime(hour * 100));
-            timeValues.push(hour * 100);
-        }
-
-        return { formattedSlots: slots, timeValues };
-    };
-
-    const fetchBookings = async () => {
-        if (!selectedCourt || !selectedDate) return;
-
-        try {
-            setBookingsLoading(true);
-            const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-            const response = await bookingsApi.getByCourtAndDate(selectedCourt.courtId, formattedDate);
-            setBookings(response.data || []);
-
-            const available = [];
-
-            if (response.data && response.data.length > 0) {
-                response.data.forEach((slot, index) => {
-                    if (!slot.isBooked) {
-                        available.push(index);
-                    }
-                });
-            }
-
-            setAvailableTimeSlots(available);
-
-            if (response.data && response.data.length > 0) {
-                const formattedSlots = response.data.map(slot => {
-                    const [hour] = slot.starts.split(':');
-                    const hourNum = parseInt(hour);
-                    const period = hourNum >= 12 ? 'PM' : 'AM';
-                    const hour12 = hourNum % 12 || 12;
-                    return `${hour12}:00 ${period}`;
-                });
-                setTimeSlots(formattedSlots);
-            }
-        } catch (err) {
-            if (venue?.openingTime && venue?.closingTime) {
-                const { formattedSlots, timeValues } = generateTimeSlots(venue.openingTime, venue.closingTime);
-                setTimeSlots(formattedSlots);
-                setAvailableTimeSlots(timeValues.map((_, index) => index));
-            } else {
-                const defaultSlots = [
-                    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
-                    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM',
-                    '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM',
-                    '8:00 PM'
-                ];
-                setTimeSlots(defaultSlots);
-                setAvailableTimeSlots(Array.from({ length: defaultSlots.length }, (_, i) => i));
-            }
-        } finally {
-            setBookingsLoading(false);
-        }
-    };
-
-    const fetchVenueData = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const venueId = parseInt(id as string, 10);
 
-            const [allVenues, allCourts] = await Promise.all([
-                getAllVenues(),
-                getAllCourts()
+            // Use the correct property name - userId, not id
+            const userId = state?.user?.userId || 1;
+            console.log('Using userId for bookings:', userId, 'User object:', state?.user);
+
+            // Fetch courts and venues data
+            const [courtsData, venuesData] = await Promise.all([
+                getAllCourts(),
+                getAllVenues()
             ]);
 
-            const venueData = allVenues.find(v => v.venueId === venueId);
-            if (!venueData) {
-                throw new Error(`Venue with ID ${venueId} not found`);
-            }
+            setCourts(courtsData);
+            setVenues(venuesData);
 
-            const venueCourts = allCourts.filter(c => c.venueId === venueId);
+            // Fetch bookings for the user
+            const response = await bookingsApi.getUserBookings(userId);
 
-            setVenue(venueData);
-            setCourts(venueCourts);
+            if (response.data && Array.isArray(response.data)) {
+                // Sort bookings by date (newest first)
+                const sortedBookings = response.data.sort((a, b) => {
+                    const dateA = new Date(`${a.date}T${a.startingTime}`);
+                    const dateB = new Date(`${b.date}T${b.startingTime}`);
+                    return dateB - dateA;
+                });
 
-            if (venueCourts.length > 0) {
-                setSelectedCourt(venueCourts[0]);
-            }
+                // Filter to just this user's bookings
+                const filteredBookings = sortedBookings.filter(booking =>
+                    booking.userId === userId || booking.userId === null
+                );
 
-            if (venueData.openingTime && venueData.closingTime) {
-                const { formattedSlots } = generateTimeSlots(venueData.openingTime, venueData.closingTime);
-                setTimeSlots(formattedSlots);
+                setBookings(filteredBookings);
             } else {
-                setTimeSlots([
-                    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
-                    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM',
-                    '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM',
-                    '8:00 PM'
-                ]);
+                setBookings([]);
             }
 
             setError(null);
         } catch (err) {
-            setError('Failed to load venue details. Please try again later.');
+            console.error('Error fetching bookings:', err);
+            setError('Failed to load your bookings. Please try again later.');
+            setBookings([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const bookCourt = async () => {
-        if (!selectedCourt || selectedTimeSlot === null) {
-            Alert.alert('Selection Required', 'Please select a court and time slot');
-            return;
-        }
-
-        try {
-            setBookingInProgress(true);
-            const selectedBooking = bookings[selectedTimeSlot];
-
-            if (!selectedBooking) {
-                throw new Error('Selected time slot not found');
-            }
-
-            const bookingData = {
-                userId: state.user?.id || 1,
-                courtId: selectedCourt.courtId,
-                startingTime: selectedBooking.starts,
-                date: format(selectedDate, 'yyyy-MM-dd')
-            };
-
-            const response = await bookingsApi.createUserBooking(bookingData);
-
-            Alert.alert(
-                'Booking Successful',
-                `You have successfully booked ${selectedCourt.name || `Court ${selectedCourt.courtId}`} at ${timeSlots[selectedTimeSlot]} on ${format(selectedDate, 'MMMM d, yyyy')}`,
-                [
-                    {
-                        text: 'View My Bookings',
-                        onPress: () => router.push('/(app)/profile/bookings'),
-                    },
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            fetchBookings();
-                        },
-                    },
-                ]
-            );
-
-            setSelectedTimeSlot(null);
-
-        } catch (err) {
-            Alert.alert(
-                'Booking Failed',
-                'There was an error processing your booking. Please try again later.'
-            );
-        } finally {
-            setBookingInProgress(false);
-        }
+    const getCourtDetails = (courtId) => {
+        return courts.find(court => court.courtId === courtId) || { name: `Court ${courtId}` };
     };
 
-    // Consistent frosted glass effect style
+    const getVenueDetails = (courtId) => {
+        const court = courts.find(court => court.courtId === courtId);
+        if (!court) return { venueName: 'Unknown Venue' };
+
+        return venues.find(venue => venue.venueId === court.venueId) || { venueName: 'Unknown Venue' };
+    };
+
+    const isBookingPast = (date, startingTime) => {
+        const bookingDate = new Date(`${date}T${startingTime}`);
+        return isBefore(bookingDate, new Date());
+    };
+
     const frostedGlassStyle = {
         colors: ['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.65)'],
         className: "backdrop-blur-md rounded-2xl shadow-lg"
     };
 
-    if (loading || !fontsLoaded) {
-        return (
-            <View className="flex-1">
-                <LinearGradient
-                    colors={['#10b68d', '#0a8d6d', '#046d64']}
-                    style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-                />
-                <SafeAreaView className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="white" />
-                    <Text style={{ fontFamily: 'Poppins-Medium', marginTop: 12 }} className="text-white">Loading venue details...</Text>
-                </SafeAreaView>
-            </View>
-        );
-    }
+    const renderBookingItem = ({ item }) => {
+        const court = getCourtDetails(item.courtId);
+        const venue = getVenueDetails(item.courtId);
+        const isPast = isBookingPast(item.date, item.startingTime);
 
-    if (error || !venue) {
+        const bookingDate = parseISO(`${item.date}T${item.startingTime}`);
+        const formattedDate = format(bookingDate, 'MMMM d, yyyy');
+        const formattedTime = format(bookingDate, 'h:mm a');
+
         return (
-            <View className="flex-1">
+            <View className="mb-4 mx-6 overflow-hidden rounded-2xl shadow-lg">
                 <LinearGradient
-                    colors={['#10b68d', '#0a8d6d', '#046d64']}
-                    style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-                />
-                <SafeAreaView className="flex-1 justify-center items-center p-6">
-                    <Ionicons name="alert-circle-outline" size={80} color="white" />
-                    <Text style={{ fontFamily: 'Poppins-Medium', marginTop: 12, marginBottom: 24 }} className="text-white text-center text-lg">{error || 'Venue not found'}</Text>
-                    <GradientButton
-                        onPress={() => router.back()}
-                        text="Go Back"
-                    />
-                </SafeAreaView>
+                    colors={isPast ? ['rgba(229,231,235,0.9)', 'rgba(209,213,219,0.65)'] : frostedGlassStyle.colors}
+                    className="p-5 backdrop-blur-md"
+                >
+                    <View className={`${isPast ? 'opacity-60' : ''}`}>
+                        <View className="flex-row justify-between items-center mb-3">
+                            <View className="flex-row items-center">
+                                <View className="w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-3">
+                                    <Ionicons
+                                        name={court.name?.toLowerCase().includes('badminton') ? 'tennisball-outline' : 'football-outline'}
+                                        size={22}
+                                        color="#10b68d"
+                                    />
+                                </View>
+                                <View>
+                                    <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 18 }} className="text-gray-800">
+                                        {court.name || `Court ${item.courtId}`}
+                                    </Text>
+                                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">
+                                        {venue.venueName || 'Unknown Venue'}
+                                    </Text>
+                                </View>
+                            </View>
+                            {isPast && (
+                                <View className="bg-gray-200 px-3 py-1 rounded-full">
+                                    <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 12 }} className="text-gray-600">
+                                        Completed
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+
+                        <View className="flex-row justify-between items-center mb-4">
+                            <View className="flex-row items-center">
+                                <Ionicons name="calendar-outline" size={16} color="#6B7280" />
+                                <Text style={{ fontFamily: 'Poppins-Medium', marginLeft: 4 }} className="text-gray-600">
+                                    {formattedDate}
+                                </Text>
+                            </View>
+                            <View className="flex-row items-center">
+                                <Ionicons name="time-outline" size={16} color="#6B7280" />
+                                <Text style={{ fontFamily: 'Poppins-Medium', marginLeft: 4 }} className="text-gray-600">
+                                    {formattedTime}
+                                </Text>
+                            </View>
+                        </View>
+
+                        {!isPast && (
+                            <View className="flex-row justify-center">
+                                <GradientButton
+                                    onPress={() => router.push(`/(app)/venues/${venue.venueId}`)}
+                                    text="Venue Details"
+                                    small
+                                />
+                            </View>
+                        )}
+                    </View>
+                </LinearGradient>
             </View>
         );
+    };
+
+    if (!fontsLoaded) {
+        return null;
     }
 
     return (
@@ -372,281 +255,64 @@ export default function VenueDetail() {
             />
 
             <SafeAreaView className="flex-1">
-                <ScrollView
-                    className="flex-1"
-                    contentContainerStyle={{ paddingBottom: 100 }}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View className="pt-8 px-6 pb-5">
-                        <View className="flex-row items-center mb-2">
-                            <TouchableOpacity
-                                onPress={() => router.back()}
-                                className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-4"
-                            >
-                                <Ionicons name="chevron-back" size={24} color="white" />
-                            </TouchableOpacity>
-                            <View className="flex-1">
-                                <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 24, lineHeight: 32 }} className="text-white">
-                                    {venue.venueName || `Venue ${venue.venueId}`}
-                                </Text>
-                                {venue.location && (
-                                    <Text style={{ fontFamily: 'Poppins-Regular', lineHeight: 20 }} className="text-white text-base opacity-80">
-                                        {venue.location}
-                                    </Text>
-                                )}
-                            </View>
-                        </View>
+                <View className="pt-8 px-6 pb-5">
+                    <View className="flex-row items-center mb-4">
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-4"
+                        >
+                            <Ionicons name="chevron-back" size={24} color="white" />
+                        </TouchableOpacity>
+                        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 24, lineHeight: 32 }} className="text-white">
+                            My Bookings
+                        </Text>
                     </View>
+                </View>
 
-                    <Animated.View
-                        style={{
-                            opacity: fadeAnim,
-                            transform: [{ scale: scaleAnim }]
-                        }}
-                    >
-                        {/* Venue Header Image */}
-                        <View className="mx-6 rounded-xl overflow-hidden shadow-lg h-56 mb-6">
-                            {venue.venueImageUrl ? (
-                                <Image
-                                    source={{ uri: venue.venueImageUrl }}
-                                    style={{ width: '100%', height: '100%' }}
-                                    resizeMode="cover"
-                                />
-                            ) : (
-                                <LinearGradient
-                                    colors={['rgba(16,182,141,0.5)', 'rgba(4,109,100,0.3)']}
-                                    style={{ width: '100%', height: '100%' }}
-                                />
-                            )}
-                            <LinearGradient
-                                colors={['transparent', 'rgba(0,0,0,0.7)']}
-                                style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%' }}
+                <Animated.View
+                    style={{
+                        flex: 1,
+                        opacity: fadeAnim,
+                        transform: [{ scale: scaleAnim }]
+                    }}
+                >
+                    {loading ? (
+                        <View className="flex-1 justify-center items-center">
+                            <ActivityIndicator size="large" color="white" />
+                            <Text style={{ fontFamily: 'Poppins-Medium', marginTop: 12 }} className="text-white">Loading your bookings...</Text>
+                        </View>
+                    ) : error ? (
+                        <View className="flex-1 justify-center items-center p-6">
+                            <Ionicons name="alert-circle-outline" size={80} color="white" />
+                            <Text style={{ fontFamily: 'Poppins-Medium', marginTop: 12, marginBottom: 24 }} className="text-white text-center text-lg">{error}</Text>
+                            <GradientButton
+                                onPress={fetchData}
+                                text="Try Again"
                             />
-                            <View className="absolute bottom-4 left-4 right-4">
-                                <View className="flex-row items-center mb-2">
-                                    <Ionicons name="star" size={18} color="#FFD700" />
-                                    <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white ml-1 text-base">
-                                        {venue.rating ? venue.rating.toFixed(1) : "New"}
-                                    </Text>
-                                    {venue.totalRating > 0 && (
-                                        <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-white/80 ml-1">
-                                            ({venue.totalRating} reviews)
-                                        </Text>
-                                    )}
-                                </View>
-                                {venue.openingTime && venue.closingTime && (
-                                    <View className="flex-row items-center">
-                                        <Ionicons name="time-outline" size={16} color="white" />
-                                        <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-white/90 ml-1">
-                                            {Math.floor(venue.openingTime/100)}:
-                                            {venue.openingTime % 100 === 0 ? '00' : venue.openingTime % 100} -
-                                            {Math.floor(venue.closingTime/100)}:
-                                            {venue.closingTime % 100 === 0 ? '00' : venue.closingTime % 100}
-                                        </Text>
-                                    </View>
-                                )}
-                            </View>
                         </View>
-
-                        {/* Court Selection */}
-                        <View className="mx-6 overflow-hidden rounded-2xl shadow-lg mb-6">
-                            <LinearGradient
-                                colors={frostedGlassStyle.colors}
-                                className="p-5 backdrop-blur-md"
-                            >
-                                <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800 text-center mb-5">Select a Court</Text>
-
-                                {courts.length === 0 ? (
-                                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-500 text-center py-4">No courts available</Text>
-                                ) : (
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pb-2">
-                                        {courts.map((court) => (
-                                            <TouchableOpacity
-                                                key={court.courtId}
-                                                className={`mr-4 items-center ${selectedCourt?.courtId === court.courtId ? 'opacity-100' : 'opacity-80'}`}
-                                                onPress={() => setSelectedCourt(court)}
-                                                activeOpacity={0.7}
-                                            >
-                                                <View
-                                                    className={`w-28 h-28 rounded-xl items-center justify-center mb-2 
-                                                        ${selectedCourt?.courtId === court.courtId ?
-                                                        'border-2 border-[#10b68d] bg-[rgba(16,182,141,0.1)]' :
-                                                        'border border-gray-200 bg-white/50'}`}
-                                                >
-                                                    <Ionicons
-                                                        name={getSportIcon(court.name || '')}
-                                                        size={40}
-                                                        color={selectedCourt?.courtId === court.courtId ? '#10b68d' : getSportColor(court.name || '')}
-                                                    />
-                                                </View>
-                                                <Text
-                                                    style={{ fontFamily: selectedCourt?.courtId === court.courtId ? 'Poppins-Bold' : 'Poppins-Medium' }}
-                                                    className={`${selectedCourt?.courtId === court.courtId ? 'text-[#10b68d]' : 'text-gray-700'}`}
-                                                >
-                                                    {court.name || `Court ${court.courtId}`}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ))}
-                                    </ScrollView>
-                                )}
-                            </LinearGradient>
+                    ) : bookings.length === 0 ? (
+                        <View className="flex-1 justify-center items-center p-6">
+                            <Ionicons name="calendar-outline" size={80} color="white" />
+                            <Text style={{ fontFamily: 'Poppins-Bold', marginTop: 24, marginBottom: 8 }} className="text-white text-center text-xl">No Bookings Found</Text>
+                            <Text style={{ fontFamily: 'Poppins-Regular', marginBottom: 24 }} className="text-white text-center opacity-80">
+                                You don't have any bookings yet. Start by exploring venues and booking a court!
+                            </Text>
+                            <GradientButton
+                                onPress={() => router.push('/(app)/venues')}
+                                text="Explore Venues"
+                                icon={<Ionicons name="search" size={20} color="white" />}
+                            />
                         </View>
-
-                        {/* Date Selection */}
-                        <View className="mx-6 overflow-hidden rounded-2xl shadow-lg mb-6">
-                            <LinearGradient
-                                colors={frostedGlassStyle.colors}
-                                className="p-5 backdrop-blur-md"
-                            >
-                                <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800 text-center mb-5">Select a Date</Text>
-
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pb-2">
-                                    {nextSevenDays.map((day, index) => (
-                                        <TouchableOpacity
-                                            key={index}
-                                            className="mx-2"
-                                            onPress={() => setSelectedDate(day)}
-                                            activeOpacity={0.7}
-                                        >
-                                            <View
-                                                className={`w-16 h-20 items-center justify-center rounded-xl
-                                                    ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
-                                                    'bg-[#10b68d]' : 'bg-white/50 border border-gray-200'}`}
-                                            >
-                                                <Text
-                                                    style={{ fontFamily: 'Poppins-Medium' }}
-                                                    className={`${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
-                                                        'text-white' : 'text-gray-500'}`}
-                                                >
-                                                    {format(day, 'EEE')}
-                                                </Text>
-                                                <Text
-                                                    style={{ fontFamily: 'Poppins-Bold' }}
-                                                    className={`text-xl ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
-                                                        'text-white' : 'text-gray-800'}`}
-                                                >
-                                                    {format(day, 'd')}
-                                                </Text>
-                                                <Text
-                                                    style={{ fontFamily: 'Poppins-Regular' }}
-                                                    className={`text-xs ${format(selectedDate, 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd') ?
-                                                        'text-white' : 'text-gray-500'}`}
-                                                >
-                                                    {format(day, 'MMM')}
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    ))}
-                                </ScrollView>
-                            </LinearGradient>
-                        </View>
-
-                        {/* Time Slots */}
-                        {selectedCourt && (
-                            <View className="mx-6 overflow-hidden rounded-2xl shadow-lg mb-6">
-                                <LinearGradient
-                                    colors={frostedGlassStyle.colors}
-                                    className="p-5 backdrop-blur-md"
-                                >
-                                    <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800 text-center mb-2">
-                                        Available Time Slots
-                                    </Text>
-                                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600 text-center mb-5">
-                                        {format(selectedDate, 'MMMM d, yyyy')}
-                                    </Text>
-
-                                    {bookingsLoading ? (
-                                        <View className="items-center justify-center py-6">
-                                            <ActivityIndicator size="small" color="#10b68d" />
-                                            <Text style={{ fontFamily: 'Poppins-Regular', marginTop: 8 }} className="text-gray-500">Loading available times...</Text>
-                                        </View>
-                                    ) : (
-                                        <View className="flex-row flex-wrap justify-between">
-                                            {timeSlots.map((time, index) => {
-                                                const isAvailable = bookings.length > 0
-                                                    ? !bookings[index]?.isBooked
-                                                    : availableTimeSlots.includes(index);
-
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={index}
-                                                        disabled={!isAvailable}
-                                                        className={`mb-3 ${
-                                                            selectedTimeSlot === index ? 'opacity-100' : isAvailable ? 'opacity-90' : 'opacity-50'
-                                                        }`}
-                                                        style={{ width: '48%' }}
-                                                        onPress={() => setSelectedTimeSlot(index)}
-                                                        activeOpacity={0.7}
-                                                    >
-                                                        <LinearGradient
-                                                            colors={
-                                                                selectedTimeSlot === index
-                                                                    ? ['#10b68d', '#0a8d6d', '#046d64']
-                                                                    : isAvailable
-                                                                        ? ['rgba(255,255,255,0.9)', 'rgba(240,240,240,0.7)']
-                                                                        : ['rgba(220,220,220,0.7)', 'rgba(200,200,200,0.5)']
-                                                            }
-                                                            className="py-3 px-4 rounded-xl items-center justify-center"
-                                                        >
-                                                            <Text
-                                                                style={{ fontFamily: selectedTimeSlot === index ? 'Poppins-Bold' : 'Poppins-Medium' }}
-                                                                className={`${
-                                                                    selectedTimeSlot === index
-                                                                        ? 'text-white'
-                                                                        : isAvailable
-                                                                            ? 'text-gray-800'
-                                                                            : 'text-gray-400'
-                                                                }`}
-                                                            >
-                                                                {time}
-                                                            </Text>
-                                                        </LinearGradient>
-                                                    </TouchableOpacity>
-                                                );
-                                            })}
-                                        </View>
-                                    )}
-
-                                    <View className="mt-6">
-                                        <GradientButton
-                                            onPress={bookCourt}
-                                            text="Book Now"
-                                            disabled={selectedTimeSlot === null}
-                                            loading={bookingInProgress}
-                                        />
-                                    </View>
-                                </LinearGradient>
-                            </View>
-                        )}
-
-                        {/* Reviews Section */}
-                        {venue.totalRating > 0 && (
-                            <View className="mx-6 overflow-hidden rounded-2xl shadow-lg mb-6">
-                                <LinearGradient
-                                    colors={frostedGlassStyle.colors}
-                                    className="p-5 backdrop-blur-md"
-                                >
-                                    <View className="flex-row justify-between items-center mb-5">
-                                        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800">Reviews</Text>
-                                        <TouchableOpacity>
-                                            <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d]">See All</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View className="bg-[rgba(16,182,141,0.05)] rounded-xl p-4 border border-[rgba(16,182,141,0.2)] items-center">
-                                        <Text style={{ fontFamily: 'Poppins-Regular', lineHeight: 22 }} className="text-gray-700 text-center mb-4">
-                                            This venue has {venue.totalRating} reviews with an average rating of {venue.rating.toFixed(1)}.
-                                        </Text>
-                                        <GradientButton
-                                            text="Write a Review"
-                                            small={true}
-                                            onPress={() => {}}
-                                        />
-                                    </View>
-                                </LinearGradient>
-                            </View>
-                        )}
-                    </Animated.View>
-                </ScrollView>
+                    ) : (
+                        <FlatList
+                            data={bookings}
+                            renderItem={renderBookingItem}
+                            keyExtractor={item => item.bookingId.toString()}
+                            contentContainerStyle={{ paddingTop: 4, paddingBottom: 100 }}
+                            showsVerticalScrollIndicator={false}
+                        />
+                    )}
+                </Animated.View>
             </SafeAreaView>
         </View>
     );
