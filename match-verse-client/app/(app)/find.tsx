@@ -1119,4 +1119,3 @@ const FindScreen: React.FC = () => {
 
 export default FindScreen;
 
-

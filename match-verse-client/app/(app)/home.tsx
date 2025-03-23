@@ -66,6 +66,7 @@ export default function Home() {
         sports: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         match: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         find: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        myBookings: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) }, // Add this line
         venues: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) }
     }).current;
 
@@ -118,7 +119,8 @@ export default function Home() {
                 sports: 100,
                 match: 200,
                 find: 300,
-                venues: 400
+                myBookings: 400, // Add this line
+                venues: 500 // Adjust the timing for venues
             };
 
             Object.entries(cardAnimations).forEach(([key, anim]) => {
@@ -415,6 +417,32 @@ export default function Home() {
                                             />
                                         </LinearGradient>
                                     </Animated.View>
+
+                                    <>
+                                    <Animated.View
+                                        className="mx-6 mt-7 overflow-hidden rounded-2xl shadow-lg"
+                                        style={{
+                                            opacity: cardAnimations.myBookings.opacity,
+                                            transform: [{ translateY: cardAnimations.myBookings.translateY }]
+                                        }}
+                                    >
+                                        <LinearGradient
+                                            colors={frostedGlassStyle.colors}
+                                            className="p-5 backdrop-blur-md flex-row justify-between items-center"
+                                        >
+                                            <View>
+                                                <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800">My Bookings</Text>
+                                                <Text style={{ fontFamily: 'Poppins-Regular', lineHeight: 20 }} className="text-gray-600 text-sm">View your upcoming matches</Text>
+                                            </View>
+                                            <GradientButton
+                                                onPress={() => router.push('/(app)/profile/bookings')}
+                                                text="View"
+                                                icon={<Ionicons name="calendar" size={20} color="white" />}
+                                                small
+                                            />
+                                        </LinearGradient>
+                                    </Animated.View>
+                                    </>
 
                                     {/* Popular venues with animations */}
                                     <Animated.View
