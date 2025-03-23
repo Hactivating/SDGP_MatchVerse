@@ -11,12 +11,12 @@ import { throws } from 'assert';
 export class MatchService {
   constructor(private prisma: PrismaService) { }
 
-  async createMatchRequest(data: CreateMatchRequestDto) {
+  async createMatchRequest(requestDto: CreateMatchRequestDto) {
     //fetch user details
 
-    if (data.bookingId) {
+    if (requestDto.bookingId) {
       const booking = await this.prisma.booking.findUnique({
-        where: { bookingId: data.bookingId },
+        where: { bookingId: requestDto.bookingId },
       });
 
       if (!booking) {
@@ -25,19 +25,33 @@ export class MatchService {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { userId: data.createdById },
+      where: { userId: requestDto.createdById },
     });
 
     if (!user) {
       throw new BadRequestException('User not found');
     }
 
+    let bookingId: number | null = null;
+    if (requestDto.bookingId) {
+      const booking = await this.prisma.booking.findUnique({
+        where: { bookingId: requestDto.bookingId },
+      });
+
+      if (!booking) {
+        throw new BadRequestException('Booking not found');
+      }
+
+      bookingId = requestDto.bookingId;
+    }
+
+
     const matchRequest = await this.prisma.matchRequest.create({
       data: {
-        bookingId: data.bookingId,
-        matchType: data.matchType,
-        createdById: data.createdById,
-        partnerId: data.partnerId,
+        bookingId,
+        matchType: requestDto.matchType,
+        createdById: requestDto.createdById,
+        partnerId: requestDto.partnerId,
         status: 'pending',
       },
 
@@ -51,12 +65,13 @@ export class MatchService {
   }
 
   async tryMatchRequest(newRequest, userRankPoints) {
+
     const matchingRequest = await this.prisma.matchRequest.findFirst({
       where: {
         matchType: newRequest.matchType,
         status: 'pending',
         requestId: { not: newRequest.requestId },
-        bookingId: { not: null },
+        // bookingId: { not: null },
       },
       include: {
         createdBy: true,
@@ -68,6 +83,14 @@ export class MatchService {
     if (!matchingRequest) {
       console.log('No suitable match found');
       return;
+    }
+
+    const newRequestHasBooking = newRequest.bookingId !== null;
+    const matchingRequestHasBooking = matchingRequest.bookingId !== null;
+
+    if ((newRequestHasBooking && matchingRequestHasBooking) ||
+      (!newRequestHasBooking && !matchingRequestHasBooking)) {
+      console.log('Match valdation failed, exactly one party must have booking')
     }
 
     const opponent = await this.prisma.user.findUnique({
@@ -86,16 +109,23 @@ export class MatchService {
       return;
     }
 
+
+    const bookingId = newRequest.bookingId || matchingRequest.bookingId;
+
     await this.prisma.matchRequest.updateMany({
       where: {
         requestId: { in: [newRequest.requestId, matchingRequest.requestId] },
 
       },
-      data: { status: 'matched' },
+      data: {
+        status: 'matched',
+        bookingId: bookingId
+      },
+
 
     });
 
-    console.log('match confirmed')
+    console.log('match confirmed with booking ID:', bookingId)
 
   }
 
