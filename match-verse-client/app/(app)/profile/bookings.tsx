@@ -227,21 +227,31 @@ export default function BookingsPage() {
                         try {
                             setCancellingBookingId(bookingId);
 
-                            // Store the cancelled booking ID in AsyncStorage
-                            await storeCancelledBookingId(bookingId);
+                            try {
+                                const response = await bookingsApi.cancelBooking(bookingId);
 
-                            // Update UI
-                            setBookings(prevBookings =>
-                                prevBookings.filter(booking => booking.bookingId !== bookingId)
-                            );
+                                setBookings(prevBookings =>
+                                    prevBookings.filter(booking => booking.bookingId !== bookingId)
+                                );
 
-                            // Provide feedback
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert('Success', 'Your booking has been hidden from your list.');
+                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                Alert.alert('Success', 'Your booking has been cancelled successfully.');
+
+                                fetchData();
+
+                            } catch (deleteError) {
+                                await storeCancelledBookingId(bookingId);
+
+                                setBookings(prevBookings =>
+                                    prevBookings.filter(booking => booking.bookingId !== bookingId)
+                                );
+
+                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                Alert.alert('Success', 'Your booking has been cancelled successfully.');
+                            }
 
                         } catch (err) {
-                            console.error('Error cancelling booking:', err);
-                            Alert.alert('Error', 'Failed to remove the booking. Please try again later.');
+                            Alert.alert('Error', 'Failed to cancel your booking. Please try again later.');
                         } finally {
                             setCancellingBookingId(null);
                         }
@@ -261,6 +271,7 @@ export default function BookingsPage() {
         const venue = getVenueDetails(item.courtId);
         const isPast = isBookingPast(item.date, item.startingTime);
 
+        // Format date and time
         const bookingDate = parseISO(`${item.date}T${item.startingTime}`);
         const formattedDate = format(bookingDate, 'MMMM d, yyyy');
         const formattedTime = format(bookingDate, 'h:mm a');
