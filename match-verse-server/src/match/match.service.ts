@@ -91,6 +91,7 @@ export class MatchService {
     if ((newRequestHasBooking && matchingRequestHasBooking) ||
       (!newRequestHasBooking && !matchingRequestHasBooking)) {
       console.log('Match valdation failed, exactly one party must have booking')
+      return;
     }
 
     const opponent = await this.prisma.user.findUnique({
@@ -112,56 +113,87 @@ export class MatchService {
 
     const bookingId = newRequest.bookingId || matchingRequest.bookingId;
 
-    await this.prisma.matchRequest.updateMany({
-      where: {
-        requestId: { in: [newRequest.requestId, matchingRequest.requestId] },
+    const requestWithBooking = newRequest.bookingId ? newRequest : matchingRequest;
+    const requestWithoutBooking = matchingRequest.bookingId ? matchingRequest : newRequest;
 
-      },
+    await this.prisma.matchRequest.update({
+      where: { requestId: requestWithBooking.requestId },
+
       data: {
-        status: 'matched',
-        bookingId: bookingId
-      },
+        status: 'matched'
+      }
+    });
 
+    await this.prisma.matchRequest.update({
+      where: { requestId: requestWithoutBooking.requestId },
+
+      data: {
+        status: 'pending_approval',
+        bookingId: bookingId,
+        proposedMatchId: requestWithBooking.requestId
+      }
 
     });
 
-    console.log('match confirmed with booking ID:', bookingId)
+    console.log('Matched proposed with boooking ID: ', bookingId);
 
-  }
+    async respondToMatchProposal(requestId : number, accept: boolean) {
+      const matchRequest = await this.prisma.matchRequest.findUnique({
+        where: { requestId },
+        include: {
+          booking: true
+        }
+      });
+
+      if (!matchRequest) throw new NotFoundException('Match request not found!');
+
+      if (matchRequest.status !== 'pending_approval') throw new BadRequestException('Match request is not pending approval');
+
+      if (!matchRequest.proposedMatchId) throw new BadRequestException('Match request has no proposed match');
+
+      const proposedMatch = await this.prisma.matchRequest.findUnique({
+        where: { requestId: matchRequest.proposedMatchId }
+      });
+
+      if (!proposedMatch) throw new NotFoundException('Proposed match not found!');
+
+
+
+    }
 
   async getMatchedUsers(matchId: number) {
-    const matchRequest = await this.prisma.matchRequest.findUnique({
-      where: { requestId: matchId },
-      include: { createdBy: true, partner: true },
-    });
+      const matchRequest = await this.prisma.matchRequest.findUnique({
+        where: { requestId: matchId },
+        include: { createdBy: true, partner: true },
+      });
 
-    if (!matchRequest) throw new NotFoundException('Match not found!');
+      if (!matchRequest) throw new NotFoundException('Match not found!');
 
-    const opponentMatch = await this.prisma.matchRequest.findFirst({
-      where: {
-        bookingId: matchRequest.bookingId,
-        requestId: { not: matchId },
-      },
-      include: { createdBy: true, partner: true },
-    });
+      const opponentMatch = await this.prisma.matchRequest.findFirst({
+        where: {
+          bookingId: matchRequest.bookingId,
+          requestId: { not: matchId },
+        },
+        include: { createdBy: true, partner: true },
+      });
 
-    if (!opponentMatch) throw new NotFoundException('Opponents not found!');
+      if (!opponentMatch) throw new NotFoundException('Opponents not found!');
 
-    return [matchRequest, opponentMatch];
-  }
+      return [matchRequest, opponentMatch];
+    }
 
   async getPendingRequests() {
-    return this.prisma.matchRequest.findMany({
-      where: { status: 'pending' },
-    });
-  }
+      return this.prisma.matchRequest.findMany({
+        where: { status: 'pending' },
+      });
+    }
 
   async getMatchedRequest() {
-    return this.prisma.matchRequest.findMany({
-      where: { status: 'matched' },
-    });
+      return this.prisma.matchRequest.findMany({
+        where: { status: 'matched' },
+      });
+    }
+
+
+
   }
-
-
-
-}
