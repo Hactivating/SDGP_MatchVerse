@@ -65,7 +65,8 @@ export default function Venues() {
         sports: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         location: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         available: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
-        popular: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) }
+        popular: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        venues: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) }
     }).current;
 
     // Create animation values for venue cards
@@ -478,15 +479,15 @@ export default function Venues() {
                                     <Animated.View
                                         className="mx-6 mt-7 mb-4 overflow-hidden rounded-2xl shadow-lg"
                                         style={{
-                                            opacity: cardAnimations.popular.opacity,
-                                            transform: [{ translateY: cardAnimations.popular.translateY }]
+                                            opacity: cardAnimations.venues.opacity,
+                                            transform: [{ translateY: cardAnimations.venues.translateY }]
                                         }}
                                     >
                                         <LinearGradient
                                             colors={frostedGlassStyle.colors}
-                                            className="p-5 backdrop-blur-md"
+                                            className="p-4 backdrop-blur-md"
                                         >
-                                            <View className="flex-row justify-between items-center mb-5">
+                                            <View className="flex-row justify-between items-center mb-3">
                                                 <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20 }} className="text-gray-800">Popular Venues</Text>
                                                 <View className="flex-row items-center">
                                                     <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] mr-1">Badminton</Text>
@@ -506,95 +507,87 @@ export default function Venues() {
                                                     <GradientButton
                                                         onPress={fetchVenues}
                                                         text="Try Again"
-                                                        small={true}
+                                                        small
                                                     />
                                                 </View>
                                             ) : venues.length > 0 ? (
                                                 <View style={{ paddingHorizontal: 4 }}>
+                                                    // Adjustment for venue cards in FlatList
                                                     <FlatList
                                                         data={venues.slice(0, 6)}
                                                         numColumns={2}
+                                                        contentContainerStyle={{ paddingHorizontal: 12 }}
                                                         columnWrapperStyle={{
                                                             justifyContent: 'space-between',
-                                                            marginBottom: 24 // More space between rows
+                                                            marginBottom: 6 // More space between rows
                                                         }}
-                                                        contentContainerStyle={{ paddingHorizontal: 4 }}
-                                                        renderItem={({ item, index }) => (
+                                                        renderItem={({ item }) => (
                                                             <TouchableOpacity
                                                                 style={{
                                                                     width: (screenWidth - 120) / 2, // Even more space between cards horizontally
-                                                                    marginBottom: 16,
+                                                                    marginBottom: 6,
                                                                     borderRadius: 12,
                                                                 }}
                                                                 onPress={() => navigateToVenue(item.venueId)}
                                                                 activeOpacity={0.8}
                                                             >
-                                                                <Animated.View
-                                                                    style={{
-                                                                        opacity: venueCardAnimations[index % 12].opacity,
-                                                                        transform: [
-                                                                            { translateY: venueCardAnimations[index % 12].translateY }
-                                                                        ]
-                                                                    }}
-                                                                >
-                                                                    <View style={{
-                                                                        aspectRatio: 1,
-                                                                        borderRadius: 12,
-                                                                        overflow: 'hidden',
-                                                                        borderWidth: 1,
-                                                                        borderColor: 'rgba(0,0,0,0.05)',
-                                                                        backgroundColor: '#f5f5f5'
-                                                                    }}>
-                                                                        {item.venueImageUrl ? (
-                                                                            <Image
-                                                                                source={{ uri: item.venueImageUrl }}
-                                                                                style={{ width: '100%', height: '100%' }}
-                                                                                resizeMode="cover"
-                                                                            />
-                                                                        ) : (
-                                                                            <LinearGradient
-                                                                                colors={['rgba(16,182,141,0.5)', 'rgba(4,109,100,0.3)']}
-                                                                                style={{ width: '100%', height: '100%' }}
-                                                                            />
-                                                                        )}
-                                                                        <LinearGradient
-                                                                            colors={['transparent', 'rgba(0,0,0,0.6)']}
-                                                                            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%' }}
+                                                                <View style={{
+                                                                    aspectRatio: 1,
+                                                                    borderRadius: 12,
+                                                                    overflow: 'hidden',
+                                                                    borderWidth: 1,
+                                                                    borderColor: 'rgba(0,0,0,0.05)',
+                                                                    backgroundColor: '#f5f5f5'
+                                                                }}>
+                                                                    {item.venueImageUrl ? (
+                                                                        <Image
+                                                                            source={{ uri: item.venueImageUrl }}
+                                                                            style={{ width: '100%', height: '100%' }}
+                                                                            resizeMode="cover"
                                                                         />
-                                                                        <View style={{
-                                                                            position: 'absolute',
-                                                                            bottom: 8,
-                                                                            left: 8,
-                                                                            backgroundColor: 'rgba(0,0,0,0.7)',
-                                                                            paddingHorizontal: 6,
-                                                                            paddingVertical: 3,
-                                                                            borderRadius: 6,
-                                                                            flexDirection: 'row',
-                                                                            alignItems: 'center'
+                                                                    ) : (
+                                                                        <LinearGradient
+                                                                            colors={['rgba(16,182,141,0.5)', 'rgba(4,109,100,0.3)']}
+                                                                            style={{ width: '100%', height: '100%' }}
+                                                                        />
+                                                                    )}
+                                                                    <LinearGradient
+                                                                        colors={['transparent', 'rgba(0,0,0,0.6)']}
+                                                                        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%' }}
+                                                                    />
+                                                                    <View style={{
+                                                                        position: 'absolute',
+                                                                        bottom: 8,
+                                                                        left: 8,
+                                                                        backgroundColor: 'rgba(0,0,0,0.7)',
+                                                                        paddingHorizontal: 6,
+                                                                        paddingVertical: 3,
+                                                                        borderRadius: 6,
+                                                                        flexDirection: 'row',
+                                                                        alignItems: 'center'
+                                                                    }}>
+                                                                        <Ionicons name="star" size={14} color="#FFD700" />
+                                                                        <Text style={{
+                                                                            color: 'white',
+                                                                            marginLeft: 3,
+                                                                            fontFamily: 'Poppins-Medium',
+                                                                            fontSize: 11
                                                                         }}>
-                                                                            <Ionicons name="star" size={14} color="#FFD700" />
-                                                                            <Text style={{
-                                                                                color: 'white',
-                                                                                marginLeft: 3,
-                                                                                fontFamily: 'Poppins-Medium',
-                                                                                fontSize: 11
-                                                                            }}>
-                                                                                {item.rating ? item.rating.toFixed(1) : "New"}
-                                                                            </Text>
-                                                                        </View>
+                                                                            New
+                                                                        </Text>
                                                                     </View>
-                                                                    <Text style={{
-                                                                        textAlign: 'center',
-                                                                        marginTop: 6,
-                                                                        fontFamily: 'Poppins-Medium',
-                                                                        color: '#4b5563',
-                                                                        fontSize: 13,
-                                                                        paddingHorizontal: 4,
-                                                                        lineHeight: 18
-                                                                    }} numberOfLines={2} ellipsizeMode="tail">
-                                                                        {item.venueName || `Venue ${item.venueId}`}
-                                                                    </Text>
-                                                                </Animated.View>
+                                                                </View>
+                                                                <Text style={{
+                                                                    textAlign: 'center',
+                                                                    marginTop: 6,
+                                                                    fontFamily: 'Poppins-Medium',
+                                                                    color: '#4b5563',
+                                                                    fontSize: 13,
+                                                                    paddingHorizontal: 4,
+                                                                    lineHeight: 18
+                                                                }} numberOfLines={2} ellipsizeMode="tail">
+                                                                    {item.venueName || `Venue ${item.venueId}`}
+                                                                </Text>
                                                             </TouchableOpacity>
                                                         )}
                                                         keyExtractor={item => item.venueId.toString()}
@@ -608,7 +601,7 @@ export default function Venues() {
                                                             marginTop: 8
                                                         }}
                                                         activeOpacity={0.7}
-                                                        onPress={() => console.log('View all venues')}
+                                                        onPress={() => router.push('/(app)/venues')}
                                                     >
                                                         <Text style={{ color: '#10b68d', fontFamily: 'Poppins-Medium', marginRight: 4 }}>View All Venues</Text>
                                                         <Ionicons name="chevron-forward" size={16} color="#10b68d" />

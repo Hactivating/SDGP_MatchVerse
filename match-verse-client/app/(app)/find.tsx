@@ -1,16 +1,13 @@
-// app/(app)/find.tsx
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
-    ScrollView,
     TouchableOpacity,
     ActivityIndicator,
     Switch,
     TextInput,
     Alert,
     Animated,
-    Dimensions,
     Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,8 +26,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
-// Match type definition
-type Booking = {
+// Type definitions
+interface Booking {
     bookingId: number;
     courtId: number;
     date: string;
@@ -43,10 +40,9 @@ type Booking = {
             location: string;
         }
     }
-};
+}
 
-// Match Request type definition
-type MatchRequest = {
+interface MatchRequest {
     requestId: number;
     bookingId: number;
     matchType: 'single' | 'double';
@@ -67,18 +63,45 @@ type MatchRequest = {
         email?: string;
         userId?: number;
     };
-};
+}
+
+interface GradientButtonProps {
+    onPress: () => void;
+    text: string;
+    icon?: React.ReactNode;
+    small?: boolean;
+    disabled?: boolean;
+}
+
+interface MatchCardProps {
+    match: MatchRequest;
+    onAccept: (requestId: number) => void;
+    onCancel: (requestId: number) => void;
+    isUserRequest: boolean;
+    isUserMatch: boolean;
+}
+
+interface BookingCardProps {
+    booking: Booking;
+    onPress: (booking: Booking) => void;
+    isUserBooking?: boolean;
+}
 
 // Format time from 24hr to 12hr format
-function formatTime(time: string) {
+function formatTime(time: string): string {
     const hour = parseInt(time);
     const suffix = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
     return `${displayHour}:00 ${suffix}`;
 }
 
-// Enhanced Button Component
-const GradientButton = ({ onPress, text, icon, small, disabled = false }) => {
+function getCurrentDate(): string {
+    const date = new Date();
+    return date.toISOString().split('T')[0];
+}
+
+// Component definitions
+const GradientButton: React.FC<GradientButtonProps> = ({ onPress, text, icon, small = false, disabled = false }) => {
     const [pressed, setPressed] = useState(false);
 
     const handlePress = () => {
@@ -111,15 +134,14 @@ const GradientButton = ({ onPress, text, icon, small, disabled = false }) => {
                     <Text style={{ fontFamily: 'Poppins-Bold' }} className="text-white mr-1.5">
                         {text}
                     </Text>
-                    {icon && icon}
+                    {icon}
                 </LinearGradient>
             </Animated.View>
         </TouchableOpacity>
     );
 };
 
-// Match Card Component
-const MatchCard = ({ match, onAccept, onCancel, isUserRequest, isUserMatch }) => {
+const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onCancel, isUserRequest, isUserMatch }) => {
     const matchTime = match.booking?.startingTime
         ? formatTime(match.booking.startingTime)
         : "Time not available";
@@ -173,8 +195,8 @@ const MatchCard = ({ match, onAccept, onCancel, isUserRequest, isUserMatch }) =>
 
                     <View className="flex-row justify-between items-center">
                         <View className="flex-row items-center">
-                            <Ionicons name="time-outline" size={18} color="#10b68d" className="mr-1" />
-                            <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d]">{matchTime}</Text>
+                            <Ionicons name="time-outline" size={18} color="#10b68d" />
+                            <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] ml-1">{matchTime}</Text>
                         </View>
 
                         {!isUserRequest && !isUserMatch && match.status === 'pending' && (
@@ -207,10 +229,47 @@ const MatchCard = ({ match, onAccept, onCancel, isUserRequest, isUserMatch }) =>
     );
 };
 
-export default function FindScreen() {
+const BookingCard: React.FC<BookingCardProps> = ({ booking, onPress, isUserBooking = false }) => {
+    return (
+        <Animated.View className="mb-4">
+            <View className={`rounded-xl overflow-hidden border ${
+                isUserBooking
+                    ? 'bg-[rgba(16,182,141,0.1)] border-[rgba(16,182,141,0.25)]'
+                    : 'bg-[rgba(16,182,141,0.05)] border-[rgba(16,182,141,0.2)]'
+            }`}>
+                <View className="p-4">
+                    <View className="mb-3">
+                        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 16 }} className="text-gray-800">
+                            {booking.court.venue.venueName}
+                            {isUserBooking && ' (Your Booking)'}
+                        </Text>
+                        <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">{booking.court.name}</Text>
+                        <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-500 text-sm">{booking.court.venue.location}</Text>
+                    </View>
+
+                    <View className="flex-row justify-between items-center">
+                        <View className="flex-row items-center">
+                            <Ionicons name="time-outline" size={18} color="#10b68d" />
+                            <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] ml-1">{formatTime(booking.startingTime)}</Text>
+                        </View>
+                        <GradientButton
+                            onPress={() => onPress(booking)}
+                            text={isUserBooking ? "Find Players" : "Create Match"}
+                            icon={<Ionicons name="people" size={16} color="white" />}
+                            small={true}
+                        />
+                    </View>
+                </View>
+            </View>
+        </Animated.View>
+    );
+};
+// Continue from Part 1
+const FindScreen: React.FC = () => {
     const { state } = useAuth();
     const router = useRouter();
     const [bookings, setBookings] = useState<Booking[]>([]);
+    const [userBookings, setUserBookings] = useState<Booking[]>([]);
     const [pendingMatches, setPendingMatches] = useState<MatchRequest[]>([]);
     const [matchedMatches, setMatchedMatches] = useState<MatchRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -220,7 +279,7 @@ export default function FindScreen() {
     const [partnerId, setPartnerId] = useState('');
     const [selectedDate, setSelectedDate] = useState(getCurrentDate());
     const [scrollY] = useState(new Animated.Value(0));
-    const [activeTab, setActiveTab] = useState('courts'); // 'courts', 'pending', 'matches'
+    const [activeTab, setActiveTab] = useState('courts');
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
@@ -229,7 +288,7 @@ export default function FindScreen() {
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
     const headerTitleAnim = useRef(new Animated.Value(0)).current;
 
-    // Card animations with staggered effect
+    // Card animations
     const cardAnimations = useRef({
         date: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         tabs: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
@@ -237,7 +296,7 @@ export default function FindScreen() {
     }).current;
 
     // Create animation values for cards
-    const itemCardAnimations = useRef(Array(20).fill().map(() => ({
+    const itemCardAnimations = useRef(Array(20).fill(0).map(() => ({
         translateY: new Animated.Value(15),
         opacity: new Animated.Value(0)
     }))).current;
@@ -260,26 +319,19 @@ export default function FindScreen() {
         ],
     };
 
-    // Get current date in the format YYYY-MM-DD
-    function getCurrentDate() {
-        const date = new Date();
-        return date.toISOString().split('T')[0];
-    }
-
-    // Refresh all data
-    const refreshData = async () => {
-        await fetchBookings();
-        await fetchMatches();
-    };
-
     // Fetch available bookings
-    const fetchBookings = async () => {
+    const fetchBookings = async (): Promise<void> => {
         if (!state.user?.userId) return;
 
         try {
             setLoading(true);
             const data = await getBookings(selectedDate);
-            setBookings(data.filter(booking => !booking.userId)); // Only show available slots
+
+            const available = data.filter((booking: Booking) => !booking.userId);
+            const userOwned = data.filter((booking: Booking) => booking.userId === state.user?.userId);
+
+            setBookings(available);
+            setUserBookings(userOwned);
             setError(null);
 
             // Animate booking cards once data is loaded
@@ -308,7 +360,7 @@ export default function FindScreen() {
     };
 
     // Fetch match requests
-    const fetchMatches = async () => {
+    const fetchMatches = async (): Promise<void> => {
         if (!state.user?.userId) return;
 
         try {
@@ -345,6 +397,12 @@ export default function FindScreen() {
         }
     };
 
+    // Refresh all data
+    const refreshData = async (): Promise<void> => {
+        await fetchBookings();
+        await fetchMatches();
+    };
+
     // Start animations and fetch data
     useEffect(() => {
         // Start animations when component mounts
@@ -376,17 +434,18 @@ export default function FindScreen() {
             };
 
             Object.entries(cardAnimations).forEach(([key, anim]) => {
+                const delayKey = key as keyof typeof delays;
                 Animated.parallel([
                     Animated.timing(anim.opacity, {
                         toValue: 1,
                         duration: 500,
-                        delay: delays[key],
+                        delay: delays[delayKey],
                         useNativeDriver: true,
                     }),
                     Animated.timing(anim.translateY, {
                         toValue: 0,
                         duration: 500,
-                        delay: delays[key],
+                        delay: delays[delayKey],
                         useNativeDriver: true,
                     })
                 ]).start();
@@ -403,7 +462,7 @@ export default function FindScreen() {
     }, [selectedDate]);
 
     // Handle date selection
-    const handleDateChange = (offset: number) => {
+    const handleDateChange = (offset: number): void => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const date = new Date(selectedDate);
         date.setDate(date.getDate() + offset);
@@ -411,13 +470,13 @@ export default function FindScreen() {
     };
 
     // Open match creation modal
-    const openCreateMatchModal = (booking: Booking) => {
+    const openCreateMatchModal = (booking: Booking): void => {
         setSelectedBooking(booking);
         setModalVisible(true);
     };
 
     // Handle match request creation
-    const handleCreateMatchRequest = async () => {
+    const handleCreateMatchRequest = async (): Promise<void> => {
         if (!state.user?.userId || !selectedBooking) {
             Alert.alert('Error', 'You must be logged in to create a match request');
             return;
@@ -436,7 +495,6 @@ export default function FindScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Success', 'Match request created successfully');
 
-            // Refresh data after creating a match request
             refreshData();
         } catch (err) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -446,7 +504,7 @@ export default function FindScreen() {
     };
 
     // Handle accepting a match request
-    const handleAcceptMatchRequest = async (requestId: number) => {
+    const handleAcceptMatchRequest = async (requestId: number): Promise<void> => {
         if (!state.user?.userId) {
             Alert.alert('Error', 'You must be logged in to join a match');
             return;
@@ -457,7 +515,6 @@ export default function FindScreen() {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Success', 'You have joined the match!');
 
-            // Refresh matches after accepting
             refreshData();
         } catch (err) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -467,13 +524,12 @@ export default function FindScreen() {
     };
 
     // Handle canceling a match request
-    const handleCancelMatchRequest = async (requestId: number) => {
+    const handleCancelMatchRequest = async (requestId: number): Promise<void> => {
         try {
             await cancelMatchRequest(requestId);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert('Success', 'Match request canceled');
 
-            // Refresh matches after canceling
             refreshData();
         } catch (err) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -483,21 +539,22 @@ export default function FindScreen() {
     };
 
     // Check if a match request was created by the current user
-    const isUserRequest = (match: MatchRequest) => {
+    const isUserRequest = (match: MatchRequest): boolean => {
         return match.createdById === state.user?.userId;
     };
 
     // Check if a match involves the current user
-    const isUserMatch = (match: MatchRequest) => {
+    const isUserMatch = (match: MatchRequest): boolean => {
         return match.createdById === state.user?.userId || match.partnerId === state.user?.userId;
     };
 
-    // Consistent frosted glass effect style
+    // Frosted glass style
     const frostedGlassStyle = {
         colors: ['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.65)'],
         className: "backdrop-blur-md rounded-2xl shadow-lg"
     };
 
+    // Loading state
     if (loading && bookings.length === 0 && activeTab === 'courts') {
         return (
             <View className="flex-1 justify-center items-center">
@@ -511,6 +568,7 @@ export default function FindScreen() {
         );
     }
 
+    // Error state
     if (error && bookings.length === 0 && activeTab === 'courts') {
         return (
             <SafeAreaView className="flex-1">
@@ -529,13 +587,13 @@ export default function FindScreen() {
                 </View>
             </SafeAreaView>
         );
-    }
 
+    }
+    // Main UI
     return (
         <View className="flex-1">
             <StatusBar style="light" />
 
-            {/* Enhanced Gradient Background */}
             <LinearGradient
                 colors={['#10b68d', '#0a8d6d', '#046d64']}
                 style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
@@ -569,7 +627,6 @@ export default function FindScreen() {
                             transform: [{ scale: scaleAnim }]
                         }}
                     >
-                        {/* Date Selector with frosted effect */}
                         <Animated.View
                             className="mx-6 overflow-hidden rounded-2xl shadow-lg"
                             style={{
@@ -604,7 +661,6 @@ export default function FindScreen() {
                             </LinearGradient>
                         </Animated.View>
 
-                        {/* Tab Navigation */}
                         <Animated.View
                             className="mx-6 mt-7 overflow-hidden rounded-2xl shadow-lg"
                             style={{
@@ -667,7 +723,6 @@ export default function FindScreen() {
                             </LinearGradient>
                         </Animated.View>
 
-                        {/* Content based on active tab */}
                         <Animated.View
                             className="mx-6 mt-7 mb-4 overflow-hidden rounded-2xl shadow-lg"
                             style={{
@@ -679,7 +734,6 @@ export default function FindScreen() {
                                 colors={frostedGlassStyle.colors}
                                 className="p-5 backdrop-blur-md"
                             >
-                                {/* Courts Tab */}
                                 {activeTab === 'courts' && (
                                     <>
                                         <View className="flex-row justify-between items-center mb-4">
@@ -689,6 +743,30 @@ export default function FindScreen() {
                                                 <Text style={{ fontSize: 18 }}>🏸</Text>
                                             </View>
                                         </View>
+
+                                        {userBookings.length > 0 && (
+                                            <View className="mb-5">
+                                                <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 18 }} className="text-gray-800 mb-3">Your Bookings</Text>
+                                                {userBookings.map((booking, index) => (
+                                                    <Animated.View
+                                                        key={booking.bookingId}
+                                                        style={{
+                                                            opacity: itemCardAnimations[index % 20].opacity,
+                                                            transform: [
+                                                                { translateY: itemCardAnimations[index % 20].translateY }
+                                                            ],
+                                                            marginBottom: 16
+                                                        }}
+                                                    >
+                                                        <BookingCard
+                                                            booking={booking}
+                                                            onPress={openCreateMatchModal}
+                                                            isUserBooking={true}
+                                                        />
+                                                    </Animated.View>
+                                                ))}
+                                            </View>
+                                        )}
 
                                         {loading ? (
                                             <View className="items-center justify-center py-8">
@@ -723,8 +801,8 @@ export default function FindScreen() {
                                                     className="flex-row items-center justify-center mb-5 bg-[rgba(16,182,141,0.1)] p-3 rounded-lg"
                                                     onPress={() => router.push('/(app)/venues')}
                                                 >
-                                                    <Ionicons name="search" size={18} color="#10b68d" className="mr-2" />
-                                                    <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d]">Browse All Venues</Text>
+                                                    <Ionicons name="search" size={18} color="#10b68d" />
+                                                    <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] ml-2">Browse All Venues</Text>
                                                 </TouchableOpacity>
 
                                                 {bookings.map((booking, index) => (
@@ -738,28 +816,11 @@ export default function FindScreen() {
                                                             marginBottom: 16
                                                         }}
                                                     >
-                                                        <View className="bg-[rgba(16,182,141,0.05)] rounded-xl overflow-hidden border border-[rgba(16,182,141,0.2)]">
-                                                            <View className="p-4">
-                                                                <View className="mb-3">
-                                                                    <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 18 }} className="text-gray-800">{booking.court.venue.venueName}</Text>
-                                                                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-600">{booking.court.name}</Text>
-                                                                    <Text style={{ fontFamily: 'Poppins-Regular' }} className="text-gray-500 text-sm">{booking.court.venue.location}</Text>
-                                                                </View>
-
-                                                                <View className="flex-row justify-between items-center">
-                                                                    <View className="flex-row items-center">
-                                                                        <Ionicons name="time-outline" size={18} color="#10b68d" className="mr-1" />
-                                                                        <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d]">{formatTime(booking.startingTime)}</Text>
-                                                                    </View>
-                                                                    <GradientButton
-                                                                        onPress={() => openCreateMatchModal(booking)}
-                                                                        text="Create Match"
-                                                                        icon={<Ionicons name="people" size={16} color="white" />}
-                                                                        small={true}
-                                                                    />
-                                                                </View>
-                                                            </View>
-                                                        </View>
+                                                        <BookingCard
+                                                            booking={booking}
+                                                            onPress={openCreateMatchModal}
+                                                            isUserBooking={false}
+                                                        />
                                                     </Animated.View>
                                                 ))}
                                             </>
@@ -767,7 +828,6 @@ export default function FindScreen() {
                                     </>
                                 )}
 
-                                {/* Pending Matches Tab */}
                                 {activeTab === 'pending' && (
                                     <>
                                         <View className="flex-row justify-between items-center mb-4">
@@ -776,8 +836,8 @@ export default function FindScreen() {
                                                 className="flex-row items-center"
                                                 onPress={() => fetchMatches()}
                                             >
-                                                <Ionicons name="refresh" size={18} color="#10b68d" className="mr-1" />
-                                                <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 14 }} className="text-[#10b68d]">Refresh</Text>
+                                                <Ionicons name="refresh" size={18} color="#10b68d" />
+                                                <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 14 }} className="text-[#10b68d] ml-1">Refresh</Text>
                                             </TouchableOpacity>
                                         </View>
 
@@ -805,7 +865,7 @@ export default function FindScreen() {
                                                 </Text>
 
                                                 {pendingMatches
-                                                    .filter(match => !isUserRequest(match)) // Show only matches not created by user
+                                                    .filter(match => !isUserRequest(match))
                                                     .map((match, index) => (
                                                         <Animated.View
                                                             key={match.requestId}
@@ -859,7 +919,6 @@ export default function FindScreen() {
                                     </>
                                 )}
 
-                                {/* My Matches Tab */}
                                 {activeTab === 'matches' && (
                                     <>
                                         <View className="flex-row justify-between items-center mb-4">
@@ -868,8 +927,8 @@ export default function FindScreen() {
                                                 className="flex-row items-center"
                                                 onPress={() => fetchMatches()}
                                             >
-                                                <Ionicons name="refresh" size={18} color="#10b68d" className="mr-1" />
-                                                <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 14 }} className="text-[#10b68d]">Refresh</Text>
+                                                <Ionicons name="refresh" size={18} color="#10b68d" />
+                                                <Text style={{ fontFamily: 'Poppins-Medium', fontSize: 14 }} className="text-[#10b68d] ml-1">Refresh</Text>
                                             </TouchableOpacity>
                                         </View>
 
@@ -960,7 +1019,6 @@ export default function FindScreen() {
                 </Animated.ScrollView>
             </SafeAreaView>
 
-            {/* Match Creation Modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -987,8 +1045,8 @@ export default function FindScreen() {
                                     {selectedBooking.court.venue.location}
                                 </Text>
                                 <View className="flex-row items-center">
-                                    <Ionicons name="time-outline" size={16} color="#10b68d" className="mr-1" />
-                                    <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d]">
+                                    <Ionicons name="time-outline" size={16} color="#10b68d" />
+                                    <Text style={{ fontFamily: 'Poppins-Medium' }} className="text-[#10b68d] ml-1">
                                         {formatTime(selectedBooking.startingTime)} - {new Date(selectedBooking.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                     </Text>
                                 </View>
@@ -1057,4 +1115,8 @@ export default function FindScreen() {
             </Modal>
         </View>
     );
-}
+};
+
+export default FindScreen;
+
+
