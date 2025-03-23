@@ -13,7 +13,7 @@ export class BookingsService {
     //get starting time of all existing bookings
     const bookings = await this.prismaService.booking.findMany({
       where: { courtId: courtId, date: date },
-      select: { startingTime: true },
+      select: { startingTime: true, bookingId:true },
     });
 
     console.log(bookings);
@@ -27,11 +27,12 @@ export class BookingsService {
     console.log(operatingTime);
 
     //map the booking slots to a set
-    const bookingsSet = new Set(
-      bookings.map((bookings) => bookings.startingTime),
+    const bookingsMap = new Map(
+      bookings.map((booking) => [booking.startingTime, booking.bookingId]),
     );
+  
 
-    console.log(bookingsSet);
+    console.log(bookingsMap);
 
     if (operatingTime) {
       const { openingTime, closingTime } = operatingTime.venue;
@@ -44,12 +45,15 @@ export class BookingsService {
 
       for (let i = 0; i < slots; i++) {
         let startingTime = `${String(openingHour).padStart(2, '0')}:${String(openingMinute).padStart(2, '0')}`;
+        const bookingId = bookingsMap.get(startingTime);
+
 
         //push slots into the array with updated starting time and a boolean of isBooked
         bookedSlots.push({
           date: date,
           starts: startingTime,
-          isBooked: bookingsSet.has(startingTime),
+          isBooked: bookingsMap.has(startingTime),
+          bookingId: bookingId ?? null
         });
         //increase hour by 1 for every iteration
         openingHour += 1;
