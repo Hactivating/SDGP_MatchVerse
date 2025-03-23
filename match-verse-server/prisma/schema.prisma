@@ -79,7 +79,7 @@ model Booking {
 
 model MatchRequest {
   requestId   Int    @id @default(autoincrement())
-  bookingId   Int    @unique
+  bookingId   Int?   // Made optional by adding ?
   matchType   String
   createdById Int
   partnerId   Int?
@@ -88,7 +88,7 @@ model MatchRequest {
   createdBy User  @relation(fields: [createdById], references: [userId], name: "matchCreator")
   partner   User? @relation(fields: [partnerId], references: [userId], name: "matchPartner")
 
-  booking     Booking      @relation(fields: [bookingId], references: [bookingId])
+  booking     Booking?     @relation(fields: [bookingId], references: [bookingId]) // Made optional
   MatchResult MatchResult?
 
   @@index([bookingId])

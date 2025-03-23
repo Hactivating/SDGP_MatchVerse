@@ -5,21 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a662c68c-86fa-43e6-94e4-962c3f43cab0" name="Changes" comment="Log in and Register">
+      <change afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/MatchScreen.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/find.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/find.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/home.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/home.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/leaderboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/leaderboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/profile.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/venues.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(app)/venues.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(auth)/google-auth.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/app/(auth)/google-auth.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-client/app/(app)/find.tsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/components/Navbar.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/components/Navbar.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-client/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/services/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-client/services/match.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250312185628_init/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250313064700_add_user_image_url/migration.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250317161347_reset/migration.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-client/services/match.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/services/match.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-client/services/user.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/services/user.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250323093328_init/migration.sql" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/migration_lock.toml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/match-verse-server/src/auth/google.stategy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-server/src/auth/google.stategy.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/schema.prisma" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-server/prisma/schema.prisma" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-server/src/match/DTO/create-match-request.dto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-server/src/match/DTO/create-match-request.dto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-server/src/match/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-server/src/match/match.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,6 +123,7 @@
       <workItem from="1741333041153" duration="19000" />
       <workItem from="1741847399821" duration="30817000" />
       <workItem from="1742579136004" duration="17712000" />
+      <workItem from="1742744447691" duration="16447000" />
     </task>
     <task id="LOCAL-00001" summary="Log in and Register">
       <option name="closed" value="true" />
@@ -162,7 +160,6 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/match-verse-client/app/(app)/home.tsx</url>
           <line>461</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>

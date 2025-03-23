@@ -2,8 +2,10 @@ import { IsEnum, IsInt, IsOptional } from "class-validator";
 
 export class CreateMatchRequestDto {
 
+
+    @IsOptional()
     @IsInt()
-    bookingId: number;
+    bookingId?: number;
 
     @IsEnum(['single', 'double'])
     matchType: 'single' | 'double'

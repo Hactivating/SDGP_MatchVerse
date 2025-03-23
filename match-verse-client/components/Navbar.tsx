@@ -197,7 +197,7 @@ export default function Navbar() {
                     <View className="flex-1 items-center justify-center">
                         <TouchableOpacity
                             className="items-center justify-end w-16 h-16 pt-4"
-                            onPress={() => navigate('/(app)/find')}
+                            onPress={() => navigate('/(app)/MatchScreen')}
                             activeOpacity={0.7}
                         >
                             <Animated.View
