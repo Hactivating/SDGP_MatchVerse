@@ -52,12 +52,13 @@ model Venue {
 }
 
 model Court {
-  courtId    Int          @id @default(autoincrement())
-  name       String
-  venueId    Int
-  booking    Booking[]
-  courtImage CourtImage[]
-  venue      Venue        @relation(fields: [venueId], references: [venueId])
+  courtId         Int          @id @default(autoincrement())
+  name            String
+  venueId         Int
+  booking         Booking[]
+  courtImage      CourtImage[]
+  pricePerBooking Int
+  venue           Venue        @relation(fields: [venueId], references: [venueId])
 }
 
 model Booking {
