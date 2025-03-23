@@ -1,3 +1,4 @@
 .DS_Store
 match-verse-client/package-lock.json
 match-verse-client/package.json
+match-verse-client/services/api.ts

@@ -271,7 +271,6 @@ export default function BookingsPage() {
         const venue = getVenueDetails(item.courtId);
         const isPast = isBookingPast(item.date, item.startingTime);
 
-        // Format date and time
         const bookingDate = parseISO(`${item.date}T${item.startingTime}`);
         const formattedDate = format(bookingDate, 'MMMM d, yyyy');
         const formattedTime = format(bookingDate, 'h:mm a');
