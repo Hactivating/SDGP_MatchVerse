@@ -8,8 +8,6 @@ export class PaymentController {
 
     @Post('create-payment-intent')
     async createPayment(@Body() paymentDto: createPaymentDto) {
-        // const clientSecret = await this.paymentService.createPayment(data.amount, 'usd');
-        // return { clientSecret };
 
         if (!paymentDto.amount || typeof paymentDto.amount !== 'number') {
             throw new BadRequestException('valid amount is required');

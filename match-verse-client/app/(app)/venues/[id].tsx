@@ -262,7 +262,7 @@ export default function VenueDetail() {
             }
 
             const isPaymentinitialized = await initializePaymentSheet(
-                selectedCourt.pricePerBooking,
+                selectedCourt.pricePerBooking ?? 0,
                 selectedCourt.courtId
             );
 
@@ -276,17 +276,21 @@ export default function VenueDetail() {
                 throw new Error('Payment failed');
             }
 
-            const bookingData = {
-                // userId: state.user?.id || 1,
-                courtId: selectedCourt.courtId,
-                startingTime: selectedBooking.starts,
-                date: format(selectedDate, 'yyyy-MM-dd')
-            };
+            if (isPaymentSuccessful) {
+                const bookingData = {
+                    userId: state.user?.id || 1,
+                    courtId: selectedCourt.courtId,
+                    startingTime: selectedBooking.starts,
+                    date: format(selectedDate, 'yyyy-MM-dd')
+                };
 
-            await bookingsApi.createUserBooking(bookingData);
+                const bookingResponse = await bookingsApi.createUserBooking(bookingData);
 
+                await api.patch(`/bookings/${bookingResponse.data.bookingId}/payment-status`, {
+                    isPaid: true
+                });
 
-
+            }
             Alert.alert(
                 'Booking Successful',
                 `You have successfully booked ${selectedCourt.name || `Court ${selectedCourt.courtId}`} at ${timeSlots[selectedTimeSlot]} on ${format(selectedDate, 'MMMM d, yyyy')}`,

@@ -31,7 +31,6 @@ CREATE TABLE "Venue" (
     "venueImageUrl" TEXT,
     "rating" INTEGER NOT NULL DEFAULT 0,
     "totalRating" INTEGER NOT NULL DEFAULT 0,
-    "pricePerBooking" DOUBLE PRECISION NOT NULL,
     "venueName" TEXT NOT NULL,
 
     CONSTRAINT "Venue_pkey" PRIMARY KEY ("venueId")
@@ -42,6 +41,7 @@ CREATE TABLE "Court" (
     "courtId" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "venueId" INTEGER NOT NULL,
+    "pricePerBooking" DOUBLE PRECISION NOT NULL,
 
     CONSTRAINT "Court_pkey" PRIMARY KEY ("courtId")
 );
@@ -53,7 +53,6 @@ CREATE TABLE "Booking" (
     "date" TEXT NOT NULL,
     "startingTime" TEXT NOT NULL,
     "userId" INTEGER,
-    "price" DOUBLE PRECISION NOT NULL,
     "isPaid" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Booking_pkey" PRIMARY KEY ("bookingId")

@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsOptional, IsNotEmpty } from "class-validator";
+import { IsNumber, IsString, IsOptional, IsNotEmpty, isNumber } from "class-validator";
 
 export class createPaymentDto {
 
@@ -14,7 +14,7 @@ export class createPaymentDto {
     date: string;
 
     @IsNotEmpty()
-    @IsString()
+    @IsNumber()
     timeSlot: string;
 
     @IsNotEmpty()

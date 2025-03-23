@@ -94,10 +94,14 @@ export class BookingsService {
     }
 
 
+    const court = await this.prismaService.court.findUnique({
+      where: { courtId: courtId },
+      select: { pricePerBooking: true }
+    });
 
     const bookingData: any = {
       ...payload,
-      price: isUserBooking ? pricePerBooking : undefined,
+      price: isUserBooking ? court.pricePerBooking : undefined,
       isPaid: isUserBooking ? false : undefined,
     };
 
