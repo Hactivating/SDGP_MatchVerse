@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { UserBookingDto } from './dto/user-booking.dto';
 import { VenueBookingDto } from './dto/venue-booking.dto';
@@ -36,5 +36,10 @@ export class BookingsController {
     console.log('sdds34343');
 
     return this.bookingService.createUserBooking(payload);
+  }
+
+  @Delete(':bookingId')
+  deleteUserBooking(@Param('bookingId')bookingId: number){
+    return this.bookingService.deleteUserBooking(bookingId)
   }
 }

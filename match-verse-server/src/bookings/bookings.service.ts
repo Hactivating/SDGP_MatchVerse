@@ -101,4 +101,10 @@ export class BookingsService {
     return booking;
     
   }
+
+  async deleteUserBooking(bookingId){
+    return this.prismaService.booking.delete({
+      where:{bookingId:bookingId}
+    })
+  }
 }
