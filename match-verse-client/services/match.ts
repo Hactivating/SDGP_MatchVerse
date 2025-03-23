@@ -1,27 +1,66 @@
-// services/match.ts
-import axios from 'axios';
-import { API_URL } from './api';
+import { api } from './api';
 
-// Get available bookings by date
-export const getBookings = async (date: string) => {
-    try {
-        const response = await axios.get(`${API_URL}/bookings/available?date=${date}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching bookings:', error);
-        throw error;
-    }
-};
+export interface MatchRequest {
+    requestId: number;
+    bookingId: number | null;
+    matchType: 'single' | 'double';
+    createdById: number;
+    partnerId: number | null;
+    status: 'pending' | 'matched';
+    createdBy?: User;
+    partner?: User;
+    booking?: Booking;
+}
 
-// Create a match request
-export const createMatchRequest = async (data: {
+export interface User {
+    userId: number;
+    username: string;
+    email: string;
+    rank: string;
+    rankPoints: number;
+    userImageUrl?: string;
+}
+
+export interface Booking {
     bookingId: number;
+    courtId: number;
+    date: string;
+    startingTime: string;
+    court?: Court;
+    isAvailable?: boolean; // Added to indicate if booking is available for match requests
+}
+
+export interface Court {
+    courtId: number;
+    name: string;
+    venueId: number;
+    venue?: Venue;
+}
+
+export interface Venue {
+    venueId: number;
+    venueName: string;
+    location: string;
+}
+
+export interface CreateMatchRequestDto {
+    bookingId?: number;
     matchType: 'single' | 'double';
     createdById: number;
     partnerId?: number;
-}) => {
+}
+
+export interface MatchResultDto {
+    winner1Id: number;
+    winner2Id: number;
+    loser1Id: number;
+    loser2Id: number;
+}
+
+// Create a match request
+export const createMatchRequest = async (request: CreateMatchRequestDto): Promise<MatchRequest> => {
     try {
-        const response = await axios.post(`${API_URL}/match/request`, data);
+        const response = await api.post('/match/request', request);
         return response.data;
     } catch (error) {
         console.error('Error creating match request:', error);
@@ -29,21 +68,10 @@ export const createMatchRequest = async (data: {
     }
 };
 
-// Get user's match history (all matches they are involved in)
-export const getUserMatches = async (userId: number) => {
+// Get pending match requests
+export const getPendingMatches = async (): Promise<MatchRequest[]> => {
     try {
-        const response = await axios.get(`${API_URL}/match/user/${userId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching user matches:', error);
-        throw error;
-    }
-};
-
-// Get all pending match requests
-export const getPendingMatches = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/match/pending`);
+        const response = await api.get('/match/pending');
         return response.data;
     } catch (error) {
         console.error('Error fetching pending matches:', error);
@@ -51,10 +79,10 @@ export const getPendingMatches = async () => {
     }
 };
 
-// Get all matched requests
-export const getMatchedMatches = async () => {
+// Get matched requests
+export const getMatchedMatches = async (): Promise<MatchRequest[]> => {
     try {
-        const response = await axios.get(`${API_URL}/match/matched`);
+        const response = await api.get('/match/matched');
         return response.data;
     } catch (error) {
         console.error('Error fetching matched matches:', error);
@@ -62,37 +90,54 @@ export const getMatchedMatches = async () => {
     }
 };
 
-// Cancel a match request
-export const cancelMatchRequest = async (requestId: number) => {
+// Submit match result and update rankings
+export const submitMatchResult = async (result: MatchResultDto): Promise<any> => {
     try {
-        const response = await axios.delete(`${API_URL}/match/request/${requestId}`);
+        const response = await api.post('/ranking/update', result);
         return response.data;
     } catch (error) {
-        console.error('Error canceling match request:', error);
+        console.error('Error submitting match result:', error);
         throw error;
     }
 };
 
-// Get match requests by type (singles or doubles)
-export const getMatchesByType = async (matchType: 'single' | 'double') => {
-    try {
-        const response = await axios.get(`${API_URL}/match/type/${matchType}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Error fetching ${matchType} matches:`, error);
-        throw error;
-    }
-};
 
-// Accept a match request (for players to confirm participating in a match)
-export const acceptMatchRequest = async (requestId: number, userId: number) => {
+export const getUserBookingsForMatching = async (userId: number): Promise<Booking[]> => {
     try {
-        const response = await axios.post(`${API_URL}/match/request/${requestId}/accept`, {
-            userId
+        console.log(`Getting bookings for user ID: ${userId}`);
+
+        if (!userId) {
+            console.log('No user ID provided, returning empty bookings array');
+            return [];
+        }
+
+        // Get all user bookings
+        const response = await api.get(`/bookings/${userId}`);
+        console.log(`API response for bookings:`, response.data);
+
+        // Filter for future bookings only
+        const currentDate = new Date();
+        const futureBookings = response.data.filter((booking: Booking) => {
+            if (!booking.date) {
+                return false;
+            }
+
+            // Parse the booking date
+            const bookingDate = new Date(booking.date);
+            const isFuture = bookingDate >= currentDate;
+
+            // For debugging
+            if (!isFuture) {
+                console.log(`Booking #${booking.bookingId} filtered out - past date: ${booking.date}`);
+            }
+
+            return isFuture;
         });
-        return response.data;
+
+        console.log(`Found ${futureBookings.length} future bookings out of ${response.data.length} total bookings`);
+        return futureBookings;
     } catch (error) {
-        console.error('Error accepting match request:', error);
-        throw error;
+        console.error('Error fetching user bookings:', error);
+        return [];
     }
 };
