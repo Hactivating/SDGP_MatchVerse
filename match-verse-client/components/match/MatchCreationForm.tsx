@@ -52,6 +52,7 @@ interface MatchCreationFormProps {
     currentUserId: number;
 }
 
+// Enhanced Button Component similar to home screen
 const GradientButton = ({ onPress, text, icon, isLoading = false, disabled = false }) => {
     const [pressed, setPressed] = React.useState(false);
 
@@ -110,12 +111,14 @@ export const MatchCreationForm: React.FC<MatchCreationFormProps> = ({
                                                                         onSubmit,
                                                                         currentUserId,
                                                                     }) => {
+    // Load Poppins font
     const [fontsLoaded] = useFonts({
         'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
         'Poppins-Medium': require('@/assets/fonts/Poppins-Medium.ttf'),
         'Poppins-Regular': require('@/assets/fonts/Poppins-Regular.ttf'),
     });
 
+    // State for partner selection
     const [showPartnerSelection, setShowPartnerSelection] = useState(false);
     const [partnerId, setPartnerId] = useState('');
     const [partnerName, setPartnerName] = useState('');
@@ -123,6 +126,7 @@ export const MatchCreationForm: React.FC<MatchCreationFormProps> = ({
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Fetch users for partner selection
     useEffect(() => {
         const fetchUsers = async () => {
             if (matchType === 'double' && showPartnerSelection) {
@@ -143,6 +147,7 @@ export const MatchCreationForm: React.FC<MatchCreationFormProps> = ({
         fetchUsers();
     }, [matchType, showPartnerSelection, currentUserId]);
 
+    // When matchType changes to 'double', enforce useBooking
     useEffect(() => {
         if (matchType === 'double' && !useBooking) {
             setUseBooking(true);
@@ -155,6 +160,7 @@ export const MatchCreationForm: React.FC<MatchCreationFormProps> = ({
             }
         }
 
+        // Reset partner selection when match type changes
         if (matchType !== 'double') {
             setPartnerId('');
             setPartnerName('');
@@ -191,6 +197,7 @@ export const MatchCreationForm: React.FC<MatchCreationFormProps> = ({
     };
 
     const handleSubmit = () => {
+        // Validate match request before submitting
         if (validateMatchRequest(matchType, useBooking)) {
             // For doubles, we need a partner
             if (matchType === 'double' && !partnerId) {
@@ -211,6 +218,7 @@ export const MatchCreationForm: React.FC<MatchCreationFormProps> = ({
         }
     };
 
+    // Filter users based on search query
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(searchQuery.toLowerCase())
     );

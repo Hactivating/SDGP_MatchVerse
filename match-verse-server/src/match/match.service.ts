@@ -1,29 +1,45 @@
 import {
   Injectable,
+  Logger,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMatchRequestDto } from './DTO/create-match-request.dto';
 
-
 @Injectable()
 export class MatchService {
-  constructor(private prisma: PrismaService) { }
+  private readonly logger = new Logger(MatchService.name);
+
+  constructor(private prisma: PrismaService) {}
 
   async createMatchRequest(data: CreateMatchRequestDto) {
+    this.logger.log(`Creating match request: ${JSON.stringify(data)}`);
+
+    // Validate booking if provided
     if (data.bookingId) {
       const booking = await this.prisma.booking.findUnique({
         where: { bookingId: data.bookingId },
       });
 
       if (!booking) {
-        throw new BadRequestException('booking not found');
+        throw new BadRequestException('Booking not found');
       }
     }
 
+    // Handle doubles match specific logic
     if (data.matchType === 'double') {
-      // Check if this booking already has pending doubles matches
+      // Validate doubles match requirements
+      if (!data.partnerId) {
+        throw new BadRequestException('Doubles matches require a partner');
+      }
+
+      // Check if booking is provided
+      if (!data.bookingId) {
+        throw new BadRequestException('Doubles matches require a booking');
+      }
+
+      // Check existing matches for this booking
       const existingMatches = await this.prisma.matchRequest.findMany({
         where: {
           bookingId: data.bookingId,
@@ -36,40 +52,34 @@ export class MatchService {
         }
       });
 
-      if (existingMatches.length > 0) {
-        const playerIds = new Set();
+      // Track existing players
+      const playerIds = new Set();
+      existingMatches.forEach(match => {
+        if (match.createdById) playerIds.add(match.createdById);
+        if (match.partnerId) playerIds.add(match.partnerId);
+      });
 
-        existingMatches.forEach(match => {
-          if (match.createdById) playerIds.add(match.createdById);
-          if (match.partnerId) playerIds.add(match.partnerId);
-        });
+      // Prevent duplicate player entry
+      if (playerIds.has(data.createdById) || playerIds.has(data.partnerId)) {
+        throw new BadRequestException('One of the players is already in this match');
+      }
 
-        console.log(`Found ${playerIds.size} existing players for this booking`);
-
-        if (playerIds.size >= 1 && !playerIds.has(data.createdById)) {
-          console.log(`Allowing player ${data.createdById} to join without a partner as the ${playerIds.size + 1} player`);
-        } else if (!data.partnerId) {
-          throw new BadRequestException('doubles matches require a partner for the first team');
-        }
-      } else if (!data.partnerId) {
-        throw new BadRequestException('doubles matches require a partner for the first team');
+      // Limit to 2 teams (4 players max)
+      if (playerIds.size >= 4) {
+        throw new BadRequestException('This booking already has a full match');
       }
     }
 
+    // Prepare match request data
     const createData: any = {
       matchType: data.matchType,
       createdById: data.createdById,
       status: 'pending',
+      bookingId: data.bookingId,
+      partnerId: data.partnerId
     };
 
-    if (data.bookingId !== undefined) {
-      createData.bookingId = data.bookingId;
-    }
-
-    if (data.partnerId !== undefined) {
-      createData.partnerId = data.partnerId;
-    }
-
+    // Create match request
     const matchRequest = await this.prisma.matchRequest.create({
       data: createData,
       include: {
@@ -83,13 +93,17 @@ export class MatchService {
       }
     });
 
+    // Try to match this request
     await this.tryMatchRequest(matchRequest);
+
+    this.logger.log(`Match request created successfully: ${matchRequest.requestId}`);
     return matchRequest;
   }
 
   async tryMatchRequest(newRequest) {
-    console.log('Trying to match request:', newRequest.requestId);
+    this.logger.log(`Attempting to match request: ${newRequest.requestId}`);
 
+    // Doubles match matching logic
     if (newRequest.matchType === 'double' && newRequest.bookingId) {
       const allRequests = await this.prisma.matchRequest.findMany({
         where: {
@@ -103,72 +117,60 @@ export class MatchService {
         }
       });
 
-      console.log(`Found ${allRequests.length} requests for booking ${newRequest.bookingId}`);
-
       const playerIds = new Set();
       allRequests.forEach(req => {
         playerIds.add(req.createdById);
         if (req.partnerId) playerIds.add(req.partnerId);
       });
 
-      const playerCount = playerIds.size;
-      console.log(`Total unique players: ${playerCount}`);
-
-      if (playerCount >= 4) {
-        console.log('Found 4+ players for doubles match, updating status to matched');
+      // Match if 4 players found
+      if (playerIds.size >= 4) {
+        this.logger.log('Found 4 players for doubles match, updating status');
 
         const requestIds = allRequests.map(req => req.requestId);
         await this.prisma.matchRequest.updateMany({
-          where: {
-            requestId: { in: requestIds }
-          },
+          where: { requestId: { in: requestIds } },
           data: { status: 'matched' }
         });
-
-        console.log(`Updated ${requestIds.length} requests to 'matched' status`);
       }
-    } else if (newRequest.matchType === 'single') {
+    }
+    // Singles match matching logic
+    else if (newRequest.matchType === 'single') {
+      // More flexible matching strategy
       const matchingRequest = await this.prisma.matchRequest.findFirst({
         where: {
           matchType: 'single',
           status: 'pending',
           requestId: { not: newRequest.requestId },
-          bookingId: newRequest.bookingId
+          // Matching logic
+          ...(newRequest.bookingId
+              ? {
+                // Prefer matching on the same booking
+                OR: [
+                  { bookingId: newRequest.bookingId },
+                  { bookingId: null }
+                ]
+              }
+              : {})
         }
       });
 
       if (matchingRequest) {
+        // Match these two requests
         await this.prisma.matchRequest.updateMany({
           where: {
             requestId: { in: [newRequest.requestId, matchingRequest.requestId] }
           },
-          data: { status: 'matched' }
+          data: {
+            status: 'matched',
+            // Assign the booking if one exists
+            bookingId: newRequest.bookingId || matchingRequest.bookingId
+          }
         });
 
-        console.log(`Matched single requests: ${newRequest.requestId} and ${matchingRequest.requestId}`);
+        this.logger.log(`Matched single requests: ${newRequest.requestId} and ${matchingRequest.requestId}`);
       }
     }
-  }
-
-  async getMatchedUsers(matchId: number) {
-    const matchRequest = await this.prisma.matchRequest.findUnique({
-      where: { requestId: matchId },
-      include: { createdBy: true, partner: true },
-    });
-
-    if (!matchRequest) throw new NotFoundException('Match not found!');
-
-    const opponentMatch = await this.prisma.matchRequest.findFirst({
-      where: {
-        bookingId: matchRequest.bookingId,
-        requestId: { not: matchId },
-      },
-      include: { createdBy: true, partner: true },
-    });
-
-    if (!opponentMatch) throw new NotFoundException('Opponents not found!');
-
-    return [matchRequest, opponentMatch];
   }
 
   async getPendingRequests() {
@@ -182,6 +184,9 @@ export class MatchService {
             court: true
           }
         }
+      },
+      orderBy: {
+        requestId: 'desc'
       }
     });
   }
@@ -197,7 +202,44 @@ export class MatchService {
             court: true
           }
         }
+      },
+      orderBy: {
+        requestId: 'desc'
       }
     });
+  }
+
+  async getMatchedUsers(matchId: number) {
+    const matchRequest = await this.prisma.matchRequest.findUnique({
+      where: { requestId: matchId },
+      include: {
+        createdBy: true,
+        partner: true,
+        booking: true
+      },
+    });
+
+    if (!matchRequest) {
+      throw new NotFoundException('Match not found');
+    }
+
+    // Find opponent match for the same booking
+    const opponentMatch = await this.prisma.matchRequest.findFirst({
+      where: {
+        bookingId: matchRequest.bookingId,
+        requestId: { not: matchId },
+        status: 'matched'
+      },
+      include: {
+        createdBy: true,
+        partner: true
+      },
+    });
+
+    if (!opponentMatch) {
+      throw new NotFoundException('Opponents not found');
+    }
+
+    return [matchRequest, opponentMatch];
   }
 }

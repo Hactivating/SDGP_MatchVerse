@@ -57,16 +57,23 @@ export interface MatchResultDto {
     loser2Id: number;
 }
 
-// Create a match request
-export const createMatchRequest = async (request: CreateMatchRequestDto): Promise<MatchRequest> => {
+export const createMatchRequest = async (payload: CreateMatchRequestDto): Promise<MatchRequest> => {
     try {
-        const response = await api.post('/match/request', request);
+        console.log('Creating match request with payload:', payload);
+
+        const response = await api.post('/match/request', payload);
+
+        // Log the response for debugging
+        console.log('Match request response:', response.data);
+
         return response.data;
     } catch (error) {
-        console.error('Error creating match request:', error);
+        console.error('Error creating match request:', error.response?.data || error);
         throw error;
     }
 };
+
+
 
 // Get pending match requests
 export const getPendingMatches = async (): Promise<MatchRequest[]> => {
