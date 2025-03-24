@@ -10,7 +10,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 import * as Haptics from 'expo-haptics';
 
-// Enhanced Button Component
 const GradientButton = ({ onPress, text, icon, small }) => {
     const [pressed, setPressed] = useState(false);
 
@@ -55,13 +54,11 @@ export default function Home() {
     const [error, setError] = useState(null);
     const [scrollY] = useState(new Animated.Value(0));
 
-    // Animation values - similar to profile screen
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
     const headerTitleAnim = useRef(new Animated.Value(0)).current;
     const sportAnimation = useRef(new Animated.Value(0)).current;
 
-    // Card animations with staggered effect
     const cardAnimations = useRef({
         sports: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         match: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
@@ -70,7 +67,6 @@ export default function Home() {
         venues: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) }
     }).current;
 
-    // Create animation values for venue cards (this is to fix the translateY error)
     const venueCardAnimations = useRef(Array(6).fill().map(() => ({
         translateY: new Animated.Value(15)
     }))).current;
@@ -93,7 +89,6 @@ export default function Home() {
     useEffect(() => {
         fetchVenues();
 
-        // Start animations when component mounts - similar to profile screen
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -113,14 +108,13 @@ export default function Home() {
             }),
         ]).start();
 
-        // Staggered animations for cards
         const animateCards = () => {
             const delays = {
                 sports: 100,
                 match: 200,
                 find: 300,
-                myBookings: 400, // Add this line
-                venues: 500 // Adjust the timing for venues
+                myBookings: 400,
+                venues: 500
             };
 
             Object.entries(cardAnimations).forEach(([key, anim]) => {
@@ -140,7 +134,6 @@ export default function Home() {
                 ]).start();
             });
 
-            // Animate venue cards
             venueCardAnimations.forEach((anim, index) => {
                 Animated.timing(anim.translateY, {
                     toValue: 0,
@@ -185,10 +178,8 @@ export default function Home() {
     const selectSport = (sport) => {
         if (selectedSport === sport) return;
 
-        // Trigger haptic feedback when changing sports
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        // Animate sport change
         Animated.sequence([
             Animated.timing(sportAnimation, {
                 toValue: 1,
@@ -215,13 +206,11 @@ export default function Home() {
 
     const isAvailableSport = selectedSport === 'badminton';
 
-    // Consistent frosted glass effect style
     const frostedGlassStyle = {
         colors: ['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.65)'],
         className: "backdrop-blur-md rounded-2xl shadow-lg"
     };
 
-    // Consistent button gradient
     const buttonGradient = {
         colors: ['#10b68d', '#0a8d6d', '#046d64'],
         start: {x: 0, y: 0},

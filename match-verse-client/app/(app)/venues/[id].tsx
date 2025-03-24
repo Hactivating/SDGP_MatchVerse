@@ -280,7 +280,7 @@ export default function VenueDetail() {
             }
 
             const bookingData = {
-                userId: state.user?.id || 1,
+                userId: state.user?.userId || state.user?.id,
                 courtId: selectedCourt.courtId,
                 startingTime: selectedBooking.starts,
                 date: format(selectedDate, 'yyyy-MM-dd')

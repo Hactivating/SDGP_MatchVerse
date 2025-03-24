@@ -2,29 +2,31 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    Text,
     StyleSheet,
-    TouchableOpacity,
     ScrollView,
     SafeAreaView,
     Alert,
-    TextInput,
-    ActivityIndicator,
-    Switch,
     RefreshControl,
-    Image
+    Animated,
+    Image,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { getPendingMatches, getMatchedMatches, createMatchRequest, getUserBookingsForMatching } from '../../services/match';
 import { useAuth } from '@/hooks/useAuth';
-import { Ionicons } from '@expo/vector-icons';
+import { MatchHeader } from '@/components/match/MatchHeader';
+import { MatchCreationForm } from '@/components/match/MatchCreationForm';
+import { MatchItem } from '@/components/match/MatchItem';
+import { JoinDoublesSection } from '@/components/match/JoinDoublesSection'; // Import the new component
+import { LinearGradient } from 'expo-linear-gradient';
+import { validateMatchRequest, isMatchComplete } from '@/components/match/helpers';
 
 export default function MatchScreen() {
     const { state } = useAuth();
-    const userId = state.user?.userId; // Correct property name // Default to 1 if no user in auth state
+    const userId = state.user?.userId;
 
+    const [matchType, setMatchType] = useState('single');
     const [bookingId, setBookingId] = useState('');
     const [useBooking, setUseBooking] = useState(false);
-    const [matchType, setMatchType] = useState('single');
     const [loading, setLoading] = useState(false);
     const [pendingMatches, setPendingMatches] = useState([]);
     const [matchedMatches, setMatchedMatches] = useState([]);
@@ -32,17 +34,192 @@ export default function MatchScreen() {
     const [userBookings, setUserBookings] = useState([]);
     const [loadingBookings, setLoadingBookings] = useState(false);
 
+    const fadeAnim = React.useRef(new Animated.Value(0)).current;
+    const scaleAnim = React.useRef(new Animated.Value(0.95)).current;
+
+    const cardAnimations = React.useRef({
+        form: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        join: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        pending: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        matched: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+    }).current;
+
     useEffect(() => {
         fetchData();
+
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.spring(scaleAnim, {
+                toValue: 1,
+                friction: 8,
+                tension: 40,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        const animateCards = () => {
+            const delays = {
+                form: 100,
+                join: 200,
+                pending: 300,
+                matched: 400
+            };
+
+            Object.entries(cardAnimations).forEach(([key, anim]) => {
+                Animated.parallel([
+                    Animated.timing(anim.opacity, {
+                        toValue: 1,
+                        duration: 500,
+                        delay: delays[key],
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(anim.translateY, {
+                        toValue: 0,
+                        duration: 500,
+                        delay: delays[key],
+                        useNativeDriver: true,
+                    })
+                ]).start();
+            });
+        };
+
+        animateCards();
     }, []);
+
+    const consolidateMatchedMatches = (matches) => {
+        console.log('===== DETAILED MATCH INFO =====');
+        matches.forEach((match, index) => {
+            console.log(`Match ${index + 1} ID: ${match.requestId} (BookingID: ${match.bookingId})`);
+            console.log(`Match Type: ${match.matchType}`);
+            console.log(`Creator: ${match.createdBy?.username || 'Unknown'} (ID: ${match.createdBy?.userId || 'Unknown'})`);
+            console.log(`Partner: ${match.partner?.username || 'None'} (ID: ${match.partnerId || 'None'})`);
+            console.log('------------------------');
+        });
+
+        const matchesByBookingId = {};
+
+        matches.forEach(match => {
+            if (!match.bookingId) return;
+
+            const key = `${match.bookingId}`;
+
+            if (!matchesByBookingId[key]) {
+                matchesByBookingId[key] = [];
+            }
+
+            matchesByBookingId[key].push(match);
+        });
+
+        const consolidatedMatches = [];
+
+        Object.keys(matchesByBookingId).forEach(bookingId => {
+            const matchesForThisBooking = matchesByBookingId[bookingId];
+
+            const singleMatches = matchesForThisBooking.filter(m => m.matchType === 'single');
+            const doubleMatches = matchesForThisBooking.filter(m => m.matchType === 'double');
+
+            if (singleMatches.length > 0) {
+                const baseMatch = singleMatches[0];
+                const allParticipants = [];
+
+                singleMatches.forEach(match => {
+                    if (match.createdBy && !allParticipants.some(p => p.userId === match.createdBy.userId) && allParticipants.length < 2) {
+                        allParticipants.push(match.createdBy);
+                    }
+
+                    if (match.partnerId && match.partner &&
+                        !allParticipants.some(p => p.userId === match.partner.userId) &&
+                        allParticipants.length < 2) {
+                        allParticipants.push(match.partner);
+                    }
+                });
+
+                consolidatedMatches.push({
+                    ...baseMatch,
+                    allParticipants,
+                    matchType: 'single'
+                });
+            }
+
+            if (doubleMatches.length > 0) {
+                const baseMatch = doubleMatches[0];
+                const allParticipants = [];
+                const teams = [];
+
+                doubleMatches.forEach(match => {
+                    if (match.createdBy && !allParticipants.some(p => p.userId === match.createdBy.userId)) {
+                        allParticipants.push(match.createdBy);
+
+                        if (match.partnerId && match.partner) {
+                            if (!allParticipants.some(p => p.userId === match.partner.userId)) {
+                                allParticipants.push(match.partner);
+                            }
+
+                            teams.push({
+                                player1: match.createdBy,
+                                player2: match.partner
+                            });
+                        }
+                    }
+
+                    else if (match.partnerId && match.partner &&
+                        !allParticipants.some(p => p.userId === match.partner.userId)) {
+                        allParticipants.push(match.partner);
+                    }
+                });
+
+                const limitedParticipants = allParticipants.slice(0, 4);
+
+                consolidatedMatches.push({
+                    ...baseMatch,
+                    allParticipants: limitedParticipants,
+                    teams: teams,
+                    matchType: 'double'
+                });
+            }
+        });
+
+        console.log('===== CONSOLIDATION RESULTS =====');
+        console.log(`Original matches: ${matches.length}, Consolidated: ${consolidatedMatches.length}`);
+
+        consolidatedMatches.forEach((match, index) => {
+            console.log(`Consolidated Match ${index + 1} (ID: ${match.requestId})`);
+            console.log(`Match Type: ${match.matchType}`);
+            console.log(`Total participants: ${match.allParticipants.length}`);
+            console.log(`Required participants: ${match.matchType === 'single' ? 2 : 4}`);
+            match.allParticipants.forEach((player, idx) => {
+                console.log(`  Player ${idx + 1}: ${player.username} (ID: ${player.userId})`);
+            });
+
+            if (match.teams && match.teams.length > 0) {
+                console.log(`Teams identified: ${match.teams.length}`);
+                match.teams.forEach((team, teamIdx) => {
+                    console.log(`  Team ${teamIdx + 1}: ${team.player1.username} & ${team.player2.username}`);
+                });
+            }
+
+            console.log(`Match status: ${match.allParticipants.length === (match.matchType === 'single' ? 2 : 4) ? 'COMPLETE' : 'INCOMPLETE'}`);
+        });
+
+        return consolidatedMatches;
+    };
 
     const fetchData = async () => {
         try {
             setRefreshing(true);
             const pendingResponse = await getPendingMatches();
             const matchedResponse = await getMatchedMatches();
+
             setPendingMatches(pendingResponse);
-            setMatchedMatches(matchedResponse);
+
+            // Consolidate matched matches to display as a single entry
+            const consolidatedMatches = consolidateMatchedMatches(matchedResponse);
+            setMatchedMatches(consolidatedMatches);
+
             await fetchUserBookings();
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -55,8 +232,17 @@ export default function MatchScreen() {
     const fetchUserBookings = async () => {
         try {
             setLoadingBookings(true);
-            // This now uses the updated function that filters out bookings already in match requests
+            console.log("Fetching bookings for user ID:", userId);
+
+            // Only proceed if we have a valid userId
+            if (!userId) {
+                console.error("Missing userId in auth state");
+                setUserBookings([]);
+                return;
+            }
+
             const bookings = await getUserBookingsForMatching(userId);
+            console.log("Received bookings:", bookings);
             setUserBookings(bookings || []);
         } catch (error) {
             console.error('Error fetching user bookings:', error);
@@ -65,25 +251,28 @@ export default function MatchScreen() {
         }
     };
 
-    const handleCreateMatchRequest = async () => {
+    const handleCreateMatchRequest = async (data) => {
         try {
+            // Validate the request before proceeding
+            if (!validateMatchRequest(data.matchType, data.useBooking)) {
+                return;
+            }
+
             setLoading(true);
 
             const payload = {
-                matchType: matchType,
+                matchType: data.matchType,
                 createdById: userId
             };
 
-            // Only add bookingId if the switch is on and a booking ID is entered
-            if (useBooking && bookingId.trim()) {
-                const bookingIdNum = parseInt(bookingId, 10);
+            if (data.useBooking && data.bookingId.trim()) {
+                const bookingIdNum = parseInt(data.bookingId, 10);
                 if (isNaN(bookingIdNum)) {
                     Alert.alert('Error', 'Booking ID must be a number');
                     setLoading(false);
                     return;
                 }
 
-                // Check if the booking ID exists in available bookings
                 const bookingExists = userBookings.some(booking => booking.bookingId === bookingIdNum);
                 if (!bookingExists) {
                     Alert.alert('Error', 'This booking is not available or does not exist');
@@ -94,9 +283,39 @@ export default function MatchScreen() {
                 payload.bookingId = bookingIdNum;
             }
 
+            if (data.matchType === 'double') {
+                if (!payload.bookingId) {
+                    Alert.alert('Error', 'A booking is required for doubles matches');
+                    setLoading(false);
+                    return;
+                }
+
+                if (data.partnerId) {
+                    payload.partnerId = data.partnerId;
+                } else {
+                    Alert.alert('Error', 'A partner is required for doubles matches');
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            console.log('Sending match request payload:', payload);
             await createMatchRequest(payload);
-            Alert.alert('Success', 'Match request created successfully!');
+
+            // Show different success messages based on match type
+            if (data.matchType === 'double') {
+                Alert.alert(
+                    'Success',
+                    'Doubles match request created with your partner! Your team will be matched with another team.',
+                    [{ text: 'OK' }]
+                );
+            } else {
+                Alert.alert('Success', 'Match request created successfully!');
+            }
+
             setBookingId('');
+            setMatchType('single');
+            setUseBooking(false);
             fetchData(); // Refresh data after successful creation
         } catch (error) {
             console.error('Error creating match request:', error);
@@ -112,62 +331,15 @@ export default function MatchScreen() {
         }
     };
 
-    const formatDateTime = (date, time) => {
-        if (!date || !time) return 'No date/time';
-        return `${date} at ${time}`;
-    };
-
-    const getRankColor = (rank) => {
-        if (!rank) return '#9CA3AF'; // Default gray
-
-        if (rank.includes('Beginner')) return '#10B981'; // Green
-        if (rank.includes('Intermediate')) return '#3B82F6'; // Blue
-        if (rank.includes('Advanced')) return '#8B5CF6'; // Purple
-        if (rank.includes('Expert')) return '#EF4444'; // Red
-
-        return '#9CA3AF'; // Default gray
-    };
-
-    const renderUserInfo = (user) => {
-        if (!user) return null;
-
-        return (
-            <View style={styles.userInfoContainer}>
-                {user.userImageUrl ? (
-                    <Image
-                        source={{ uri: user.userImageUrl }}
-                        style={styles.userAvatar}
-                        resizeMode="cover"
-                    />
-                ) : (
-                    <View style={styles.userAvatarPlaceholder}>
-                        <Text style={styles.userAvatarText}>
-                            {user.username ? user.username.charAt(0).toUpperCase() : '?'}
-                        </Text>
-                    </View>
-                )}
-                <View style={styles.userDetails}>
-                    <Text style={styles.userName}>{user.username || `User #${user.userId}`}</Text>
-                    <View style={[styles.rankBadge, { backgroundColor: getRankColor(user.rank) }]}>
-                        <Text style={styles.rankText}>{user.rank || 'Unranked'}</Text>
-                    </View>
-                </View>
-            </View>
-        );
-    };
-
-    // Get the IDs of bookings that are already in pending or matched requests
     const getBookingsInUse = () => {
         const bookingIdsInUse = new Set();
 
-        // Check pending matches
         pendingMatches.forEach(match => {
             if (match.bookingId) {
                 bookingIdsInUse.add(match.bookingId);
             }
         });
 
-        // Check matched matches
         matchedMatches.forEach(match => {
             if (match.bookingId) {
                 bookingIdsInUse.add(match.bookingId);
@@ -177,554 +349,121 @@ export default function MatchScreen() {
         return bookingIdsInUse;
     };
 
-    // Filter out bookings that are already in use
     const availableBookings = userBookings.filter(booking =>
         !getBookingsInUse().has(booking.bookingId)
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={fetchData} />
-                }
-            >
-                <Text style={styles.header}>Match Center</Text>
+        <View style={styles.container}>
+            <StatusBar style="light" />
 
-                {/* Create Match Request Form */}
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Create Match Request</Text>
+            {/* Enhanced Gradient Background similar to home screen */}
+            <LinearGradient
+                colors={['#10b68d', '#0a8d6d', '#046d64']}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+            />
 
-                    <View style={styles.inputGroup}>
-                        <View style={styles.buttonGroup}>
-                            <TouchableOpacity
-                                style={[
-                                    styles.typeButton,
-                                    matchType === 'single' && styles.activeTypeButton
-                                ]}
-                                onPress={() => setMatchType('single')}
-                            >
-                                <Ionicons name="person" size={18} color={matchType === 'single' ? '#fff' : '#333'} />
-                                <Text style={matchType === 'single' ? styles.activeButtonText : styles.buttonText}>
-                                    Singles
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[
-                                    styles.typeButton,
-                                    matchType === 'double' && styles.activeTypeButton
-                                ]}
-                                onPress={() => setMatchType('double')}
-                            >
-                                <Ionicons name="people" size={18} color={matchType === 'double' ? '#fff' : '#333'} />
-                                <Text style={matchType === 'double' ? styles.activeButtonText : styles.buttonText}>
-                                    Doubles
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+            <SafeAreaView style={styles.container}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={fetchData} />
+                    }
+                >
+                    <MatchHeader title="Match Center" />
 
-                    <View style={styles.switchContainer}>
-                        <Text style={styles.switchLabel}>I have a booking</Text>
-                        <Switch
-                            value={useBooking}
-                            onValueChange={setUseBooking}
-                            trackColor={{ false: '#e0e0e0', true: '#a7f3d0' }}
-                            thumbColor={useBooking ? '#10b68d' : '#f4f3f4'}
-                        />
-                    </View>
-
-                    {useBooking && (
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Booking ID:</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={bookingId}
-                                onChangeText={setBookingId}
-                                placeholder="Enter booking ID"
-                                keyboardType="numeric"
-                            />
-
-                            {loadingBookings ? (
-                                <ActivityIndicator color="#10b68d" style={{ marginVertical: 12 }} />
-                            ) : availableBookings.length > 0 ? (
-                                <View style={styles.bookingsContainer}>
-                                    <Text style={styles.bookingsTitle}>Your available bookings:</Text>
-                                    {availableBookings.map((booking) => (
-                                        <TouchableOpacity
-                                            key={booking.bookingId}
-                                            style={styles.bookingItem}
-                                            onPress={() => setBookingId(booking.bookingId.toString())}
-                                        >
-                                            <View style={styles.bookingItemRow}>
-                                                <Ionicons name="calendar" size={16} color="#10b68d" />
-                                                <Text style={styles.bookingItemText}>
-                                                    {booking.court?.name || `Court ${booking.courtId}`} - {formatDateTime(booking.date, booking.startingTime)}
-                                                </Text>
-                                            </View>
-                                            <Text style={styles.bookingId}>ID: {booking.bookingId}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            ) : (
-                                <Text style={styles.noBookingsText}>You don't have any available bookings</Text>
-                            )}
-                        </View>
-                    )}
-
-                    {!useBooking && (
-                        <View style={styles.infoContainer}>
-                            <Ionicons name="information-circle-outline" size={18} color="#10b68d" />
-                            <Text style={styles.infoText}>
-                                You'll be matched with someone who has a court booking.
-                            </Text>
-                        </View>
-                    )}
-
-                    <TouchableOpacity
-                        style={styles.submitButton}
-                        onPress={handleCreateMatchRequest}
-                        disabled={loading}
+                    <Animated.View
+                        style={{
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }]
+                        }}
                     >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                            <>
-                                <Ionicons name="add-circle-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
-                                <Text style={styles.submitButtonText}>Create Match Request</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
-                </View>
+                        {/* Create Match Request Form */}
+                        <Animated.View
+                            style={{
+                                opacity: cardAnimations.form.opacity,
+                                transform: [{ translateY: cardAnimations.form.translateY }]
+                            }}
+                        >
+                            <MatchCreationForm
+                                matchType={matchType}
+                                setMatchType={setMatchType}
+                                bookingId={bookingId}
+                                setBookingId={setBookingId}
+                                useBooking={useBooking}
+                                setUseBooking={setUseBooking}
+                                loading={loading}
+                                loadingBookings={loadingBookings}
+                                availableBookings={availableBookings}
+                                currentUserId={userId || 0}
+                                onSubmit={handleCreateMatchRequest}
+                            />
+                        </Animated.View>
 
-                {/* Pending Matches */}
-                <View style={styles.card}>
-                    <View style={styles.cardTitleRow}>
-                        <Text style={styles.cardTitle}>
-                            Pending Matches
-                        </Text>
-                        <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{pendingMatches.length}</Text>
-                        </View>
-                    </View>
+                        {/* Join Doubles Section - NEW */}
+                        <Animated.View
+                            style={{
+                                opacity: cardAnimations.join.opacity,
+                                transform: [{ translateY: cardAnimations.join.translateY }]
+                            }}
+                        >
+                            <JoinDoublesSection
+                                userId={userId || 0}
+                                onRefresh={fetchData}
+                            />
+                        </Animated.View>
 
-                    {pendingMatches.length === 0 ? (
-                        <View style={styles.emptyStateContainer}>
-                            <Ionicons name="hourglass-outline" size={36} color="#d1d5db" />
-                            <Text style={styles.emptyText}>No pending matches found</Text>
-                        </View>
-                    ) : (
-                        pendingMatches.map((match) => (
-                            <View key={match.requestId} style={styles.matchItem}>
-                                <View style={styles.matchHeader}>
-                                    <View style={styles.matchTypeBadge}>
-                                        <Ionicons
-                                            name={match.matchType === 'single' ? 'person' : 'people'}
-                                            size={12}
-                                            color="#fff"
-                                            style={{ marginRight: 4 }}
-                                        />
-                                        <Text style={styles.matchTypeText}>
-                                            {match.matchType.charAt(0).toUpperCase() + match.matchType.slice(1)}
-                                        </Text>
-                                    </View>
-                                    <Text style={styles.pendingBadge}>Pending</Text>
-                                </View>
+                        {/* Pending Matches */}
+                        <Animated.View
+                            style={{
+                                opacity: cardAnimations.pending.opacity,
+                                transform: [{ translateY: cardAnimations.pending.translateY }]
+                            }}
+                        >
+                            <MatchItem
+                                title="Pending Matches"
+                                matches={pendingMatches.map(match => ({
+                                    ...match,
+                                    isComplete: isMatchComplete(match.matchType, match.allParticipants?.length || 1)
+                                }))}
+                                status="pending"
+                                emptyIconName="hourglass-outline"
+                                emptyText="No pending matches found"
+                            />
+                        </Animated.View>
 
-                                <Text style={styles.matchId}>Request #{match.requestId}</Text>
-
-                                {match.bookingId ? (
-                                    <View style={styles.infoRow}>
-                                        <Ionicons name="calendar-outline" size={16} color="#10b68d" />
-                                        <Text style={styles.infoText}>
-                                            Booking: {match.booking ?
-                                            `${match.booking.court?.name || 'Court'} on ${formatDateTime(match.booking.date, match.booking.startingTime)}` :
-                                            `#${match.bookingId}`}
-                                        </Text>
-                                    </View>
-                                ) : (
-                                    <View style={styles.infoRow}>
-                                        <Ionicons name="search-outline" size={16} color="#10b68d" />
-                                        <Text style={styles.infoText}>
-                                            Looking for someone with a booking
-                                        </Text>
-                                    </View>
-                                )}
-
-                                {renderUserInfo(match.createdBy)}
-                            </View>
-                        ))
-                    )}
-                </View>
-
-                {/* Matched Matches */}
-                <View style={styles.card}>
-                    <View style={styles.cardTitleRow}>
-                        <Text style={styles.cardTitle}>
-                            Matched Games
-                        </Text>
-                        <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{matchedMatches.length}</Text>
-                        </View>
-                    </View>
-
-                    {matchedMatches.length === 0 ? (
-                        <View style={styles.emptyStateContainer}>
-                            <Ionicons name="tennisball-outline" size={36} color="#d1d5db" />
-                            <Text style={styles.emptyText}>No matched games found</Text>
-                        </View>
-                    ) : (
-                        matchedMatches.map((match) => (
-                            <View key={match.requestId} style={styles.matchItem}>
-                                <View style={styles.matchHeader}>
-                                    <View style={styles.matchTypeBadge}>
-                                        <Ionicons
-                                            name={match.matchType === 'single' ? 'person' : 'people'}
-                                            size={12}
-                                            color="#fff"
-                                            style={{ marginRight: 4 }}
-                                        />
-                                        <Text style={styles.matchTypeText}>
-                                            {match.matchType.charAt(0).toUpperCase() + match.matchType.slice(1)}
-                                        </Text>
-                                    </View>
-                                    <Text style={styles.matchedBadge}>Matched</Text>
-                                </View>
-
-                                <Text style={styles.matchId}>Match #{match.requestId}</Text>
-
-                                {match.bookingId && (
-                                    <View style={styles.infoRow}>
-                                        <Ionicons name="calendar-outline" size={16} color="#10b68d" />
-                                        <Text style={styles.infoText}>
-                                            Booking: {match.booking ?
-                                            `${match.booking.court?.name || 'Court'} on ${formatDateTime(match.booking.date, match.booking.startingTime)}` :
-                                            `#${match.bookingId}`}
-                                        </Text>
-                                    </View>
-                                )}
-
-                                <View style={styles.playersContainer}>
-                                    <Text style={styles.playersTitle}>Players:</Text>
-                                    <View style={styles.playersList}>
-                                        {renderUserInfo(match.createdBy)}
-                                        {match.partnerId && renderUserInfo(match.partner)}
-                                    </View>
-                                </View>
-                            </View>
-                        ))
-                    )}
-                </View>
-            </ScrollView>
-        </SafeAreaView>
+                        {/* Matched Matches */}
+                        <Animated.View
+                            style={{
+                                opacity: cardAnimations.matched.opacity,
+                                transform: [{ translateY: cardAnimations.matched.translateY }]
+                            }}
+                        >
+                            <MatchItem
+                                title="Matched Games"
+                                matches={matchedMatches.map(match => ({
+                                    ...match,
+                                    isComplete: isMatchComplete(match.matchType, match.allParticipants?.length || 1)
+                                }))}
+                                status="matched"
+                                emptyIconName="tennisball-outline"
+                                emptyText="No matched games found"
+                            />
+                        </Animated.View>
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
     },
     scrollContent: {
         padding: 16,
         paddingBottom: 100,
     },
-    header: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 16,
-        color: '#333',
-    },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    cardTitleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    cardTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 16,
-        color: '#333',
-        flex: 1,
-    },
-    countBadge: {
-        backgroundColor: '#f3f4f6',
-        borderRadius: 16,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-    },
-    countText: {
-        fontWeight: 'bold',
-        color: '#4b5563',
-        fontSize: 14,
-    },
-    inputGroup: {
-        marginBottom: 16,
-    },
-    label: {
-        fontSize: 16,
-        marginBottom: 8,
-        color: '#333',
-        fontWeight: '500',
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        backgroundColor: '#f9fafb',
-    },
-    buttonGroup: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    typeButton: {
-        flex: 1,
-        flexDirection: 'row',
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-        borderRadius: 8,
-        padding: 12,
-        marginHorizontal: 4,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f9fafb',
-    },
-    activeTypeButton: {
-        backgroundColor: '#10b68d',
-        borderColor: '#10b68d',
-    },
-    buttonText: {
-        color: '#333',
-        fontWeight: '500',
-        marginLeft: 6,
-    },
-    activeButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        marginLeft: 6,
-    },
-    switchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-        padding: 12,
-        backgroundColor: '#f9fafb',
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#e0e0e0',
-    },
-    switchLabel: {
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
-    },
-    infoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 12,
-        backgroundColor: '#f0fdf4',
-        borderRadius: 8,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#dcfce7',
-    },
-    infoText: {
-        color: '#333',
-        fontSize: 14,
-        marginLeft: 8,
-        flex: 1,
-    },
-    submitButton: {
-        backgroundColor: '#10b68d',
-        borderRadius: 8,
-        padding: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
-    submitButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    matchItem: {
-        backgroundColor: '#f9fafb',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    matchHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    matchTypeBadge: {
-        backgroundColor: '#10b68d',
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        borderRadius: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    matchTypeText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 12,
-    },
-    pendingBadge: {
-        backgroundColor: '#fef3c7',
-        color: '#d97706',
-        fontWeight: 'bold',
-        fontSize: 12,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        borderRadius: 16,
-    },
-    matchedBadge: {
-        backgroundColor: '#dbeafe',
-        color: '#2563eb',
-        fontWeight: 'bold',
-        fontSize: 12,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-        borderRadius: 16,
-    },
-    matchId: {
-        fontWeight: 'bold',
-        marginBottom: 12,
-        color: '#333',
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    emptyStateContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-    },
-    emptyText: {
-        textAlign: 'center',
-        color: '#6b7280',
-        fontStyle: 'italic',
-        marginTop: 8,
-    },
-    bookingsContainer: {
-        marginTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
-        paddingTop: 12,
-    },
-    bookingsTitle: {
-        fontWeight: 'bold',
-        marginBottom: 8,
-        color: '#333',
-    },
-    bookingItem: {
-        padding: 12,
-        borderRadius: 8,
-        backgroundColor: '#f0fdf4',
-        marginBottom: 8,
-        borderWidth: 1,
-        borderColor: '#dcfce7',
-    },
-    bookingItemRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    bookingItemText: {
-        marginLeft: 8,
-        color: '#333',
-    },
-    bookingId: {
-        fontSize: 12,
-        color: '#059669',
-        marginTop: 4,
-        fontWeight: '500',
-    },
-    noBookingsText: {
-        textAlign: 'center',
-        color: '#6b7280',
-        fontStyle: 'italic',
-        marginTop: 12,
-    },
-    userInfoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-        backgroundColor: '#f3f4f6',
-        padding: 8,
-        borderRadius: 8,
-    },
-    userAvatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-    },
-    userAvatarPlaceholder: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#d1d5db',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    userAvatarText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    userDetails: {
-        marginLeft: 8,
-        flex: 1,
-    },
-    userName: {
-        fontWeight: '500',
-        fontSize: 14,
-        color: '#333',
-    },
-    rankBadge: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-        alignSelf: 'flex-start',
-        marginTop: 2,
-    },
-    rankText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 10,
-    },
-    playersContainer: {
-        marginTop: 8,
-    },
-    playersTitle: {
-        fontWeight: '500',
-        marginBottom: 8,
-        color: '#333',
-    },
-    playersList: {
-        gap: 8,
-    }
 });

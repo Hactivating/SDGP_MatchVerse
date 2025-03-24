@@ -6,169 +6,148 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateMatchRequestDto } from './DTO/create-match-request.dto';
 
+
 @Injectable()
 export class MatchService {
   constructor(private prisma: PrismaService) { }
 
   async createMatchRequest(data: CreateMatchRequestDto) {
-    // Validate booking if a bookingId is provided
     if (data.bookingId) {
       const booking = await this.prisma.booking.findUnique({
         where: { bookingId: data.bookingId },
-        include: {
-          matchRequest: {
-            where: { status: 'matched' }
-          }
-        }
       });
 
       if (!booking) {
         throw new BadRequestException('booking not found');
       }
-
-      if (booking.matchRequest.length > 0) {
-        throw new BadRequestException('this booking is already matched with another player');
-      }
     }
 
-    if (data.matchType === 'double' && !data.partnerId) {
-      throw new BadRequestException('doubles match requires a partner');
-    }
-
-    if (data.matchType === 'double' && data.createdById === data.partnerId) {
-      throw new BadRequestException('you cannot add yourself as a partner');
-    }
-
-    // Create the match request with proper relations
-    const createData: any = {
-      matchType: data.matchType,
-      status: 'pending',
-      createdBy: {
-        connect: { userId: data.createdById }
-      }
-    };
-
-    // Conditionally add booking relation if bookingId is provided
-    if (data.bookingId) {
-      createData.booking = {
-        connect: { bookingId: data.bookingId }
-      };
-    }
-
-    // Conditionally add partner relation if partnerId is provided
-    if (data.partnerId) {
-      createData.partner = {
-        connect: { userId: data.partnerId }
-      };
-    }
-
-    // Create the match request
-    const matchRequest = await this.prisma.matchRequest.create({
-      data: createData,
-      include: {
-        booking: true,
-        createdBy: true,
-        partner: true
-      }
-    });
-
-    // Try to match with an existing request
-    const matchResult = await this.tryMatchRequest(matchRequest);
-
-    // Return the updated match request (which may now be matched)
-    if (matchResult) {
-      // If we found a match, return the updated request with matched status
-      return await this.prisma.matchRequest.findUnique({
-        where: { requestId: matchRequest.requestId },
+    if (data.matchType === 'double') {
+      // Check if this booking already has pending doubles matches
+      const existingMatches = await this.prisma.matchRequest.findMany({
+        where: {
+          bookingId: data.bookingId,
+          matchType: 'double',
+          status: 'pending'
+        },
         include: {
-          booking: true,
           createdBy: true,
           partner: true
         }
       });
+
+      if (existingMatches.length > 0) {
+        const playerIds = new Set();
+
+        existingMatches.forEach(match => {
+          if (match.createdById) playerIds.add(match.createdById);
+          if (match.partnerId) playerIds.add(match.partnerId);
+        });
+
+        console.log(`Found ${playerIds.size} existing players for this booking`);
+
+        if (playerIds.size >= 1 && !playerIds.has(data.createdById)) {
+          console.log(`Allowing player ${data.createdById} to join without a partner as the ${playerIds.size + 1} player`);
+        } else if (!data.partnerId) {
+          throw new BadRequestException('doubles matches require a partner for the first team');
+        }
+      } else if (!data.partnerId) {
+        throw new BadRequestException('doubles matches require a partner for the first team');
+      }
     }
 
+    const createData: any = {
+      matchType: data.matchType,
+      createdById: data.createdById,
+      status: 'pending',
+    };
+
+    if (data.bookingId !== undefined) {
+      createData.bookingId = data.bookingId;
+    }
+
+    if (data.partnerId !== undefined) {
+      createData.partnerId = data.partnerId;
+    }
+
+    const matchRequest = await this.prisma.matchRequest.create({
+      data: createData,
+      include: {
+        createdBy: true,
+        partner: true,
+        booking: {
+          include: {
+            court: true
+          }
+        }
+      }
+    });
+
+    await this.tryMatchRequest(matchRequest);
     return matchRequest;
   }
 
   async tryMatchRequest(newRequest) {
-    console.log(`Attempting to match request #${newRequest.requestId}`);
-    console.log(`Request has bookingId: ${newRequest.bookingId ? 'Yes' : 'No'}`);
+    console.log('Trying to match request:', newRequest.requestId);
 
-    // Find a matching request
-    const matchingRequest = await this.prisma.matchRequest.findFirst({
-      where: {
-        // Basic conditions for any match
-        matchType: newRequest.matchType,
-        status: 'pending',
-        requestId: { not: newRequest.requestId },
-        createdById: { not: newRequest.createdById }, // Prevent self-matching
-
-        // Booking logic - this is the critical part
-        ...(newRequest.bookingId
-                ? {
-                  // If this request has a booking, find one WITHOUT a booking
-                  bookingId: null,
-                }
-                : {
-                  // If this request has NO booking, find one WITH a booking
-                  bookingId: {
-                    not: null,
-                  },
-                  // Make sure the booking hasn't already been matched
-                  booking: {
-                    matchRequest: {
-                      none: {
-                        status: 'matched',
-                        requestId: { not: newRequest.requestId }
-                      }
-                    }
-                  }
-                }
-        )
-      },
-      include: {
-        booking: true,
-        createdBy: true,
-        partner: true
-      }
-    });
-
-    if (matchingRequest) {
-      console.log(`Found matching request #${matchingRequest.requestId}`);
-
-      // If the new request doesn't have a booking but the matching one does,
-      // update the new request to use that booking
-      if (!newRequest.bookingId && matchingRequest.bookingId) {
-        await this.prisma.matchRequest.update({
-          where: { requestId: newRequest.requestId },
-          data: {
-            bookingId: matchingRequest.bookingId,
-            status: 'matched'
-          }
-        });
-      }
-
-      // Update the matching request to 'matched' status
-      await this.prisma.matchRequest.update({
-        where: { requestId: matchingRequest.requestId },
-        data: { status: 'matched' }
+    if (newRequest.matchType === 'double' && newRequest.bookingId) {
+      const allRequests = await this.prisma.matchRequest.findMany({
+        where: {
+          bookingId: newRequest.bookingId,
+          matchType: 'double',
+          status: 'pending'
+        },
+        include: {
+          createdBy: true,
+          partner: true
+        }
       });
 
-      // Also update the new request if it hasn't been updated yet
-      if (newRequest.bookingId) {
-        await this.prisma.matchRequest.update({
-          where: { requestId: newRequest.requestId },
+      console.log(`Found ${allRequests.length} requests for booking ${newRequest.bookingId}`);
+
+      const playerIds = new Set();
+      allRequests.forEach(req => {
+        playerIds.add(req.createdById);
+        if (req.partnerId) playerIds.add(req.partnerId);
+      });
+
+      const playerCount = playerIds.size;
+      console.log(`Total unique players: ${playerCount}`);
+
+      if (playerCount >= 4) {
+        console.log('Found 4+ players for doubles match, updating status to matched');
+
+        const requestIds = allRequests.map(req => req.requestId);
+        await this.prisma.matchRequest.updateMany({
+          where: {
+            requestId: { in: requestIds }
+          },
           data: { status: 'matched' }
         });
+
+        console.log(`Updated ${requestIds.length} requests to 'matched' status`);
       }
+    } else if (newRequest.matchType === 'single') {
+      const matchingRequest = await this.prisma.matchRequest.findFirst({
+        where: {
+          matchType: 'single',
+          status: 'pending',
+          requestId: { not: newRequest.requestId },
+          bookingId: newRequest.bookingId
+        }
+      });
 
-      console.log('Match confirmed between requests');
-      return true;
+      if (matchingRequest) {
+        await this.prisma.matchRequest.updateMany({
+          where: {
+            requestId: { in: [newRequest.requestId, matchingRequest.requestId] }
+          },
+          data: { status: 'matched' }
+        });
+
+        console.log(`Matched single requests: ${newRequest.requestId} and ${matchingRequest.requestId}`);
+      }
     }
-
-    console.log('No matching request found');
-    return false;
   }
 
   async getMatchedUsers(matchId: number) {
@@ -181,18 +160,8 @@ export class MatchService {
 
     const opponentMatch = await this.prisma.matchRequest.findFirst({
       where: {
-        OR: [
-          // If there's a booking, find match with same booking
-          ...(matchRequest.bookingId ? [{
-            bookingId: matchRequest.bookingId,
-            requestId: { not: matchId },
-          }] : []),
-          // Look for matches that this one was directly matched with
-          {
-            status: 'matched',
-            // Add more matching criteria if needed
-          }
-        ]
+        bookingId: matchRequest.bookingId,
+        requestId: { not: matchId },
       },
       include: { createdBy: true, partner: true },
     });

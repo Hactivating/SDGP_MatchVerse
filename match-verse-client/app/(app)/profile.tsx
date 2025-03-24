@@ -11,7 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 
-// Enhanced Button Component
 const GradientButton = ({ onPress, text, icon, small, disabled, loading }) => {
     const [pressed, setPressed] = useState(false);
 
@@ -55,7 +54,6 @@ const GradientButton = ({ onPress, text, icon, small, disabled, loading }) => {
     );
 };
 
-// Secondary Button Component
 const SecondaryButton = ({ onPress, text, icon, small }) => {
     const [pressed, setPressed] = useState(false);
 
@@ -92,7 +90,6 @@ const SecondaryButton = ({ onPress, text, icon, small }) => {
     );
 };
 
-// Input Field Component
 const InputField = ({ icon, value, onChangeText, placeholder, keyboardType = 'default', secureTextEntry = false }) => {
     return (
         <View className="flex-row items-center bg-white backdrop-blur-md border border-[rgba(16,182,141,0.2)] rounded-xl px-4 py-3 shadow-sm overflow-hidden">
@@ -118,13 +115,11 @@ export default function ProfileScreen() {
     const [error, setError] = useState(null);
     const [scrollY] = useState(new Animated.Value(0));
 
-    // Edit profile state
     const [isEditing, setIsEditing] = useState(false);
     const [editedUsername, setEditedUsername] = useState('');
     const [editedEmail, setEditedEmail] = useState('');
     const [isUpdating, setIsUpdating] = useState(false);
 
-    // Animation values
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
     const headerTitleAnim = useRef(new Animated.Value(0)).current;
@@ -141,14 +136,12 @@ export default function ProfileScreen() {
         extrapolate: 'clamp',
     });
 
-    // Load Poppins font
     const [fontsLoaded] = useFonts({
         'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
         'Poppins-Medium': require('@/assets/fonts/Poppins-Medium.ttf'),
         'Poppins-Regular': require('@/assets/fonts/Poppins-Regular.ttf'),
     });
 
-    // Start animations when component mounts
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeAnim, {
@@ -169,7 +162,6 @@ export default function ProfileScreen() {
             }),
         ]).start();
 
-        // Staggered animations for cards
         const animateCards = () => {
             const delays = {
                 profile: 100,
