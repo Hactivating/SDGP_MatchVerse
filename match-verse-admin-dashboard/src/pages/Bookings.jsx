@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
-import { bookingsApi, courtsApi, authApi } from '../services/api';
+import { bookingsApi, courtsApi } from '../services/api';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import BookingCalendar from '../components/bookings/BookingCalendar';
 import AddBookingModal from '../components/bookings/AddBookingModal';
-import PasswordConfirmModal from '../components/ui/PasswordConfirmationModal';
+import DeleteBookingModal from '../components/bookings/DeleteBookingModal';
 import { formatDate } from '../utils/dateUtils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -31,7 +31,7 @@ const Bookings = () => {
   const [venueLoading, setVenueLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     fetchCourts();
@@ -125,58 +125,111 @@ const Bookings = () => {
       setLoading(true);
       const formattedDate = formatDate(selectedDate);
       const timestamp = new Date().getTime();
+      
+      // Step 1: Fetch all bookings for the selected court and date
       const response = await bookingsApi.getByCourtAndDate(selectedCourt, formattedDate, timestamp);
-      
       let slotsData = response.data || [];
-      const formattedBookings = [];
       
+      console.log('Slots data from API:', slotsData);
+      
+      // Step 2: Identify all userIds from the booked slots
+      const userIds = [];
       slotsData.forEach(slot => {
-        if (!slot) return;
-        
-        const isSlotBooked = slot.isBooked === true;
-        
-        if (isSlotBooked) {
-          let hourNum;
-          
-          if (slot.starts && slot.starts.includes(':')) {
-            const [hour] = slot.starts.split(':');
-            hourNum = parseInt(hour, 10);
-          } else if (slot.startingTime) {
-            const timeStr = slot.startingTime.toString();
-            if (timeStr.length >= 3) {
-              hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
-            } else {
-              hourNum = parseInt(timeStr, 10);
-            }
-          } else if (slot.starts && !isNaN(parseInt(slot.starts, 10))) {
-            const timeStr = slot.starts.toString();
-            if (timeStr.length >= 3) {
-              hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
-            } else {
-              hourNum = parseInt(timeStr, 10);
-            }
-          } else {
-            return;
-          }
-          
-          const ampm = hourNum >= 12 ? 'PM' : 'AM';
-          const hour12 = hourNum % 12 || 12;
-          
-          const booking = {
-            courtId: selectedCourt,
-            date: slot.date,
-            startingTime: `${hour12}:00 ${ampm}`,
-            status: 'Confirmed',
-            id: slot.bookingId || `${selectedCourt}-${slot.date}-${slot.starts || slot.startingTime}`
-          };
-          
-          formattedBookings.push(booking);
+        if (slot && slot.isBooked && slot.userId) {
+          userIds.push(slot.userId);
         }
       });
       
+      console.log('User IDs found in bookings:', userIds);
+      
+      // Step 3: Fetch all users if we have userIds
+      let userDetailsMap = {};
+      if (userIds.length > 0) {
+        try {
+          const usersResponse = await axios.get(`${API_URL}/users`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const allUsers = usersResponse.data || [];
+          console.log('All users from API:', allUsers);
+          
+          // Create a map of userId to user details
+          allUsers.forEach(user => {
+            if (user && user.userId) {
+              userDetailsMap[user.userId] = user;
+            }
+          });
+          
+          console.log('User details map created:', userDetailsMap);
+        } catch (error) {
+          console.error('Failed to fetch users:', error);
+        }
+      }
+      
+      // Step 4: Format bookings with user details
+      const formattedBookings = [];
+      
+      slotsData.forEach(slot => {
+        if (!slot || !slot.isBooked) return;
+        
+        let hourNum;
+        
+        if (slot.starts && slot.starts.includes(':')) {
+          const [hour] = slot.starts.split(':');
+          hourNum = parseInt(hour, 10);
+        } else if (slot.startingTime) {
+          const timeStr = slot.startingTime.toString();
+          if (timeStr.length >= 3) {
+            hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
+          } else {
+            hourNum = parseInt(timeStr, 10);
+          }
+        } else if (slot.starts && !isNaN(parseInt(slot.starts, 10))) {
+          const timeStr = slot.starts.toString();
+          if (timeStr.length >= 3) {
+            hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
+          } else {
+            hourNum = parseInt(timeStr, 10);
+          }
+        } else {
+          return;
+        }
+        
+        const ampm = hourNum >= 12 ? 'PM' : 'AM';
+        const hour12 = hourNum % 12 || 12;
+        
+        // Get the court name
+        const court = courts.find(c => c.id.toString() === selectedCourt);
+        
+        // Find the user info if this booking has a userId
+        let userDetails = null;
+        if (slot.userId && userDetailsMap[slot.userId]) {
+          userDetails = userDetailsMap[slot.userId];
+          console.log(`Found user details for userId ${slot.userId}:`, userDetails);
+        }
+        
+        const booking = {
+          courtId: selectedCourt,
+          courtName: court ? court.name : `Court ${selectedCourt}`,
+          date: slot.date,
+          startingTime: `${hour12}:00 ${ampm}`,
+          status: 'Confirmed',
+          id: slot.bookingId || `${selectedCourt}-${slot.date}-${slot.starts || slot.startingTime}`,
+          userId: slot.userId,
+          userInfo: userDetails
+        };
+        
+        formattedBookings.push(booking);
+      });
+      
+      console.log('Final formatted bookings with user info:', formattedBookings);
       setBookings(formattedBookings);
       
     } catch (err) {
+      console.error(`Failed to load bookings: ${err.message || 'Unknown error'}`, err);
       setError(`Failed to load bookings: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
@@ -217,7 +270,6 @@ const Bookings = () => {
       alert('Booking created successfully!');
       
       // Make sure the selected date and court match what was just booked
-      // This ensures we're viewing the calendar for the newly created booking
       if (formatDate(bookingData.date) !== formatDate(selectedDate)) {
         setSelectedDate(bookingData.date);
       }
@@ -226,7 +278,7 @@ const Bookings = () => {
         setSelectedCourt(bookingData.courtId);
       }
       
-      // Refresh bookings immediately without setTimeout
+      // Refresh bookings immediately
       await fetchBookings();
     } catch (err) {
       let errorMsg = 'Please try again.';
@@ -240,76 +292,117 @@ const Bookings = () => {
     }
   };
   
-  // Initiate the booking deletion process by showing password confirmation
+  // Initiate the booking deletion process by showing confirmation dialog
   const handleDeleteBooking = (bookingId) => {
+    // Find the booking details
+    const bookingInfo = bookings.find(b => b.id === bookingId);
+    if (!bookingInfo) {
+      alert('Booking not found');
+      return;
+    }
+    
     // Store the booking ID to delete
     setBookingToDelete(bookingId);
-    // Open password confirmation modal
-    setIsPasswordModalOpen(true);
+    // Open delete confirmation modal
+    setIsDeleteModalOpen(true);
   };
   
-  // Handle the actual deletion after password confirmation
-  const handleConfirmDelete = async (password) => {
+  // Handle the actual deletion after confirmation
+  const handleConfirmDelete = async () => {
     if (!bookingToDelete) return;
     
     try {
       setIsDeleting(true);
+      console.log('Starting deletion process for booking ID:', bookingToDelete);
       
-      // First, verify the venue password
-      // This could be done either by:
-      // 1. Using a local verification if you have the hash in localStorage (not secure)
-      // 2. Checking with the backend via a dedicated endpoint (more secure)
+      const booking = bookings.find(b => b.id === bookingToDelete);
+      if (!booking) {
+        throw new Error('Booking not found');
+      }
       
-      // For this example, we'll check with a simulated auth endpoint
-      // In a real app, you'd use an actual password verification endpoint
-      // await authApi.verifyPassword({ password });
+      console.log('Booking to delete:', booking);
       
-      // For demo purposes, we'll just simulate a password check
-      // Replace this with actual authentication in production
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // If the password check passes, proceed with deletion
-      const bookingId = bookingToDelete;
-      
-      // Extract the numeric part of the bookingId if it's a string format
-      let id = bookingId;
-      if (typeof bookingId === 'string' && bookingId.includes('-')) {
-        // If bookingId is in the format "courtId-date-time", we need to parse it
-        const parts = bookingId.split('-');
+      if (!isNaN(parseInt(bookingToDelete)) && !String(bookingToDelete).includes('-')) {
+        console.log(`Using numeric bookingId: ${bookingToDelete}`);
+        await bookingsApi.deleteBooking(parseInt(bookingToDelete));
+      } 
+      else if (typeof bookingToDelete === 'string' && bookingToDelete.includes('-')) {
+        const parts = bookingToDelete.split('-');
         const courtId = parts[0];
         const date = parts[1];
         const time = parts[2];
         
-        console.log(`Attempting to delete booking for court ${courtId} on ${date} at ${time}`);
+        console.log(`Looking for booking: court=${courtId}, date=${date}, time=${time}`);
         
-        // For now, we'll simulate success and just refresh the UI
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Remove the booking from the local state
-        setBookings(prevBookings => prevBookings.filter(booking => booking.id !== bookingId));
-        
-        // Close the password modal
-        setIsPasswordModalOpen(false);
-        setBookingToDelete(null);
-        
-        alert('Booking cancelled successfully!');
-        return;
+        try {
+          const response = await bookingsApi.getByCourtAndDate(courtId, date);
+          console.log('Court bookings response:', response.data);
+          
+          const slots = response.data || [];
+          
+          const bookedSlots = slots.filter(slot => slot.isBooked === true);
+          console.log('All booked slots:', bookedSlots);
+          
+          let matchingSlot = null;
+          
+          matchingSlot = slots.find(slot => 
+            slot.starts === time && slot.isBooked === true
+          );
+          
+          if (!matchingSlot) {
+            console.log('Direct match not found, trying hour matching');
+            
+            let targetHour;
+            if (time.includes(':')) {
+              targetHour = parseInt(time.split(':')[0], 10);
+            } else {
+              targetHour = parseInt(time, 10);
+            }
+            
+            console.log(`Looking for hour: ${targetHour}`);
+            
+            matchingSlot = slots.find(slot => {
+              if (!slot.isBooked) return false;
+              
+              let slotHour;
+              if (slot.starts && slot.starts.includes(':')) {
+                slotHour = parseInt(slot.starts.split(':')[0], 10);
+              } else if (slot.starts) {
+                slotHour = parseInt(slot.starts, 10);
+              }
+              
+              return slotHour === targetHour;
+            });
+          }
+          
+          if (!matchingSlot) {
+            console.log('Hour match not found, using any booked slot with a bookingId');
+            matchingSlot = slots.find(slot => 
+              slot.isBooked === true && slot.bookingId
+            );
+          }
+          
+          if (matchingSlot && matchingSlot.bookingId) {
+            console.log(`Found slot with bookingId: ${matchingSlot.bookingId}`);
+            
+            await bookingsApi.deleteBooking(matchingSlot.bookingId);
+          } else {
+            throw new Error('Could not find a booking at this time slot');
+          }
+        } catch (fetchError) {
+          console.error('Error fetching or matching slots:', fetchError);
+          throw new Error(`Failed to get booking details: ${fetchError.message}`);
+        }
+      } else {
+        throw new Error('Invalid booking ID format');
       }
-      
-      // If it's a numeric ID, we can try to call the backend API
-      await bookingsApi.deleteBooking(id);
-      
-      // Close the password modal
-      setIsPasswordModalOpen(false);
-      setBookingToDelete(null);
       
       alert('Booking cancelled successfully!');
       
-      // Refresh the bookings list
       await fetchBookings();
       
     } catch (err) {
-      console.error('Error deleting booking:', err);
+      console.error('Error in booking deletion:', err);
       
       let errorMsg = 'Failed to cancel booking. Please try again.';
       if (err.response && err.response.data) {
@@ -318,7 +411,6 @@ const Bookings = () => {
         errorMsg = err.message;
       }
       
-      // Don't close the modal on error, allow retry
       throw new Error(errorMsg);
     } finally {
       setIsDeleting(false);
@@ -466,16 +558,15 @@ const Bookings = () => {
         </div>
       )}
       
-      {/* Password Confirmation Modal */}
-      <PasswordConfirmModal
-        isOpen={isPasswordModalOpen}
+      {/* Delete Booking Confirmation Modal */}
+      <DeleteBookingModal
+        isOpen={isDeleteModalOpen}
         onClose={() => {
-          setIsPasswordModalOpen(false);
+          setIsDeleteModalOpen(false);
           setBookingToDelete(null);
         }}
-        onConfirm={handleConfirmDelete}
-        title="Confirm Booking Cancellation"
-        message="For security purposes, please enter your venue password to confirm this booking cancellation."
+        onDelete={handleConfirmDelete}
+        bookingInfo={bookingToDelete ? bookings.find(b => b.id === bookingToDelete) : null}
       />
 
       <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md">

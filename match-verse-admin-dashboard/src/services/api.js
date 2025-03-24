@@ -178,3 +178,10 @@ export const authApi = {
 };
 
 export default api;
+
+export const usersApi = {
+  getAll: () => {
+    console.log('API: Fetching all users');
+    return api.get('/users');
+  }
+};

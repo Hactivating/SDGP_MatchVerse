@@ -31,9 +31,42 @@ const BookingCalendar = ({ bookings = [], date, venueInfo, onDeleteBooking }) =>
   };
 
   const handleDeleteBooking = (bookingId) => {
-    if (window.confirm('Are you sure you want to cancel this booking?')) {
-      onDeleteBooking(bookingId);
+    onDeleteBooking(bookingId);
+  };
+
+  // Function to render user information safely
+  const renderUserInfo = (booking) => {
+    if (!booking || !booking.userId) {
+      return (
+        <div className="text-sm text-[#6b7280]">
+          Venue Admin Booking
+        </div>
+      );
     }
+    
+    if (booking.userInfo) {
+      // User info is available
+      const user = booking.userInfo;
+      return (
+        <div className="text-sm text-[#6b7280]">
+          <div>
+            {user.username || `User #${booking.userId}`}
+          </div>
+          {user.email && (
+            <div className="text-xs text-gray-500">
+              {user.email}
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    // Fallback to just showing the userId
+    return (
+      <div className="text-sm text-[#6b7280]">
+        User ID: {booking.userId}
+      </div>
+    );
   };
 
   return (
@@ -66,11 +99,10 @@ const BookingCalendar = ({ bookings = [], date, venueInfo, onDeleteBooking }) =>
                   <div className="ml-4 flex-1 flex justify-between items-center">
                     <div>
                       <div className="font-medium text-[rgb(73,209,84)]">Booked</div>
+                      {/* Display user information */}
+                      {renderUserInfo(booking)}
                       <div className="text-sm text-[#6b7280]">
-                        {booking.userId ? `User ID: ${booking.userId}` : 'Venue Admin Booking'}
-                      </div>
-                      <div className="text-sm text-[#6b7280]">
-                        Court ID: {booking.courtId}
+                        Court: {booking.courtName || booking.courtId}
                       </div>
                     </div>
                     <Button

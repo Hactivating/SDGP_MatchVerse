@@ -60,7 +60,7 @@ const GradientButton = ({ onPress, text, icon, small, disabled = false, loading 
 
 export default function BookingsPage() {
     const router = useRouter();
-    const { state } = useAuth();
+    const { state } = useAuth();  // Directly destructure state from useAuth
     const [bookings, setBookings] = useState([]);
     const [courts, setCourts] = useState([]);
     const [venues, setVenues] = useState([]);
@@ -98,8 +98,11 @@ export default function BookingsPage() {
         try {
             setLoading(true);
 
-            const userId = state?.user?.userId || 4;
+            // Use the correct property name - userId, not id
+            const userId = state?.user?.userId || 1;
+            console.log('Using userId for bookings:', userId, 'User object:', state?.user);
 
+            // Fetch courts and venues data
             const [courtsData, venuesData] = await Promise.all([
                 getAllCourts(),
                 getAllVenues()
@@ -108,30 +111,30 @@ export default function BookingsPage() {
             setCourts(courtsData);
             setVenues(venuesData);
 
-            try {
-                const response = await bookingsApi.getUserBookings(userId);
+            // Fetch bookings for the user
+            const response = await bookingsApi.getUserBookings(userId);
 
-                if (response.data && Array.isArray(response.data)) {
-                    const sortedBookings = response.data.sort((a, b) => {
-                        const dateA = new Date(`${a.date}T${a.startingTime}`);
-                        const dateB = new Date(`${b.date}T${b.startingTime}`);
-                        return dateB - dateA;
-                    });
+            if (response.data && Array.isArray(response.data)) {
+                // Sort bookings by date (newest first)
+                const sortedBookings = response.data.sort((a, b) => {
+                    const dateA = new Date(`${a.date}T${a.startingTime}`);
+                    const dateB = new Date(`${b.date}T${b.startingTime}`);
+                    return dateB - dateA;
+                });
 
-                    const userBookings = sortedBookings.filter(booking =>
-                        booking.userId === userId || booking.userId === null
-                    );
+                // Filter to just this user's bookings
+                const filteredBookings = sortedBookings.filter(booking =>
+                    booking.userId === userId || booking.userId === null
+                );
 
-                    setBookings(userBookings);
-                } else {
-                    setBookings([]);
-                }
-            } catch (apiError) {
+                setBookings(filteredBookings);
+            } else {
                 setBookings([]);
             }
 
             setError(null);
         } catch (err) {
+            console.error('Error fetching bookings:', err);
             setError('Failed to load your bookings. Please try again later.');
             setBookings([]);
         } finally {
