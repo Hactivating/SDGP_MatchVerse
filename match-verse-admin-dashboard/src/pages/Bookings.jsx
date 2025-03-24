@@ -125,12 +125,17 @@ const Bookings = () => {
       setLoading(true);
       const formattedDate = formatDate(selectedDate);
       const timestamp = new Date().getTime();
+      
+      // Step 1: Fetch all bookings for the selected court and date
       const response = await bookingsApi.getByCourtAndDate(selectedCourt, formattedDate, timestamp);
-      
       let slotsData = response.data || [];
-      const formattedBookings = [];
       
+      console.log('Slots data from API:', slotsData);
+      
+      // Step 2: Identify all userIds from the booked slots
+      const userIds = [];
       slotsData.forEach(slot => {
+<<<<<<< Updated upstream
         if (!slot) return;
         
         const isSlotBooked = slot.isBooked === true;
@@ -172,12 +177,103 @@ const Bookings = () => {
           };
           
           formattedBookings.push(booking);
+=======
+        if (slot && slot.isBooked && slot.userId) {
+          userIds.push(slot.userId);
+>>>>>>> Stashed changes
         }
       });
       
+      console.log('User IDs found in bookings:', userIds);
+      
+      // Step 3: Fetch all users if we have userIds
+      let userDetailsMap = {};
+      if (userIds.length > 0) {
+        try {
+          const usersResponse = await axios.get(`${API_URL}/users`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const allUsers = usersResponse.data || [];
+          console.log('All users from API:', allUsers);
+          
+          // Create a map of userId to user details
+          allUsers.forEach(user => {
+            if (user && user.userId) {
+              userDetailsMap[user.userId] = user;
+            }
+          });
+          
+          console.log('User details map created:', userDetailsMap);
+        } catch (error) {
+          console.error('Failed to fetch users:', error);
+        }
+      }
+      
+      // Step 4: Format bookings with user details
+      const formattedBookings = [];
+      
+      slotsData.forEach(slot => {
+        if (!slot || !slot.isBooked) return;
+        
+        let hourNum;
+        
+        if (slot.starts && slot.starts.includes(':')) {
+          const [hour] = slot.starts.split(':');
+          hourNum = parseInt(hour, 10);
+        } else if (slot.startingTime) {
+          const timeStr = slot.startingTime.toString();
+          if (timeStr.length >= 3) {
+            hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
+          } else {
+            hourNum = parseInt(timeStr, 10);
+          }
+        } else if (slot.starts && !isNaN(parseInt(slot.starts, 10))) {
+          const timeStr = slot.starts.toString();
+          if (timeStr.length >= 3) {
+            hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
+          } else {
+            hourNum = parseInt(timeStr, 10);
+          }
+        } else {
+          return;
+        }
+        
+        const ampm = hourNum >= 12 ? 'PM' : 'AM';
+        const hour12 = hourNum % 12 || 12;
+        
+        // Get the court name
+        const court = courts.find(c => c.id.toString() === selectedCourt);
+        
+        // Find the user info if this booking has a userId
+        let userDetails = null;
+        if (slot.userId && userDetailsMap[slot.userId]) {
+          userDetails = userDetailsMap[slot.userId];
+          console.log(`Found user details for userId ${slot.userId}:`, userDetails);
+        }
+        
+        const booking = {
+          courtId: selectedCourt,
+          courtName: court ? court.name : `Court ${selectedCourt}`,
+          date: slot.date,
+          startingTime: `${hour12}:00 ${ampm}`,
+          status: 'Confirmed',
+          id: slot.bookingId || `${selectedCourt}-${slot.date}-${slot.starts || slot.startingTime}`,
+          userId: slot.userId,
+          userInfo: userDetails
+        };
+        
+        formattedBookings.push(booking);
+      });
+      
+      console.log('Final formatted bookings with user info:', formattedBookings);
       setBookings(formattedBookings);
       
     } catch (err) {
+      console.error(`Failed to load bookings: ${err.message || 'Unknown error'}`, err);
       setError(`Failed to load bookings: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
