@@ -38,7 +38,6 @@ export const bookingsApi = {
         if (!userId) {
             throw new Error('User ID is required');
         }
-
         return api.get(`/bookings/${userId}`);
     },
 
@@ -48,5 +47,15 @@ export const bookingsApi = {
         }
 
         return api.post('/bookings/user', bookingData);
+    },
+
+    cancelBooking: (bookingId: number) => {
+        if (!bookingId) {
+            throw new Error('Booking ID is required');
+        }
+
+        return api.delete(`/bookings/${bookingId}`);
     }
 };
+
+export default bookingsApi;

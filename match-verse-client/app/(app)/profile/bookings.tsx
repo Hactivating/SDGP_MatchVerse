@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Alert, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Animated } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,7 +11,6 @@ import { format, parseISO, isBefore } from 'date-fns';
 import { bookingsApi } from '@/services/bookings';
 import { getAllCourts, getAllVenues } from '@/services/venue';
 import * as Haptics from 'expo-haptics';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GradientButton = ({ onPress, text, icon, small, disabled = false, loading = false }) => {
     const [pressed, setPressed] = useState(false);
@@ -59,29 +58,14 @@ const GradientButton = ({ onPress, text, icon, small, disabled = false, loading 
     );
 };
 
-const storeCancelledBookingId = async (bookingId) => {
-    try {
-        const cancelledIdsStr = await AsyncStorage.getItem('cancelledBookings');
-        const cancelledIds = cancelledIdsStr ? JSON.parse(cancelledIdsStr) : [];
-
-        if (!cancelledIds.includes(bookingId)) {
-            cancelledIds.push(bookingId);
-            await AsyncStorage.setItem('cancelledBookings', JSON.stringify(cancelledIds));
-        }
-    } catch (error) {
-        console.error('Error storing cancelled booking:', error);
-    }
-};
-
 export default function BookingsPage() {
     const router = useRouter();
-    const { state, user } = useAuth();
+    const { state } = useAuth();
     const [bookings, setBookings] = useState([]);
     const [courts, setCourts] = useState([]);
     const [venues, setVenues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [cancellingBookingId, setCancellingBookingId] = useState(null);
 
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
@@ -113,10 +97,8 @@ export default function BookingsPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const userId = 1;
 
-            const cancelledIdsStr = await AsyncStorage.getItem('cancelledBookings');
-            const cancelledIds = cancelledIdsStr ? JSON.parse(cancelledIdsStr) : [];
+            const userId = state?.user?.userId || 4;
 
             const [courtsData, venuesData] = await Promise.all([
                 getAllCourts(),
@@ -130,72 +112,31 @@ export default function BookingsPage() {
                 const response = await bookingsApi.getUserBookings(userId);
 
                 if (response.data && Array.isArray(response.data)) {
-                    let filteredBookings = response.data;
-
-                    if (cancelledIds.length > 0) {
-                        filteredBookings = filteredBookings.filter(
-                            booking => !cancelledIds.includes(booking.bookingId)
-                        );
-                    }
-
-                    const sortedBookings = filteredBookings.sort((a, b) => {
+                    const sortedBookings = response.data.sort((a, b) => {
                         const dateA = new Date(`${a.date}T${a.startingTime}`);
                         const dateB = new Date(`${b.date}T${b.startingTime}`);
                         return dateB - dateA;
                     });
 
-                    setBookings(sortedBookings);
+                    const userBookings = sortedBookings.filter(booking =>
+                        booking.userId === userId || booking.userId === null
+                    );
+
+                    setBookings(userBookings);
                 } else {
-                    createMockBookings(courtsData, userId);
+                    setBookings([]);
                 }
             } catch (apiError) {
-                createMockBookings(courtsData, userId);
+                setBookings([]);
             }
 
             setError(null);
         } catch (err) {
             setError('Failed to load your bookings. Please try again later.');
+            setBookings([]);
         } finally {
             setLoading(false);
         }
-    };
-
-    const createMockBookings = (courtsData, userId) => {
-        const today = new Date();
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
-        const nextWeek = new Date();
-        nextWeek.setDate(today.getDate() + 7);
-
-        const todayStr = today.toISOString().split('T')[0];
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        const nextWeekStr = nextWeek.toISOString().split('T')[0];
-
-        const sampleBookings = [
-            {
-                bookingId: 1,
-                courtId: courtsData[0]?.courtId || 1,
-                date: todayStr,
-                startingTime: '15:00:00',
-                userId
-            },
-            {
-                bookingId: 2,
-                courtId: courtsData[1]?.courtId || 2,
-                date: tomorrowStr,
-                startingTime: '10:00:00',
-                userId
-            },
-            {
-                bookingId: 3,
-                courtId: courtsData[0]?.courtId || 1,
-                date: nextWeekStr,
-                startingTime: '13:00:00',
-                userId
-            }
-        ];
-
-        setBookings(sampleBookings);
     };
 
     const getCourtDetails = (courtId) => {
@@ -212,43 +153,6 @@ export default function BookingsPage() {
     const isBookingPast = (date, startingTime) => {
         const bookingDate = new Date(`${date}T${startingTime}`);
         return isBefore(bookingDate, new Date());
-    };
-
-    const handleCancelBooking = (bookingId) => {
-        Alert.alert(
-            'Cancel Booking',
-            'Are you sure you want to cancel this booking?',
-            [
-                { text: 'No', style: 'cancel' },
-                {
-                    text: 'Yes',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            setCancellingBookingId(bookingId);
-
-                            // Store the cancelled booking ID in AsyncStorage
-                            await storeCancelledBookingId(bookingId);
-
-                            // Update UI
-                            setBookings(prevBookings =>
-                                prevBookings.filter(booking => booking.bookingId !== bookingId)
-                            );
-
-                            // Provide feedback
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                            Alert.alert('Success', 'Your booking has been hidden from your list.');
-
-                        } catch (err) {
-                            console.error('Error cancelling booking:', err);
-                            Alert.alert('Error', 'Failed to remove the booking. Please try again later.');
-                        } finally {
-                            setCancellingBookingId(null);
-                        }
-                    },
-                }
-            ]
-        );
     };
 
     const frostedGlassStyle = {
