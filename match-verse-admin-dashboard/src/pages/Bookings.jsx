@@ -135,52 +135,8 @@ const Bookings = () => {
       // Step 2: Identify all userIds from the booked slots
       const userIds = [];
       slotsData.forEach(slot => {
-<<<<<<< Updated upstream
-        if (!slot) return;
-        
-        const isSlotBooked = slot.isBooked === true;
-        
-        if (isSlotBooked) {
-          let hourNum;
-          
-          if (slot.starts && slot.starts.includes(':')) {
-            const [hour] = slot.starts.split(':');
-            hourNum = parseInt(hour, 10);
-          } else if (slot.startingTime) {
-            const timeStr = slot.startingTime.toString();
-            if (timeStr.length >= 3) {
-              hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
-            } else {
-              hourNum = parseInt(timeStr, 10);
-            }
-          } else if (slot.starts && !isNaN(parseInt(slot.starts, 10))) {
-            const timeStr = slot.starts.toString();
-            if (timeStr.length >= 3) {
-              hourNum = parseInt(timeStr.substring(0, timeStr.length - 2), 10);
-            } else {
-              hourNum = parseInt(timeStr, 10);
-            }
-          } else {
-            return;
-          }
-          
-          const ampm = hourNum >= 12 ? 'PM' : 'AM';
-          const hour12 = hourNum % 12 || 12;
-          
-          const booking = {
-            courtId: selectedCourt,
-            date: slot.date,
-            startingTime: `${hour12}:00 ${ampm}`,
-            status: 'Confirmed',
-            id: slot.bookingId || `${selectedCourt}-${slot.date}-${slot.starts || slot.startingTime}`,
-            courtName: courts.find(court => court.id.toString() === selectedCourt)?.name || `Court ${selectedCourt}`
-          };
-          
-          formattedBookings.push(booking);
-=======
         if (slot && slot.isBooked && slot.userId) {
           userIds.push(slot.userId);
->>>>>>> Stashed changes
         }
       });
       
