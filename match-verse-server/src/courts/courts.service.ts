@@ -8,7 +8,7 @@ export class CourtsService {
   constructor(
     private prisma: PrismaService,
     private s3Service: S3Service,
-  ) {}
+  ) { }
 
   async getAllCourts() {
     return this.prisma.court.findMany();
@@ -27,7 +27,9 @@ export class CourtsService {
 
   async createCourt(payload: CreateCourtDto) {
     return this.prisma.court.create({
-      data: payload, //inserts payload(request body in DB as a query)
+      data: {
+        ...payload,
+      }//inserts payload(request body in DB as a query)
     });
   }
 
