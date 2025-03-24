@@ -249,81 +249,86 @@ const Bookings = () => {
   };
   
   // Handle the actual deletion after password confirmation
-  const handleConfirmDelete = async (password) => {
-    if (!bookingToDelete) return;
+  // Handle the actual deletion after confirmation
+// Fixed function to handle deletion after confirmation
+// Handle the actual deletion after confirmation
+const handleConfirmDelete = async () => {
+  if (!bookingToDelete) return;
+  
+  try {
+    setIsDeleting(true);
+    console.log('Starting deletion process for booking ID:', bookingToDelete);
     
-    try {
-      setIsDeleting(true);
-      
-      // First, verify the venue password
-      // This could be done either by:
-      // 1. Using a local verification if you have the hash in localStorage (not secure)
-      // 2. Checking with the backend via a dedicated endpoint (more secure)
-      
-      // For this example, we'll check with a simulated auth endpoint
-      // In a real app, you'd use an actual password verification endpoint
-      // await authApi.verifyPassword({ password });
-      
-      // For demo purposes, we'll just simulate a password check
-      // Replace this with actual authentication in production
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // If the password check passes, proceed with deletion
-      const bookingId = bookingToDelete;
-      
-      // Extract the numeric part of the bookingId if it's a string format
-      let id = bookingId;
-      if (typeof bookingId === 'string' && bookingId.includes('-')) {
-        // If bookingId is in the format "courtId-date-time", we need to parse it
-        const parts = bookingId.split('-');
-        const courtId = parts[0];
-        const date = parts[1];
-        const time = parts[2];
-        
-        console.log(`Attempting to delete booking for court ${courtId} on ${date} at ${time}`);
-        
-        // For now, we'll simulate success and just refresh the UI
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Remove the booking from the local state
-        setBookings(prevBookings => prevBookings.filter(booking => booking.id !== bookingId));
-        
-        // Close the password modal
-        setIsPasswordModalOpen(false);
-        setBookingToDelete(null);
-        
-        alert('Booking cancelled successfully!');
-        return;
-      }
-      
-      // If it's a numeric ID, we can try to call the backend API
-      await bookingsApi.deleteBooking(id);
-      
-      // Close the password modal
-      setIsPasswordModalOpen(false);
-      setBookingToDelete(null);
-      
-      alert('Booking cancelled successfully!');
-      
-      // Refresh the bookings list
-      await fetchBookings();
-      
-    } catch (err) {
-      console.error('Error deleting booking:', err);
-      
-      let errorMsg = 'Failed to cancel booking. Please try again.';
-      if (err.response && err.response.data) {
-        errorMsg = err.response.data.message || err.response.data || errorMsg;
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-      
-      // Don't close the modal on error, allow retry
-      throw new Error(errorMsg);
-    } finally {
-      setIsDeleting(false);
+    // Get the booking details from our state
+    const booking = bookings.find(b => b.id === bookingToDelete);
+    if (!booking) {
+      throw new Error('Booking not found');
     }
-  };
+    
+    console.log('Booking to delete:', booking);
+    
+    // If this is already a numeric ID, use it directly
+    if (!isNaN(parseInt(bookingToDelete)) && !bookingToDelete.includes('-')) {
+      console.log(`Using numeric bookingId: ${bookingToDelete}`);
+      await bookingsApi.deleteBooking(parseInt(bookingToDelete));
+    } 
+    // If we have a composite ID (courtId-date-time)
+    else if (typeof bookingToDelete === 'string' && bookingToDelete.includes('-')) {
+      // Extract the courtId, date, and time from the composite ID
+      const parts = bookingToDelete.split('-');
+      const courtId = parts[0];
+      const date = parts[1];
+      const time = parts[2];
+      
+      console.log(`Looking for booking: court=${courtId}, date=${date}, time=${time}`);
+      
+      // Fetch the slots for this court and date to get the bookingId
+      const response = await bookingsApi.getByCourtAndDate(courtId, date);
+      console.log('Court bookings response:', response.data);
+      
+      // Find the slot that matches our time
+      const slots = response.data || [];
+      const matchingSlot = slots.find(slot => 
+        slot.starts === time && slot.isBooked === true
+      );
+      
+      if (matchingSlot && matchingSlot.bookingId) {
+        console.log(`Found matching slot with bookingId: ${matchingSlot.bookingId}`);
+        
+        // Now delete using the real bookingId
+        await bookingsApi.deleteBooking(matchingSlot.bookingId);
+      } else {
+        throw new Error('Could not find a booking at this time slot');
+      }
+    } else {
+      throw new Error('Invalid booking ID format');
+    }
+    
+    // If we get here, the deletion was successful
+    alert('Booking cancelled successfully!');
+    
+    // Refresh bookings to update the UI
+    await fetchBookings();
+    
+  } catch (err) {
+    console.error('Error in booking deletion:', err);
+    
+    // Format error message for user
+    let errorMsg = 'Failed to cancel booking. Please try again.';
+    if (err.response && err.response.data) {
+      errorMsg = err.response.data.message || err.response.data || errorMsg;
+    } else if (err.message) {
+      errorMsg = err.message;
+    }
+    
+    alert(errorMsg);
+  } finally {
+    setIsDeleting(false);
+    // Close the confirmation modal
+    setIsConfirmDeleteModalOpen(false);
+    setBookingToDelete(null);
+  }
+};
 
   const handleOpenAddModal = () => {
     setInitialCourtForModal(selectedCourt);
