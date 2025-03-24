@@ -3,4 +3,5 @@ export interface Slot{
     starts:string,
     isBooked:boolean;
     bookingId:number | null
+    userId:number | null
 }

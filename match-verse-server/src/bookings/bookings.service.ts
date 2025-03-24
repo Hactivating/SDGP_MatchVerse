@@ -7,13 +7,16 @@ import { BookingGateway } from './gateway/booking.gateway';
 
 @Injectable()
 export class BookingsService {
-  constructor(private prismaService: PrismaService, private gateway: BookingGateway) {}
+  constructor(
+    private prismaService: PrismaService,
+    private gateway: BookingGateway,
+  ) {}
 
   async getBookings(courtId: number, date: string) {
     //get starting time of all existing bookings
     const bookings = await this.prismaService.booking.findMany({
       where: { courtId: courtId, date: date },
-      select: { startingTime: true, bookingId:true },
+      select: { startingTime: true, bookingId: true, userId: true },
     });
 
     console.log(bookings);
@@ -28,9 +31,11 @@ export class BookingsService {
 
     //map the booking slots to a set
     const bookingsMap = new Map(
-      bookings.map((booking) => [booking.startingTime, booking.bookingId]),
+      bookings.map((booking) => [
+        booking.startingTime,
+        { bookingId: booking.bookingId, userId: booking.userId },
+      ]),
     );
-  
 
     console.log(bookingsMap);
 
@@ -47,14 +52,16 @@ export class BookingsService {
         let startingTime = `${String(openingHour).padStart(2, '0')}:${String(openingMinute).padStart(2, '0')}`;
         const bookingId = bookingsMap.get(startingTime);
 
-
         //push slots into the array with updated starting time and a boolean of isBooked
+        const bookingData = bookingsMap.get(startingTime); // Fetch both bookingId and userId
         bookedSlots.push({
           date: date,
           starts: startingTime,
           isBooked: bookingsMap.has(startingTime),
-          bookingId: bookingId ?? null
+          bookingId: bookingData ? bookingData.bookingId : null, 
+          userId: bookingData ? bookingData.userId : null, 
         });
+
         //increase hour by 1 for every iteration
         openingHour += 1;
       }
@@ -96,19 +103,20 @@ export class BookingsService {
         return 'invalid time ';
       }
     }
-    const booking=await this.prismaService.booking.create({
+
+    console.log(payload);
+    const booking = await this.prismaService.booking.create({
       data: payload,
     });
 
     this.gateway.emitEventUpdate();
 
     return booking;
-    
   }
 
-  async deleteUserBooking(bookingId){
+  async deleteUserBooking(bookingId) {
     return this.prismaService.booking.delete({
-      where:{bookingId:bookingId}
-    })
+      where: { bookingId: bookingId },
+    });
   }
 }
