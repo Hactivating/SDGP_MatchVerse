@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a662c68c-86fa-43e6-94e4-962c3f43cab0" name="Changes" comment="Log in and Register">
+<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
 <<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/match-verse-admin-dashboard/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-admin-dashboard/src/services/api.js" afterDir="false" />
@@ -16,6 +17,11 @@
       <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/migration_lock.toml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-server/src/match/match.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-server/src/match/match.controller.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-server/src/match/match.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-server/src/match/match.service.ts" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/match-verse-client/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/services/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250324060618_innt/migration.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/migration_lock.toml" beforeDir="false" />
+>>>>>>> Stashed changes
 =======
       <change beforePath="$PROJECT_DIR$/match-verse-client/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/match-verse-client/services/api.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/match-verse-server/prisma/migrations/20250324060618_innt/migration.sql" beforeDir="false" />
