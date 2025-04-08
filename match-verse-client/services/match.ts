@@ -50,12 +50,48 @@ export interface CreateMatchRequestDto {
     partnerId?: number;
 }
 
+export interface JoinMatchDto {
+    matchId: number;
+    userId: number;
+    partnerId?: number;
+}
+
 export interface MatchResultDto {
     winner1Id: number;
     winner2Id: number;
     loser1Id: number;
     loser2Id: number;
 }
+export interface JoinSinglesDto {
+    matchId: number;
+    userId: number;
+}
+
+export const getAvailableSinglesMatches = async (): Promise<MatchRequest[]> => {
+    try {
+        const response = await api.get('/match/available-singles');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching available singles matches:', error);
+        throw error;
+    }
+};
+
+export const joinSinglesMatchRequest = async (payload: JoinSinglesDto): Promise<MatchRequest> => {
+    try {
+        console.log('Joining singles match request with payload:', payload);
+
+        const response = await api.post('/match/join-singles', payload);
+
+        // Log the response for debugging
+        console.log('Join singles match response:', response.data);
+
+        return response.data;
+    } catch (error) {
+        console.error('Error joining singles match request:', error.response?.data || error);
+        throw error;
+    }
+};
 
 export const createMatchRequest = async (payload: CreateMatchRequestDto): Promise<MatchRequest> => {
     try {
@@ -73,7 +109,22 @@ export const createMatchRequest = async (payload: CreateMatchRequestDto): Promis
     }
 };
 
+// Join an existing match request (new function)
+export const joinMatchRequest = async (payload: JoinMatchDto): Promise<MatchRequest> => {
+    try {
+        console.log('Joining match request with payload:', payload);
 
+        const response = await api.post('/match/join', payload);
+
+        // Log the response for debugging
+        console.log('Join match response:', response.data);
+
+        return response.data;
+    } catch (error) {
+        console.error('Error joining match request:', error.response?.data || error);
+        throw error;
+    }
+};
 
 // Get pending match requests
 export const getPendingMatches = async (): Promise<MatchRequest[]> => {
@@ -147,4 +198,5 @@ export const getUserBookingsForMatching = async (userId: number): Promise<Bookin
         console.error('Error fetching user bookings:', error);
         return [];
     }
+
 };
