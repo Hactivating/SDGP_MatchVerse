@@ -1,4 +1,4 @@
-// app/(app)/find.tsx
+// app/(app)/find.tsx (Updated)
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -8,31 +8,33 @@ import {
     Alert,
     RefreshControl,
     Animated,
-    Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { getPendingMatches, getMatchedMatches, createMatchRequest, getUserBookingsForMatching } from '../../services/match';
+import {
+    getPendingMatches,
+    getMatchedMatches,
+    getUserBookingsForMatching,
+    getAvailableSinglesMatches,
+} from '../../services/match';
 import { useAuth } from '@/hooks/useAuth';
 import { MatchHeader } from '@/components/match/MatchHeader';
-import { MatchCreationForm } from '@/components/match/MatchCreationForm';
-import { MatchItem } from '@/components/match/MatchItem';
-import { JoinDoublesSection } from '@/components/match/JoinDoublesSection'; // Import the new component
+import { MatchCreation } from '@/components/match/MatchCreation';
+import { JoinDoubles } from '@/components/match/JoinDoublesSection';
+import { JoinSingles } from '@/components/match/JoinSingles';
+import { MatchList } from '@/components/match/MatchList';
 import { LinearGradient } from 'expo-linear-gradient';
-import { validateMatchRequest, isMatchComplete } from '@/components/match/helpers';
 
 export default function MatchScreen() {
     const { state } = useAuth();
     const userId = state.user?.userId;
 
-    const [matchType, setMatchType] = useState('single');
-    const [bookingId, setBookingId] = useState('');
-    const [useBooking, setUseBooking] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [pendingMatches, setPendingMatches] = useState([]);
     const [matchedMatches, setMatchedMatches] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [userBookings, setUserBookings] = useState([]);
     const [loadingBookings, setLoadingBookings] = useState(false);
+    const [availableDoublesMatches, setAvailableDoublesMatches] = useState([]);
+    const [availableSinglesMatches, setAvailableSinglesMatches] = useState([]);
 
     // Animation values
     const fadeAnim = React.useRef(new Animated.Value(0)).current;
@@ -41,7 +43,8 @@ export default function MatchScreen() {
     // Card animations with staggered effect
     const cardAnimations = React.useRef({
         form: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
-        join: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        joinSingles: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
+        joinDoubles: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         pending: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
         matched: { opacity: new Animated.Value(0), translateY: new Animated.Value(20) },
     }).current;
@@ -68,9 +71,10 @@ export default function MatchScreen() {
         const animateCards = () => {
             const delays = {
                 form: 100,
-                join: 200,
-                pending: 300,
-                matched: 400
+                joinSingles: 200,
+                joinDoubles: 300,
+                pending: 400,
+                matched: 500
             };
 
             Object.entries(cardAnimations).forEach(([key, anim]) => {
@@ -158,50 +162,83 @@ export default function MatchScreen() {
                 });
             }
 
-            // Process doubles matches separately
+            // Process doubles matches with improved handling
             if (doubleMatches.length > 0) {
                 // Use the first match as the base for doubles
                 const baseMatch = doubleMatches[0];
                 const allParticipants = [];
                 const teams = [];
 
-                // First collect all participants and their partners
+                // Enhanced logging to help debug participant tracking
+                console.log('Doubles match participants before consolidation:');
                 doubleMatches.forEach(match => {
-                    // Add creator
+                    console.log(`Match ${match.requestId}: Created by ${match.createdBy?.username || 'Unknown'}`);
+                    console.log(`Has partner: ${match.partner ? 'Yes - ' + match.partner.username : 'No'}`);
+                });
+
+                // Make sure to collect ALL participants across all related match requests
+                doubleMatches.forEach(match => {
+                    // Add creator if not already in the list
                     if (match.createdBy && !allParticipants.some(p => p.userId === match.createdBy.userId)) {
                         allParticipants.push(match.createdBy);
+                    }
 
-                        // If this player has a partner, add them as a team
-                        if (match.partnerId && match.partner) {
-                            // Check if partner is already in participants
-                            if (!allParticipants.some(p => p.userId === match.partner.userId)) {
-                                allParticipants.push(match.partner);
-                            }
+                    // Add partner if there is one and not already in the list
+                    if (match.partner && !allParticipants.some(p => p.userId === match.partner.userId)) {
+                        allParticipants.push(match.partner);
+                    }
+                });
 
-                            // Add them as a team
+                // Enhanced team formation logic
+                // If we have clear teams (where partners are specified), add them first
+                doubleMatches.forEach(match => {
+                    if (match.createdBy && match.partner) {
+                        // Only add if both players exist and we don't already have this team
+                        const teamExists = teams.some(team =>
+                            (team.player1.userId === match.createdBy.userId && team.player2.userId === match.partner.userId) ||
+                            (team.player1.userId === match.partner.userId && team.player2.userId === match.createdBy.userId)
+                        );
+
+                        if (!teamExists) {
                             teams.push({
                                 player1: match.createdBy,
                                 player2: match.partner
                             });
                         }
                     }
-
-                    // If we already have the partner from another entry, add them
-                    else if (match.partnerId && match.partner &&
-                        !allParticipants.some(p => p.userId === match.partner.userId)) {
-                        allParticipants.push(match.partner);
-                    }
                 });
+
+                // For players without explicit teams, form ad-hoc teams
+                const unassignedPlayers = allParticipants.filter(player =>
+                    !teams.some(team =>
+                        team.player1.userId === player.userId ||
+                        team.player2.userId === player.userId
+                    )
+                );
+
+                // Create teams from unassigned players if possible
+                for (let i = 0; i < unassignedPlayers.length; i += 2) {
+                    if (i + 1 < unassignedPlayers.length) {
+                        teams.push({
+                            player1: unassignedPlayers[i],
+                            player2: unassignedPlayers[i + 1]
+                        });
+                    }
+                }
+
+                // Log the final consolidated data
+                console.log(`Final doubles match has ${allParticipants.length} participants and ${teams.length} teams`);
 
                 // Limit to maximum 4 players for doubles
                 const limitedParticipants = allParticipants.slice(0, 4);
 
-                // Create consolidated doubles match
+                // Create consolidated doubles match with teams information
                 consolidatedMatches.push({
                     ...baseMatch,
                     allParticipants: limitedParticipants,
                     teams: teams,
-                    matchType: 'double'
+                    matchType: 'double',
+                    isComplete: limitedParticipants.length === 4
                 });
             }
         });
@@ -240,6 +277,44 @@ export default function MatchScreen() {
 
             setPendingMatches(pendingResponse);
 
+            // Get available singles matches to join
+            const availableSingles = await getAvailableSinglesMatches();
+            setAvailableSinglesMatches(availableSingles.filter(match =>
+                // Don't show the user's own matches in the join list
+                match.createdById !== userId
+            ));
+
+            // Extract available doubles matches that are not full yet
+            const availableDoubles = pendingResponse.filter(match => {
+                // Only include doubles matches
+                if (match.matchType !== 'double' || match.status !== 'pending') {
+                    return false;
+                }
+
+                // Count players in this match
+                let playerCount = 0;
+                if (match.createdById) playerCount++;
+                if (match.partnerId) playerCount++;
+
+                // Find other match requests for the same booking
+                const relatedMatches = pendingResponse.filter(m =>
+                    m.bookingId === match.bookingId &&
+                    m.matchType === 'double' &&
+                    m.requestId !== match.requestId
+                );
+
+                // Count players from related matches
+                relatedMatches.forEach(m => {
+                    if (m.createdById) playerCount++;
+                    if (m.partnerId) playerCount++;
+                });
+
+                // Only show matches that need more players (less than 4)
+                return playerCount < 4;
+            });
+
+            setAvailableDoublesMatches(availableDoubles);
+
             // Consolidate matched matches to display as a single entry
             const consolidatedMatches = consolidateMatchedMatches(matchedResponse);
             setMatchedMatches(consolidatedMatches);
@@ -276,92 +351,7 @@ export default function MatchScreen() {
         }
     };
 
-    const handleCreateMatchRequest = async (data) => {
-        try {
-            // Validate the request before proceeding
-            if (!validateMatchRequest(data.matchType, data.useBooking)) {
-                return;
-            }
-
-            setLoading(true);
-
-            const payload = {
-                matchType: data.matchType,
-                createdById: userId
-            };
-
-            // Only add bookingId if the switch is on and a booking ID is entered
-            if (data.useBooking && data.bookingId.trim()) {
-                const bookingIdNum = parseInt(data.bookingId, 10);
-                if (isNaN(bookingIdNum)) {
-                    Alert.alert('Error', 'Booking ID must be a number');
-                    setLoading(false);
-                    return;
-                }
-
-                // Check if the booking ID exists in available bookings
-                const bookingExists = userBookings.some(booking => booking.bookingId === bookingIdNum);
-                if (!bookingExists) {
-                    Alert.alert('Error', 'This booking is not available or does not exist');
-                    setLoading(false);
-                    return;
-                }
-
-                payload.bookingId = bookingIdNum;
-            }
-
-            // Additional validation specifically for doubles
-            if (data.matchType === 'double') {
-                if (!payload.bookingId) {
-                    Alert.alert('Error', 'A booking is required for doubles matches');
-                    setLoading(false);
-                    return;
-                }
-
-                // Add partnerId for doubles matches
-                if (data.partnerId) {
-                    payload.partnerId = data.partnerId;
-                } else {
-                    Alert.alert('Error', 'A partner is required for doubles matches');
-                    setLoading(false);
-                    return;
-                }
-            }
-
-            console.log('Sending match request payload:', payload);
-            await createMatchRequest(payload);
-
-            // Show different success messages based on match type
-            if (data.matchType === 'double') {
-                Alert.alert(
-                    'Success',
-                    'Doubles match request created with your partner! Your team will be matched with another team.',
-                    [{ text: 'OK' }]
-                );
-            } else {
-                Alert.alert('Success', 'Match request created successfully!');
-            }
-
-            // Reset form fields
-            setBookingId('');
-            setMatchType('single');
-            setUseBooking(false);
-            fetchData(); // Refresh data after successful creation
-        } catch (error) {
-            console.error('Error creating match request:', error);
-
-            let errorMessage = 'Failed to create match request';
-            if (error.response && error.response.data && error.response.data.message) {
-                errorMessage = error.response.data.message;
-            }
-
-            Alert.alert('Error', errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Get the IDs of bookings that are already in pending or matched requests
+    // Get the IDs of bookings that are already in use
     const getBookingsInUse = () => {
         const bookingIdsInUse = new Set();
 
@@ -391,7 +381,7 @@ export default function MatchScreen() {
         <View style={styles.container}>
             <StatusBar style="light" />
 
-            {/* Enhanced Gradient Background similar to home screen */}
+            {/* Enhanced Gradient Background */}
             <LinearGradient
                 colors={['#10b68d', '#0a8d6d', '#046d64']}
                 style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
@@ -420,71 +410,55 @@ export default function MatchScreen() {
                                 transform: [{ translateY: cardAnimations.form.translateY }]
                             }}
                         >
-                            <MatchCreationForm
-                                matchType={matchType}
-                                setMatchType={setMatchType}
-                                bookingId={bookingId}
-                                setBookingId={setBookingId}
-                                useBooking={useBooking}
-                                setUseBooking={setUseBooking}
-                                loading={loading}
-                                loadingBookings={loadingBookings}
+                            <MatchCreation
+                                userId={userId}
                                 availableBookings={availableBookings}
-                                currentUserId={userId || 0}
-                                onSubmit={handleCreateMatchRequest}
+                                refreshData={fetchData}
+                                loadingBookings={loadingBookings}
                             />
                         </Animated.View>
 
-                        {/* Join Doubles Section - NEW */}
+                        {/* Join Singles Section */}
                         <Animated.View
                             style={{
-                                opacity: cardAnimations.join.opacity,
-                                transform: [{ translateY: cardAnimations.join.translateY }]
+                                opacity: cardAnimations.joinSingles.opacity,
+                                transform: [{ translateY: cardAnimations.joinSingles.translateY }]
                             }}
                         >
-                            <JoinDoublesSection
-                                userId={userId || 0}
+                            <JoinSingles
+                                availableSinglesMatches={availableSinglesMatches}
+                                userId={userId}
+                                refreshing={refreshing}
                                 onRefresh={fetchData}
                             />
                         </Animated.View>
 
-                        {/* Pending Matches */}
+                        {/* Join Doubles Section */}
                         <Animated.View
                             style={{
-                                opacity: cardAnimations.pending.opacity,
-                                transform: [{ translateY: cardAnimations.pending.translateY }]
+                                opacity: cardAnimations.joinDoubles.opacity,
+                                transform: [{ translateY: cardAnimations.joinDoubles.translateY }]
                             }}
                         >
-                            <MatchItem
-                                title="Pending Matches"
-                                matches={pendingMatches.map(match => ({
-                                    ...match,
-                                    isComplete: isMatchComplete(match.matchType, match.allParticipants?.length || 1)
-                                }))}
-                                status="pending"
-                                emptyIconName="hourglass-outline"
-                                emptyText="No pending matches found"
+                            <JoinDoubles
+                                availableDoublesMatches={availableDoublesMatches}
+                                userId={userId}
+                                refreshing={refreshing}
+                                onRefresh={fetchData}
                             />
                         </Animated.View>
 
-                        {/* Matched Matches */}
-                        <Animated.View
-                            style={{
-                                opacity: cardAnimations.matched.opacity,
-                                transform: [{ translateY: cardAnimations.matched.translateY }]
+                        {/* Match Lists (Pending and Matched) */}
+                        <MatchList
+                            pendingMatches={pendingMatches}
+                            matchedMatches={matchedMatches}
+                            animations={{
+                                pending: cardAnimations.pending,
+                                matched: cardAnimations.matched
                             }}
-                        >
-                            <MatchItem
-                                title="Matched Games"
-                                matches={matchedMatches.map(match => ({
-                                    ...match,
-                                    isComplete: isMatchComplete(match.matchType, match.allParticipants?.length || 1)
-                                }))}
-                                status="matched"
-                                emptyIconName="tennisball-outline"
-                                emptyText="No matched games found"
-                            />
-                        </Animated.View>
+                            onRefresh={fetchData}
+                            currentUserId={userId}
+                        />
                     </Animated.View>
                 </ScrollView>
             </SafeAreaView>
@@ -499,5 +473,5 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 16,
         paddingBottom: 100,
-    },
+    }
 });

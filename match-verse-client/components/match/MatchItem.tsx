@@ -90,6 +90,11 @@ export const MatchItem: React.FC<MatchItemProps> = ({
         return `${date} at ${time}`;
     };
 
+    // Helper function to get required players based on match type
+    const getRequiredPlayers = (matchType) => {
+        return matchType === 'single' ? 2 : 4;
+    };
+
     if (!fontsLoaded) {
         return null;
     }
@@ -168,9 +173,9 @@ export const MatchItem: React.FC<MatchItemProps> = ({
                             <View style={styles.playersContainer}>
                                 <Text style={[styles.playersTitle, { fontFamily: 'Poppins-Medium' }]}>
                                     {status === 'pending' ? 'Players' : 'Players'}:
-                                    {match.bookingId && bookingPlayers[match.bookingId] && (
-                                        <Text style={{ color: '#10b68d' }}> ({bookingPlayers[match.bookingId].length}/4)</Text>
-                                    )}
+                                    <Text style={{ color: '#10b68d' }}>
+                                        {` (${match.allParticipants?.length || 0}/${getRequiredPlayers(match.matchType)})`}
+                                    </Text>
                                 </Text>
 
                                 <View style={styles.playersList}>

@@ -172,7 +172,7 @@ export default function Home() {
     };
 
     const findMatch = () => {
-        router.push('/(app)/find');
+        router.push('/(app)/MatchScreen');
     };
 
     const selectSport = (sport) => {
