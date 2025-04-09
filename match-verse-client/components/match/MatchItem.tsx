@@ -1,10 +1,13 @@
+// components/match/MatchItem.tsx (Updated with Result Submission)
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 import { UserInfo } from './UserInfo';
 import { getPendingMatches } from '@/services/match';
+import { MatchResultSubmission } from './MatchResultSubmission';
+import * as Haptics from 'expo-haptics';
 
 interface MatchItemProps {
     title: string;
@@ -12,6 +15,8 @@ interface MatchItemProps {
     status: 'pending' | 'matched';
     emptyIconName: string;
     emptyText: string;
+    onRefresh: () => void;
+    currentUserId?: number;
 }
 
 export const MatchItem: React.FC<MatchItemProps> = ({
@@ -20,8 +25,12 @@ export const MatchItem: React.FC<MatchItemProps> = ({
                                                         status,
                                                         emptyIconName,
                                                         emptyText,
+                                                        onRefresh,
+                                                        currentUserId
                                                     }) => {
     const [bookingPlayers, setBookingPlayers] = useState<{[key: number]: any[]}>({});
+    const [showResultSubmission, setShowResultSubmission] = useState(false);
+    const [selectedMatch, setSelectedMatch] = useState(null);
 
     const [fontsLoaded] = useFonts({
         'Poppins-Bold': require('@/assets/fonts/Poppins-Bold.ttf'),
@@ -88,6 +97,34 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     const formatDateTime = (date, time) => {
         if (!date || !time) return 'No date/time';
         return `${date} at ${time}`;
+    };
+
+    // Helper function to get required players based on match type
+    const getRequiredPlayers = (matchType) => {
+        return matchType === 'single' ? 2 : 4;
+    };
+
+    const handleSubmitResult = (match) => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setSelectedMatch(match);
+        setShowResultSubmission(true);
+    };
+
+    const handleResultSubmissionSuccess = () => {
+        onRefresh();
+    };
+
+    // Check if current user is a participant in the match
+    const isUserParticipant = (match) => {
+        if (!currentUserId) return false;
+
+        // Check if user is in allParticipants array
+        if (match.allParticipants) {
+            return match.allParticipants.some(participant => participant.userId === currentUserId);
+        }
+
+        // Check creator and partner
+        return match.createdById === currentUserId || match.partnerId === currentUserId;
     };
 
     if (!fontsLoaded) {
@@ -168,9 +205,9 @@ export const MatchItem: React.FC<MatchItemProps> = ({
                             <View style={styles.playersContainer}>
                                 <Text style={[styles.playersTitle, { fontFamily: 'Poppins-Medium' }]}>
                                     {status === 'pending' ? 'Players' : 'Players'}:
-                                    {match.bookingId && bookingPlayers[match.bookingId] && (
-                                        <Text style={{ color: '#10b68d' }}> ({bookingPlayers[match.bookingId].length}/4)</Text>
-                                    )}
+                                    <Text style={{ color: '#10b68d' }}>
+                                        {` (${match.allParticipants?.length || 0}/${getRequiredPlayers(match.matchType)})`}
+                                    </Text>
                                 </Text>
 
                                 <View style={styles.playersList}>
@@ -261,8 +298,39 @@ export const MatchItem: React.FC<MatchItemProps> = ({
                                     )}
                                 </View>
                             </View>
+
+                            {/* Submit Result Button - Only show for matched games where user is a participant */}
+                            {status === 'matched' && isUserParticipant(match) && (
+                                <TouchableOpacity
+                                    style={styles.submitResultButton}
+                                    onPress={() => handleSubmitResult(match)}
+                                >
+                                    <LinearGradient
+                                        colors={['#10b68d', '#046d64']}
+                                        style={styles.submitResultButtonGradient}
+                                    >
+                                        <Ionicons name="trophy-outline" size={16} color="#fff" style={styles.buttonIcon} />
+                                        <Text style={[styles.submitResultButtonText, { fontFamily: 'Poppins-Medium' }]}>
+                                            Submit Result
+                                        </Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     ))
+                )}
+
+                {/* Match Result Submission Modal */}
+                {selectedMatch && (
+                    <MatchResultSubmission
+                        isVisible={showResultSubmission}
+                        onClose={() => setShowResultSubmission(false)}
+                        onSuccess={handleResultSubmissionSuccess}
+                        matchId={selectedMatch.requestId}
+                        matchType={selectedMatch.matchType}
+                        allParticipants={selectedMatch.allParticipants || []}
+                        teams={selectedMatch.teams}
+                    />
                 )}
             </LinearGradient>
         </View>
@@ -279,6 +347,25 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 2,
+    },
+    submitResultButton: {
+        marginTop: 12,
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    submitResultButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+    },
+    submitResultButtonText: {
+        color: '#fff',
+        fontSize: 14,
+    },
+    buttonIcon: {
+        marginRight: 6,
     },
     cardTitleRow: {
         flexDirection: 'row',
@@ -390,6 +477,7 @@ const styles = StyleSheet.create({
     },
     playerItem: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 8,
         backgroundColor: '#f3f4f6',
@@ -426,3 +514,5 @@ const styles = StyleSheet.create({
         fontSize: 10,
     }
 });
+
+export default MatchItem;
