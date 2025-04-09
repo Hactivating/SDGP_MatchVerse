@@ -1,4 +1,4 @@
-// components/match/MatchList.tsx
+// components/match/MatchList.tsx (Updated)
 import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { MatchItem } from './MatchItem';
@@ -17,12 +17,16 @@ interface MatchListProps {
             translateY: Animated.Value;
         };
     };
+    onRefresh: () => void;
+    currentUserId?: number;
 }
 
 export const MatchList: React.FC<MatchListProps> = ({
                                                         pendingMatches,
                                                         matchedMatches,
-                                                        animations
+                                                        animations,
+                                                        onRefresh,
+                                                        currentUserId
                                                     }) => {
     return (
         <View style={styles.container}>
@@ -42,6 +46,8 @@ export const MatchList: React.FC<MatchListProps> = ({
                     status="pending"
                     emptyIconName="hourglass-outline"
                     emptyText="No pending matches found"
+                    onRefresh={onRefresh}
+                    currentUserId={currentUserId}
                 />
             </Animated.View>
 
@@ -61,6 +67,8 @@ export const MatchList: React.FC<MatchListProps> = ({
                     status="matched"
                     emptyIconName="tennisball-outline"
                     emptyText="No matched games found"
+                    onRefresh={onRefresh}
+                    currentUserId={currentUserId}
                 />
             </Animated.View>
         </View>

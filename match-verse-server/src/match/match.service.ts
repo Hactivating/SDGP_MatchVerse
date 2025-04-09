@@ -95,7 +95,7 @@ export class MatchService {
       }
     });
 
-    // Try to match this request (for doubles only, singles are manually matched now)
+    // Try to match this request (for doubles only, singles are manually matched)
     await this.tryMatchRequest(matchRequest);
 
     this.logger.log(`Match request created successfully: ${matchRequest.requestId}`);
@@ -254,7 +254,6 @@ export class MatchService {
     this.logger.log(`Attempting to match request: ${newRequest.requestId}`);
 
     // Only match doubles matches automatically
-    // Singles matches are now matched manually through the joinSinglesMatch endpoint
     if (newRequest.matchType === 'double' && newRequest.bookingId) {
       const allRequests = await this.prisma.matchRequest.findMany({
         where: {
@@ -285,7 +284,6 @@ export class MatchService {
         });
       }
     }
-    // Singles match matching logic removed - now manual only
   }
 
   async getPendingRequests() {

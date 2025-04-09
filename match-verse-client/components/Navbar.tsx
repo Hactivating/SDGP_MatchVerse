@@ -19,7 +19,7 @@ export default function Navbar() {
     // Animation values for each tab
     const homeAnim = useRef(new Animated.Value(isActive('/home') ? 1 : 0)).current;
     const venuesAnim = useRef(new Animated.Value(isActive('/venues') ? 1 : 0)).current;
-    const findAnim = useRef(new Animated.Value(isActive('/find') ? 1 : 0)).current;
+    const findAnim = useRef(new Animated.Value(isActive('/MatchScreen') ? 1 : 0)).current;
     const leaderboardAnim = useRef(new Animated.Value(isActive('/leaderboard') ? 1 : 0)).current;
     const profileAnim = useRef(new Animated.Value(isActive('/profile') ? 1 : 0)).current;
 

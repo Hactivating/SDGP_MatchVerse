@@ -1,4 +1,4 @@
-// app/(app)/find.tsx
+// app/(app)/find.tsx (Updated)
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -456,6 +456,8 @@ export default function MatchScreen() {
                                 pending: cardAnimations.pending,
                                 matched: cardAnimations.matched
                             }}
+                            onRefresh={fetchData}
+                            currentUserId={userId}
                         />
                     </Animated.View>
                 </ScrollView>
